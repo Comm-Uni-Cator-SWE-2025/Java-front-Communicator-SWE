@@ -1,0 +1,126 @@
+/* Root styling */
+.root {
+    -fx-background-color: #000000;
+    background-color: #000000;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Logo */
+.logo {
+    -fx-opacity: 0.9;
+    opacity: 0.9;
+}
+
+/* Time label */
+.time-label {
+    -fx-text-fill: #ffffff;
+    color: #ffffff;
+    -fx-font-size: 14px;
+    font-size: 14px;
+    -fx-opacity: 0.8;
+    opacity: 0.8;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    -fx-background-color: #ffffff;
+    background-color: #ffffff;
+    -fx-text-fill: #000000;
+    color: #000000;
+    -fx-padding: 8 16;
+    padding: 8px 16px;
+    -fx-background-radius: 20;
+    border-radius: 20px;
+    -fx-cursor: hand;
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    -fx-background-color: #f0f0f0;
+    background-color: #f0f0f0;
+}
+
+/* Title */
+.title {
+    -fx-font-size: 48px;
+    font-size: 48px;
+    -fx-font-weight: bold;
+    font-weight: bold;
+    -fx-text-fill: #ffffff;
+    color: #ffffff;
+    -fx-letter-spacing: 2px;
+    letter-spacing: 2px;
+}
+
+/* Subtitle */
+.subtitle {
+    -fx-font-size: 18px;
+    font-size: 18px;
+    -fx-text-fill: #ffffff;
+    color: #ffffff;
+    -fx-opacity: 0.8;
+    opacity: 0.8;
+    -fx-letter-spacing: 1px;
+    letter-spacing: 1px;
+}
+
+/* Meeting buttons */
+.meeting-button {
+    -fx-background-color: #4285f4;
+    background-color: #4285f4;
+    -fx-text-fill: white;
+    color: white;
+    -fx-padding: 10 20;
+    padding: 10px 20px;
+    -fx-background-radius: 20;
+    border-radius: 20px;
+    -fx-cursor: hand;
+    cursor: pointer;
+}
+
+.meeting-button:hover {
+    -fx-background-color: #1a73e8;
+    background-color: #1a73e8;
+}
+
+/* Meeting code field */
+.meeting-code {
+    -fx-background-color: #333333;
+    background-color: #333333;
+    -fx-text-fill: white;
+    color: white;
+    -fx-border-color: #444444;
+    border-color: #444444;
+    -fx-border-radius: 20;
+    border-radius: 20px;
+    -fx-background-radius: 20;
+    -fx-padding: 8 16;
+    padding: 8px 16px;
+    -fx-pref-width: 250;
+    width: 250px;
+}
+
+.meeting-code .prompt-text {
+    -fx-text-fill: #888888;
+    color: #888888;
+}
+
+/* Join button */
+.join-button {
+    -fx-background-color: #4285f4;
+    background-color: #4285f4;
+    -fx-text-fill: white;
+    color: white;
+    -fx-padding: 10 20;
+    padding: 10px 20px;
+    -fx-background-radius: 20;
+    border-radius: 20px;
+    -fx-cursor: hand;
+    cursor: pointer;
+}
+
+.join-button:hover {
+    -fx-background-color: #1a73e8;
+    background-color: #1a73e8;
+}
