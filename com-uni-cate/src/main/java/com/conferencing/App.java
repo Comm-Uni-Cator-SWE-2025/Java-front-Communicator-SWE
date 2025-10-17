@@ -20,7 +20,6 @@ import com.conferencing.views.LoginPage;
 import com.conferencing.views.MainPage;
 import com.conferencing.views.MeetingInterface;
 import com.conferencing.views.RegisterPage;
-import com.socketry.SocketryClient;
 
 public class App {
     private JFrame frame;
