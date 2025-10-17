@@ -1,0 +1,21 @@
+── pom.xml
+└── src/
+    └── main/
+        └── java/
+            └── com/
+                └── conferencing/
+                    ├── App.java
+                    ├── CustomButton.java
+                    ├── DarkTheme.java
+                    ├── LightTheme.java
+                    ├── PlaceholderTextField.java
+                    ├── Theme.java
+                    ├── ThemeManager.java
+                    └── ui/
+                        ├── CustomButton.java
+                        ├── PlaceholderTextField.java
+                        └── TitledPanel.java
+                    └── views/
+                        ├── LoginPage.java
+                        ├── MainPage.java
+                        └── MeetingInterface.java
