@@ -59,15 +59,13 @@ public class MeetingInterface extends JPanel {
         rpc.subscribe(Utils.UPDATE_UI,bytes -> {
             final RImage rImage = RImage.deserialize(bytes);
             final int[][] image = rImage.getImage();
-            if (screenShareOn || videoOn) {
-                displayFrame(image, rImage.getIp());
-            }
+            displayFrame(image, rImage.getIp());
             return new byte[0];
         });
 //        addParticipant("Dummy Name 1");
 //        addParticipant("Dummy Name 2");
 //        addParticipant("Dummy Name 3");
-//        addParticipant("Other", "");
+        addParticipant("Other", "10.32.11.242");
         addParticipant("You", getSelfIP());
     }
 
