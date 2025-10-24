@@ -10,9 +10,13 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -20,7 +24,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.conferencing.AbstractRPC;
 import com.conferencing.App;
-import com.conferencing.Serializer;
+import com.conferencing.screenNVideo.RImage;
 import com.conferencing.Utils;
 import com.conferencing.theme.Theme;
 import com.conferencing.theme.ThemeManager;
@@ -41,28 +45,40 @@ public class MeetingInterface extends JPanel {
     private boolean screenShareOn = false;
     private CustomButton chatButton;
 
-    private static ParticipantPanel activeParticipantPanel;
+    private static HashMap<String, ParticipantPanel> participantPanels;
     private static long start = 0;
     private static final AtomicBoolean updating = new AtomicBoolean(false);
 
     public MeetingInterface(App app, AbstractRPC rpc) {
         this.app = app;
         this.rpc = rpc;
-        this.videoGrid = new JPanel(new GridLayout(1, 3, 10, 10));
+        this.videoGrid = new JPanel(new GridLayout(2, 3, 10, 10));
+        participantPanels = new HashMap<>();
         initComponents();
 
         rpc.subscribe(Utils.UPDATE_UI,bytes -> {
-            int[][] image = Serializer.deserializeImage(bytes);
+            final RImage rImage = RImage.deserialize(bytes);
+            final int[][] image = rImage.getImage();
             if (screenShareOn || videoOn) {
-                displayFrame(image);
+                displayFrame(image, rImage.getIp());
             }
             return new byte[0];
         });
 //        addParticipant("Dummy Name 1");
 //        addParticipant("Dummy Name 2");
 //        addParticipant("Dummy Name 3");
-//        addParticipant("Dummy Name 4");
-        addParticipant("You");
+//        addParticipant("Other", "");
+        addParticipant("You", getSelfIP());
+    }
+
+    private static String getSelfIP() {
+        // Get IP address as string
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            return socket.getLocalAddress().getHostAddress();
+        } catch (SocketException | UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void initComponents() {
@@ -84,14 +100,11 @@ public class MeetingInterface extends JPanel {
         applyTheme();
     }
 
-    private void addParticipant(String name) {
-        ParticipantPanel panel = new ParticipantPanel(name);
+    private void addParticipant(String name, String ip) {
+        final ParticipantPanel panel = new ParticipantPanel(name);
+        System.out.println("Adding " + ip);
+        participantPanels.put(ip, panel);
         videoGrid.add(panel);
-
-        // Set the first participant panel as the active one for displaying frames
-        if (activeParticipantPanel == null) {
-            activeParticipantPanel = panel;
-        }
     }
 
     private JPanel createChatPanel() {
@@ -148,9 +161,9 @@ public class MeetingInterface extends JPanel {
             }
             if (!screenShareOn && !videoOn) {
 
-                SwingUtilities.invokeLater(() -> {
-                    activeParticipantPanel.setImage(null);
-                });
+//                SwingUtilities.invokeLater(() -> {
+//                    activeParticipantPanel.setImage(null);
+//                });
             }
             videoButton.setPrimary(videoOn);
         });
@@ -167,9 +180,9 @@ public class MeetingInterface extends JPanel {
             }
             if (!screenShareOn && !videoOn) {
 
-                SwingUtilities.invokeLater(() -> {
-                    activeParticipantPanel.setImage(null);
-                });
+//                SwingUtilities.invokeLater(() -> {
+//                    activeParticipantPanel.setImage(null);
+//                });
             }
             shareButton.setPrimary(screenShareOn);
         });
@@ -246,7 +259,9 @@ public class MeetingInterface extends JPanel {
      * The image fully covers the active ParticipantPanel.
      * Drops new frames if the previous one is still being processed.
      */
-    public static void displayFrame(int[][] pixels) {
+    public static void displayFrame(final int[][] pixels, final String ip) {
+        System.out.println("Got : " + ip);
+        final ParticipantPanel activeParticipantPanel = participantPanels.get(ip);
         if (activeParticipantPanel == null) {
             System.err.println("No active participant panel initialized");
             return;
@@ -278,13 +293,6 @@ public class MeetingInterface extends JPanel {
                 updating.set(false);
             }
         });
-    }
-
-    /**
-     * Set the active participant panel for displaying frames.
-     */
-    public static void setActiveParticipantPanel(ParticipantPanel panel) {
-        activeParticipantPanel = panel;
     }
 
     private static class ParticipantPanel extends JPanel {
