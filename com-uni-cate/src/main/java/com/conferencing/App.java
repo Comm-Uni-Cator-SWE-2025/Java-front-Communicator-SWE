@@ -43,17 +43,14 @@ public class App {
 //        this.controllerService = ControllerService.getInstance();
         AbstractRPC rpc = new DummyRPC();
         initComponents(rpc);
-        ThemeManager.getInstance().setApp(this);
         Thread handler = null;
         try {
             handler = rpc.connect();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (IOException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+        System.out.println("Connected to Dummy RPC Server");
+        ThemeManager.getInstance().setApp(this);
     }
     
 //    public ControllerService getControllerService() {

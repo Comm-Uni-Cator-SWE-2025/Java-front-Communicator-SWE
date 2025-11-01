@@ -25,7 +25,7 @@ public class DummyRPC implements AbstractRPC {
 
     @Override
     public Thread connect() throws IOException, ExecutionException, InterruptedException {
-        server = new SocketryClient(new byte[] {5}, 60000 ,procedures);
+        server = new SocketryClient(new byte[] {20}, 60000 ,procedures);
         Thread handler = new Thread(server::listenLoop);
         handler.start();
         return handler;
