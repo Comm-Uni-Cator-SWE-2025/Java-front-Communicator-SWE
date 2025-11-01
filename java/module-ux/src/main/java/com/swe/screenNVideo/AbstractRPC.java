@@ -1,4 +1,4 @@
-package com.conferencing;
+package com.swe.screenNVideo;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
