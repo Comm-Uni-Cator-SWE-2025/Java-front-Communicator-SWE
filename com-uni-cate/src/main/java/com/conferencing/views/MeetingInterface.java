@@ -16,11 +16,13 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.JScrollPane;
 
 import com.conferencing.AbstractRPC;
 import com.conferencing.App;
@@ -35,6 +37,10 @@ public class MeetingInterface extends JPanel {
     private final App app;
     private final JPanel videoGrid;
     private final AbstractRPC rpc;
+    /** Tracks participant panels by ip for add/remove operations. */
+    private static Map<String, ParticipantPanel> participantPanels;
+    /** Container for videoGrid to enable scrolling when full. */
+    private JScrollPane scrollPane;
     private JPanel controlsPanel;
     private JPanel buttonPanel;
     private JPanel rightControls;
@@ -45,15 +51,14 @@ public class MeetingInterface extends JPanel {
     private boolean screenShareOn = false;
     private CustomButton chatButton;
 
-    private static HashMap<String, ParticipantPanel> participantPanels;
     private static long start = 0;
     private static final AtomicBoolean updating = new AtomicBoolean(false);
 
     public MeetingInterface(App app, AbstractRPC rpc) {
         this.app = app;
         this.rpc = rpc;
-        this.videoGrid = new JPanel(new GridLayout(2, 3, 10, 10));
-        participantPanels = new HashMap<>();
+        this.videoGrid = new JPanel();
+        this.participantPanels = new HashMap<>();
         initComponents();
 
         rpc.subscribe(Utils.UPDATE_UI,bytes -> {
@@ -67,6 +72,8 @@ public class MeetingInterface extends JPanel {
 //        addParticipant("Dummy Name 3");
         addParticipant("Other", "10.32.11.242");
         addParticipant("You", getSelfIP());
+
+        updateVideoGridLayout();
     }
 
     private static String getSelfIP() {
@@ -85,7 +92,15 @@ public class MeetingInterface extends JPanel {
 
         // Content panel to hold video grid and chat
         contentPanel = new JPanel(new BorderLayout(10, 10));
-        contentPanel.add(videoGrid, BorderLayout.CENTER);
+        scrollPane = new JScrollPane(videoGrid);
+        scrollPane.setBorder(null);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        contentPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Create chat panel (initially hidden)
         chatPanel = createChatPanel();
@@ -98,11 +113,68 @@ public class MeetingInterface extends JPanel {
         applyTheme();
     }
 
+    /**
+     * Adds a participant panel to the grid.
+     * Prevents duplicates and updates the grid layout.
+     * @param name The participant's display name.
+     * @param ip The participant's ip.
+     */
     private void addParticipant(String name, String ip) {
+        if (participantPanels.containsKey(ip)) {
+            return;
+        }
+
         final ParticipantPanel panel = new ParticipantPanel(name);
         System.out.println("Adding " + ip);
         participantPanels.put(ip, panel);
         videoGrid.add(panel);
+
+        updateVideoGridLayout();
+    }
+
+    /**
+     * Removes a participant panel from the grid.
+     * Selects a new active panel if needed and updates the layout.
+     * @param ip The participant's ip.
+     */
+    private void removeParticipant(String ip) {
+        ParticipantPanel panel = participantPanels.remove(ip);
+
+        if (panel != null) {
+            videoGrid.remove(panel);
+
+            updateVideoGridLayout();
+        }
+    }
+
+    /**
+     * Dynamically updates the video grid's layout (rows/cols) based on
+     * participant count. Enables scrolling for 7+ participants.
+     */
+    private void updateVideoGridLayout() {
+        int count = participantPanels.size();
+
+        if (count <= 1) {
+            videoGrid.setLayout(new GridLayout(1, 1, 10, 10));
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        } else if (count == 2) {
+            videoGrid.setLayout(new GridLayout(1, 2, 10, 10));
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        } else if (count <= 4) {
+            videoGrid.setLayout(new GridLayout(2, 2, 10, 10));
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        } else if (count <= 6) {
+            videoGrid.setLayout(new GridLayout(2, 3, 10, 10));
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        } else {
+            videoGrid.setLayout(new GridLayout(0, 3, 10, 10));
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        }
+
+        videoGrid.revalidate();
+        videoGrid.repaint();
+        scrollPane.revalidate();
+        scrollPane.repaint();
     }
 
     private JPanel createChatPanel() {
@@ -267,6 +339,7 @@ public class MeetingInterface extends JPanel {
 //        System.out.println("Received");
         // if already updating, drop this frame
         if (!updating.compareAndSet(false, true)) {
+            System.err.println("Dropping frame");
             return;
         }
 
@@ -301,6 +374,7 @@ public class MeetingInterface extends JPanel {
             this.name = name;
             this.displayImage = null;
             setLayout(new BorderLayout());
+            setPreferredSize(new Dimension(300, 220));
         }
 
         void setImage(BufferedImage image) {
@@ -334,14 +408,14 @@ public class MeetingInterface extends JPanel {
                 g2d.setFont(new Font("SansSerif", Font.BOLD, Math.max(12, circleDiameter / 3)));
                 String initials = name.contains(" ") ? ("" + name.charAt(0) + name.substring(name.indexOf(" ") + 1).charAt(0)).toUpperCase() : ("" + name.charAt(0)).toUpperCase();
                 g2d.drawString(initials,
-                    circleX + (circleDiameter - g2d.getFontMetrics().stringWidth(initials)) / 2,
-                    circleY + (circleDiameter - g2d.getFontMetrics().getHeight()) / 2 + g2d.getFontMetrics().getAscent()
+                        circleX + (circleDiameter - g2d.getFontMetrics().stringWidth(initials)) / 2,
+                        circleY + (circleDiameter - g2d.getFontMetrics().getHeight()) / 2 + g2d.getFontMetrics().getAscent()
                 );
 
                 g2d.setFont(new Font("SansSerif", Font.PLAIN, 14));
                 g2d.drawString(name,
-                    (getWidth() - g2d.getFontMetrics().stringWidth(name)) / 2,
-                    circleY + circleDiameter + 20);
+                        (getWidth() - g2d.getFontMetrics().stringWidth(name)) / 2,
+                        circleY + circleDiameter + 20);
             }
 
             g2d.dispose();
