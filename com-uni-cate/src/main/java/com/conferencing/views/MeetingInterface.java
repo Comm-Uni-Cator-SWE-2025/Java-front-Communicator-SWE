@@ -10,11 +10,14 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Map;
-import java.util.HashMap;
 
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -23,7 +26,7 @@ import javax.swing.JScrollPane;
 
 import com.conferencing.AbstractRPC;
 import com.conferencing.App;
-import com.conferencing.Serializer;
+import com.conferencing.screenNVideo.RImage;
 import com.conferencing.Utils;
 import com.conferencing.theme.Theme;
 import com.conferencing.theme.ThemeManager;
@@ -34,8 +37,8 @@ public class MeetingInterface extends JPanel {
     private final App app;
     private final JPanel videoGrid;
     private final AbstractRPC rpc;
-    /** Tracks participant panels by name for add/remove operations. */
-    private final Map<String, ParticipantPanel> participantPanels;
+    /** Tracks participant panels by ip for add/remove operations. */
+    private static Map<String, ParticipantPanel> participantPanels;
     /** Container for videoGrid to enable scrolling when full. */
     private JScrollPane scrollPane;
     private JPanel controlsPanel;
@@ -48,7 +51,6 @@ public class MeetingInterface extends JPanel {
     private boolean screenShareOn = false;
     private CustomButton chatButton;
 
-    private static ParticipantPanel activeParticipantPanel;
     private static long start = 0;
     private static final AtomicBoolean updating = new AtomicBoolean(false);
 
@@ -60,19 +62,28 @@ public class MeetingInterface extends JPanel {
         initComponents();
 
         rpc.subscribe(Utils.UPDATE_UI,bytes -> {
-            int[][] image = Serializer.deserializeImage(bytes);
-            if (screenShareOn || videoOn) {
-                displayFrame(image);
-            }
+            final RImage rImage = RImage.deserialize(bytes);
+            final int[][] image = rImage.getImage();
+            displayFrame(image, rImage.getIp());
             return new byte[0];
         });
 //        addParticipant("Dummy Name 1");
 //        addParticipant("Dummy Name 2");
 //        addParticipant("Dummy Name 3");
-//        addParticipant("Dummy Name 4");
-        addParticipant("You");
+        addParticipant("Other", "10.32.11.242");
+        addParticipant("You", getSelfIP());
 
         updateVideoGridLayout();
+    }
+
+    private static String getSelfIP() {
+        // Get IP address as string
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            return socket.getLocalAddress().getHostAddress();
+        } catch (SocketException | UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void initComponents() {
@@ -106,21 +117,17 @@ public class MeetingInterface extends JPanel {
      * Adds a participant panel to the grid.
      * Prevents duplicates and updates the grid layout.
      * @param name The participant's display name.
+     * @param ip The participant's ip.
      */
-    private void addParticipant(String name) {
-        if (participantPanels.containsKey(name)) {
+    private void addParticipant(String name, String ip) {
+        if (participantPanels.containsKey(ip)) {
             return;
         }
 
-        ParticipantPanel panel = new ParticipantPanel(name);
-
-        participantPanels.put(name, panel);
+        final ParticipantPanel panel = new ParticipantPanel(name);
+        System.out.println("Adding " + ip);
+        participantPanels.put(ip, panel);
         videoGrid.add(panel);
-
-        // Set the first participant panel as the active one for displaying frames
-        if (activeParticipantPanel == null) {
-            activeParticipantPanel = panel;
-        }
 
         updateVideoGridLayout();
     }
@@ -128,17 +135,13 @@ public class MeetingInterface extends JPanel {
     /**
      * Removes a participant panel from the grid.
      * Selects a new active panel if needed and updates the layout.
-     * @param name The participant's display name.
+     * @param ip The participant's ip.
      */
-    private void removeParticipant(String name) {
-        ParticipantPanel panel = participantPanels.remove(name);
+    private void removeParticipant(String ip) {
+        ParticipantPanel panel = participantPanels.remove(ip);
 
         if (panel != null) {
             videoGrid.remove(panel);
-
-            if (activeParticipantPanel == panel) {
-                activeParticipantPanel = participantPanels.values().stream().findFirst().orElse(null);
-            }
 
             updateVideoGridLayout();
         }
@@ -228,9 +231,9 @@ public class MeetingInterface extends JPanel {
             }
             if (!screenShareOn && !videoOn) {
 
-                SwingUtilities.invokeLater(() -> {
-                    activeParticipantPanel.setImage(null);
-                });
+//                SwingUtilities.invokeLater(() -> {
+//                    activeParticipantPanel.setImage(null);
+//                });
             }
             videoButton.setPrimary(videoOn);
         });
@@ -247,9 +250,9 @@ public class MeetingInterface extends JPanel {
             }
             if (!screenShareOn && !videoOn) {
 
-                SwingUtilities.invokeLater(() -> {
-                    activeParticipantPanel.setImage(null);
-                });
+//                SwingUtilities.invokeLater(() -> {
+//                    activeParticipantPanel.setImage(null);
+//                });
             }
             shareButton.setPrimary(screenShareOn);
         });
@@ -326,7 +329,9 @@ public class MeetingInterface extends JPanel {
      * The image fully covers the active ParticipantPanel.
      * Drops new frames if the previous one is still being processed.
      */
-    public static void displayFrame(int[][] pixels) {
+    public static void displayFrame(final int[][] pixels, final String ip) {
+        System.out.println("Got : " + ip);
+        final ParticipantPanel activeParticipantPanel = participantPanels.get(ip);
         if (activeParticipantPanel == null) {
             System.err.println("No active participant panel initialized");
             return;
@@ -334,6 +339,7 @@ public class MeetingInterface extends JPanel {
 //        System.out.println("Received");
         // if already updating, drop this frame
         if (!updating.compareAndSet(false, true)) {
+            System.err.println("Dropping frame");
             return;
         }
 
@@ -358,13 +364,6 @@ public class MeetingInterface extends JPanel {
                 updating.set(false);
             }
         });
-    }
-
-    /**
-     * Set the active participant panel for displaying frames.
-     */
-    public static void setActiveParticipantPanel(ParticipantPanel panel) {
-        activeParticipantPanel = panel;
     }
 
     private static class ParticipantPanel extends JPanel {

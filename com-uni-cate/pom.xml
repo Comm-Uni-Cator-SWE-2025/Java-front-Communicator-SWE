@@ -78,7 +78,7 @@
         <dependency>
             <groupId>com.github.enchanteddev</groupId>
             <artifactId>socketry</artifactId>
-            <version>V1</version>
+            <version>V3</version>
         </dependency>
     </dependencies>
 
@@ -164,8 +164,18 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${checkstyle.version}</version>
                 <configuration>
-                    <skip>true</skip>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle-check</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Maven Site Plugin for reporting -->
@@ -191,6 +201,7 @@
                     <mainClass>com.conferencing.App</mainClass>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 
