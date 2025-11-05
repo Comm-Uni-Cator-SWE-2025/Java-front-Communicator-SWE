@@ -36,6 +36,8 @@ public class MeetingPage extends JPanel {
     // Placeholder panels for team integration
     private JPanel chatPanel;
     private JPanel participantsPanel;
+    private CustomButton cameraButton;
+    private CustomButton screenShareButton;
 
     public MeetingPage(MeetingViewModel meetingViewModel) {
         this.meetingViewModel = meetingViewModel;
@@ -74,8 +76,7 @@ public class MeetingPage extends JPanel {
         centerTabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         // --- PLACEHOLDER PANELS (Team Ownership) ---
-        centerTabs.addTab("Video", createPlaceholderPanel(" Video Module - To be integrated by Video Team"));
-        centerTabs.addTab("Screensharing", createPlaceholderPanel(" Screensharing Module - To be integrated by Screen Team"));
+        centerTabs.addTab("ScreenNVideo", new ScreenNVideo(meetingViewModel));
         centerTabs.addTab("Canvas", createPlaceholderPanel(" Canvas Module - To be integrated by Canvas Team"));
         centerTabs.addTab("AI Insights", createPlaceholderPanel(" AI Insights Module - To be integrated by AI Team"));
 
@@ -144,8 +145,18 @@ public class MeetingPage extends JPanel {
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
 
         controlsPanel.add(new CustomButton(" Mute", false));
-        controlsPanel.add(new CustomButton(" Camera", false));
-        controlsPanel.add(new CustomButton(" Share", false));
+        cameraButton = new CustomButton(" Camera", false);
+        cameraButton.addActionListener(e -> {
+            meetingViewModel.toggleVideo();
+        });
+        controlsPanel.add(cameraButton);
+
+        screenShareButton = new CustomButton(" Share", false);
+        screenShareButton.addActionListener(e -> {
+            meetingViewModel.toggleScreenSharing();
+        });
+        controlsPanel.add(screenShareButton);
+
         JButton leaveButton = new CustomButton(" Leave", true);
         leaveButton.addActionListener(e -> meetingViewModel.endMeeting());
         controlsPanel.add(leaveButton);
@@ -191,6 +202,19 @@ public class MeetingPage extends JPanel {
             })
         ));
         */
+
+        meetingViewModel.isVideoEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
+            SwingUtilities.invokeLater(() -> {
+                cameraButton.setPrimary(val);
+            });
+        }));
+
+        meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
+            SwingUtilities.invokeLater(() -> {
+                screenShareButton.setPrimary(val);
+            });
+        }));
+
     }
 
     /**

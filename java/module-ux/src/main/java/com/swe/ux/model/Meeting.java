@@ -15,6 +15,8 @@ public class Meeting {
     private LocalDateTime endTime;
     private final List<User> participants;
     private final List<ChatMessage> messages;
+    private boolean videoEnabled;
+    private boolean screenSharingEnabled;
 
     public Meeting(String title) {
         this.id = UUID.randomUUID().toString();
@@ -22,6 +24,8 @@ public class Meeting {
         this.startTime = LocalDateTime.now();
         this.participants = new ArrayList<>();
         this.messages = new ArrayList<>();
+        this.videoEnabled = false;
+        this.screenSharingEnabled = false;
     }
 
     // Getters
@@ -37,6 +41,14 @@ public class Meeting {
         if (!participants.contains(user)) {
             participants.add(user);
         }
+    }
+
+    public void setVideoEnabled(boolean enabled) {
+        this.videoEnabled = enabled;
+    }
+
+    public void setScreenSharingEnabled(boolean enabled) {
+        this.screenSharingEnabled = enabled;
     }
 
     public void removeParticipant(User user) {

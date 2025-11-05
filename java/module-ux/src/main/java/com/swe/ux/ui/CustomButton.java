@@ -16,6 +16,11 @@ import com.swe.ux.theme.ThemeManager;
 public class CustomButton extends JButton {
     private boolean primary;
 
+    public void setPrimary(boolean primary) {
+        this.primary = primary;
+        applyTheme();
+    }
+
     public CustomButton(String text, boolean primary) {
         super(text);
         this.primary = primary;
