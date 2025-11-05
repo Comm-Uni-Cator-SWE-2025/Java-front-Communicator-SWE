@@ -33,6 +33,14 @@
         <jacoco.branch.coverage.ratio>0.85</jacoco.branch.coverage.ratio>
     </properties>
 
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Module Dependencies -->
         <dependency>
@@ -53,6 +61,7 @@
             <artifactId>javafx-controls</artifactId>
             <version>17.0.2</version>
         </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
@@ -107,6 +116,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.enchanteddev</groupId>
+            <artifactId>socketry</artifactId>
+            <version>V3</version>
         </dependency>
     </dependencies>
 
