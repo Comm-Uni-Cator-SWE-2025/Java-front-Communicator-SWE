@@ -1,5 +1,7 @@
 package com.swe.ux;
 
+import com.swe.screenNVideo.AbstractRPC;
+import com.swe.screenNVideo.DummyRPC;
 import com.swe.ux.model.User;
 import com.swe.ux.service.AuthService;
 import com.swe.ux.service.impl.InMemoryAuthService;
@@ -15,7 +17,9 @@ import com.swe.ux.viewmodel.RegisterViewModel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 
 import com.swe.ux.binding.PropertyListeners;
 
@@ -54,31 +58,35 @@ public class App extends JFrame {
     private App() {
         // Initialize services
         this.authService = new InMemoryAuthService();
-        
-        // Set up the main window
-        setTitle("Comm-Uni-Cate");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700);
-        setLocationRelativeTo(null);
-        
+
         // Set up the main panel with card layout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         
         // Initialize views
         initViews();
-        
+
+    }
+
+    public void start() {
+
+        // Set up the main window
+        setTitle("Comm-Uni-Cate");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1200, 700);
+        setLocationRelativeTo(null);
+
         // Add main panel to the frame
         add(mainPanel, BorderLayout.CENTER);
-        
+
         // Apply theme
         ThemeManager themeManager = ThemeManager.getInstance();
         themeManager.setMainFrame(this);
         themeManager.setApp(this);
-        
+
         // Show login view by default
         showView(MEETING_VIEW);
-        
+
         // Center the window
         setLocationRelativeTo(null);
     }
@@ -102,7 +110,9 @@ public class App extends JFrame {
         LoginViewModel loginViewModel = new LoginViewModel(authService);
         MainViewModel mainViewModel = new MainViewModel(authService);
         MeetingViewModel meetingViewModel = new MeetingViewModel(null); // Will be set when user joins a meeting
-        
+
+        meetingViewModel.startMeeting();
+
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
         RegisterPage registerView = new RegisterPage(new RegisterViewModel(authService));
@@ -195,6 +205,20 @@ public class App extends JFrame {
      * Main entry point of the application.
      */
     public static void main(String[] args) {
+
+        final AbstractRPC rpc = DummyRPC.getInstance();
+
+        // Create and show the application window
+        App app = App.getInstance();
+
+
+        Thread handler = null;
+        try {
+            handler = rpc.connect();
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         // Run on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
             try {
@@ -203,13 +227,19 @@ public class App extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            
-            // Create and show the application window
-            App app = App.getInstance();
+
+            app.start();
             app.setVisible(true);
         });
+
+
+        try {
+            handler.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
-    
+
     // Getters
     public AuthService getAuthService() {
         return authService;
