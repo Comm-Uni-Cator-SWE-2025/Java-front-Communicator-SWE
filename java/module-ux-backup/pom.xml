@@ -18,7 +18,8 @@
     <description>User Interface Module for Comm-Uni-Cate Application</description>
 
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Dependency versions -->
@@ -96,7 +97,6 @@
             <version>1.2</version>
         </dependency>
         
-        
         <!-- SLF4J API -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -149,10 +149,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <release>${maven.compiler.release}</release>
-                    <compilerArgs>
-                        <arg>-Xlint:all</arg>
-                    </compilerArgs>
+                    <source>17</source>
+                    <target>17</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
 
