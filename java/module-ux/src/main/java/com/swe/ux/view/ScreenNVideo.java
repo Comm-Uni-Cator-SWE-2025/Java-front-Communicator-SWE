@@ -167,12 +167,14 @@ public class ScreenNVideo extends JPanel {
         final ParticipantPanel activeParticipantPanel = participantPanels.get(ip);
         if (activeParticipantPanel == null) {
             System.err.println("No active participant panel initialized");
+            uiImage.setIsSuccess(false);
             return;
         }
 
         // if already updating, drop this frame
         if (!updating.compareAndSet(false, true)) {
             System.err.println("Dropping frame");
+            uiImage.setIsSuccess(false);
             return;
         }
 
