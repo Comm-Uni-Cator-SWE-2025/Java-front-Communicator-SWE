@@ -1,19 +1,21 @@
 package com.swe.canvas.ui;
 
+import java.util.List;
+
 import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.ui.util.ColorConverter;
 import com.swe.canvas.ui.util.GeometryUtils;
+
 import javafx.geometry.Bounds;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
-
-import java.util.List;
 
 public class CanvasRenderer {
 
@@ -71,10 +73,13 @@ public class CanvasRenderer {
                 // If dragging, draw box around the moving ghost
                 drawBoundingBox(ghostShape);
             } else {
-                // Otherwise draw around the original shape
-                Shape selected = state.getShapeState(selectedShapeId).getShape();
-                if (selected != null && !state.getShapeState(selectedShapeId).isDeleted()) {
-                    drawBoundingBox(selected);
+                // Otherwise draw around the original shape. Guard against missing ShapeState.
+                final ShapeState selectedState = state.getShapeState(selectedShapeId);
+                if (selectedState != null) {
+                    final Shape selected = selectedState.getShape();
+                    if (selected != null && !selectedState.isDeleted()) {
+                        drawBoundingBox(selected);
+                    }
                 }
             }
         }

@@ -1,24 +1,26 @@
 package com.swe.canvas.mvvm;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
-import com.swe.canvas.datamodel.shape.ShapeFactory;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
-import com.swe.canvas.datamodel.shape.ShapeType;
+import com.swe.canvas.datamodel.shape.ShapeFactory;
 import com.swe.canvas.datamodel.shape.ShapeId;
-
+import com.swe.canvas.datamodel.shape.ShapeType;
 import com.swe.canvas.ui.util.ColorConverter;
 import com.swe.canvas.ui.util.GeometryUtils;
-import javafx.beans.property.*;
+
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import java.util.function.Consumer;
 
 /**
  * View model for the canvas
@@ -106,9 +108,17 @@ public class CanvasViewModel {
 
             // 3. If we clicked a shape, prepare for immediate dragging
             if (hitShapeId != null) {
-                isDraggingSelection = true;
-                // Create the ghost shape immediately so we can see it move
-                ghostShape = canvasState.getShapeState(hitShapeId).getShape().copy();
+                final com.swe.canvas.datamodel.canvas.ShapeState ss = canvasState.getShapeState(hitShapeId);
+                if (ss != null && !ss.isDeleted() && ss.getShape() != null) {
+                    isDraggingSelection = true;
+                    // Create the ghost shape immediately so we can see it move
+                    ghostShape = ss.getShape().copy();
+                } else {
+                    // Shape no longer exists (race) — treat as no hit
+                    isDraggingSelection = false;
+                    ghostShape = null;
+                    selectedShapeId.set(null);
+                }
             } else {
                 isDraggingSelection = false;
                 ghostShape = null;
