@@ -2,6 +2,7 @@ package com.swe.ux;
 
 import com.swe.screenNVideo.AbstractRPC;
 import com.swe.screenNVideo.DummyRPC;
+import com.swe.screenNVideo.Utils;
 import com.swe.ux.model.User;
 import com.swe.ux.service.AuthService;
 import com.swe.ux.service.impl.InMemoryAuthService;
@@ -109,22 +110,32 @@ public class App extends JFrame {
         // Initialize ViewModels
         LoginViewModel loginViewModel = new LoginViewModel(authService);
         MainViewModel mainViewModel = new MainViewModel(authService);
-        MeetingViewModel meetingViewModel = new MeetingViewModel(null); // Will be set when user joins a meeting
+        MeetingViewModel meetingViewModel = new MeetingViewModel(new User(Utils.getSelfIP(),"You", "You", "you")); // Will be set when user joins a meeting
 
-        meetingViewModel.startMeeting();
 
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
         RegisterPage registerView = new RegisterPage(new RegisterViewModel(authService));
         MainPage mainView = new MainPage(mainViewModel);
         MeetingPage meetingView = new MeetingPage(meetingViewModel);
-        
+
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
         mainPanel.add(registerView, REGISTER_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
         mainPanel.add(meetingView, MEETING_VIEW);
-        
+
+        final DummyRPC rpc = DummyRPC.getInstance();
+
+        // New participant
+        rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
+            final String viewerIP = new String(data);
+            User new_user = new User(viewerIP, viewerIP, "New", "new");
+            meetingViewModel.addParticipant(new_user);
+            return new byte[0];
+        });
+
+        meetingViewModel.startMeeting();
         // Set up navigation listeners
         loginViewModel.loginSuccess.addListener(PropertyListeners.onBooleanChanged(loggedIn -> {
             if (loggedIn) {
