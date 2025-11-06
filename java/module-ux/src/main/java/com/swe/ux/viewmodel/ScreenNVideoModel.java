@@ -51,8 +51,11 @@ public class ScreenNVideoModel extends BaseViewModel {
                     bufferedImage.setRGB(y, x, image[x][y]);
                 }
             }
-            onImageReceived.accept(new UIImage(bufferedImage, rImage.getIp()));
-            return new byte[0];
+            UIImage uiImage = new UIImage(bufferedImage, rImage.getIp(), (byte) 1);
+            onImageReceived.accept(uiImage);
+            byte[] res = new byte[1];
+            res[0] = uiImage.isSuccess();
+            return res;
         });
     }
 }
