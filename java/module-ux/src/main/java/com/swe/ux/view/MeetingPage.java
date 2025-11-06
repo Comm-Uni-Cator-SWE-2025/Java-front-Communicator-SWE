@@ -1,9 +1,11 @@
 package com.swe.ux.view;
 
+import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.model.User;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.CustomButton;
+import com.swe.ux.viewmodel.CanvasViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
 import com.swe.ux.binding.PropertyListeners;
 
@@ -81,7 +83,12 @@ public class MeetingPage extends JPanel {
         // --- PLACEHOLDER PANELS (Team Ownership) ---
         screenNVideoComponent = new ScreenNVideo(meetingViewModel);
         centerTabs.addTab("ScreenNVideo", screenNVideoComponent);
-        centerTabs.addTab("Canvas", createPlaceholderPanel(" Canvas Module - To be integrated by Canvas Team"));
+        
+        // Canvas Module - Integrated
+        CanvasViewModel canvasViewModel = new CanvasViewModel(new CanvasState());
+        CanvasPage canvasPage = new CanvasPage(canvasViewModel);
+        centerTabs.addTab("Canvas", canvasPage);
+        
         centerTabs.addTab("AI Insights", createPlaceholderPanel(" AI Insights Module - To be integrated by AI Team"));
 
         // Right-side (Chat + Participants)
