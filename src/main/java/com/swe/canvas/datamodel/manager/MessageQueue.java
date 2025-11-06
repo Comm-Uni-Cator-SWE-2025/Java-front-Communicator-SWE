@@ -47,7 +47,7 @@ public class MessageQueue {
      * @throws InterruptedException if the thread is interrupted while waiting
      * (only if a bounded queue is used and full).
      */
-    public void post(SerializedAction action) throws InterruptedException {
+    public void post(final SerializedAction action) throws InterruptedException {
         queue.put(action);
     }
 
@@ -66,6 +66,7 @@ public class MessageQueue {
     }
 
     /**
+     * @summary Gets the current size of the queue.
      * @return The current number of messages in the queue.
      */
     public int size() {

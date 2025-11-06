@@ -99,10 +99,10 @@ public class ParticipantActionManager implements ActionManager {
      * @param sendToHostQueue The message queue to send actions *to* the Host.
      * @param participantUserId The user ID of this participant.
      */
-    public ParticipantActionManager(CanvasState canvasState, UndoRedoStack undoRedoStack,
-                                    ActionFactory actionFactory, ActionSerializer serializer,
-                                    ActionDeserializer deserializer, MessageQueue sendToHostQueue,
-                                    String participantUserId) {
+    public ParticipantActionManager(final CanvasState canvasState, final UndoRedoStack undoRedoStack,
+                                    final ActionFactory actionFactory, final ActionSerializer serializer,
+                                    final ActionDeserializer deserializer, final MessageQueue sendToHostQueue,
+                                    final String participantUserId) {
         this.canvasState = canvasState;
         this.undoRedoStack = undoRedoStack;
         this.actionFactory = actionFactory;
@@ -114,11 +114,11 @@ public class ParticipantActionManager implements ActionManager {
     }
 
     @Override
-    public synchronized void processIncomingAction(SerializedAction serializedAction) {
+    public synchronized void processIncomingAction(final SerializedAction serializedAction) {
         // This action is from the Host, so it is *always* valid.
         // No validation step is needed.
         try {
-            Action action = deserializer.deserialize(serializedAction);
+            final Action action = deserializer.deserialize(serializedAction);
             System.out.printf("[Part. %s] Received broadcast: %s\n", participantUserId, action);
 
             // 1. Apply to local state
@@ -144,7 +144,7 @@ public class ParticipantActionManager implements ActionManager {
     }
 
     @Override
-    public void requestLocalAction(Action action) {
+    public void requestLocalAction(final Action action) {
         // This is a new action from our local UI.
         // We must send it to the host for validation.
         System.out.printf("[Part. %s] Requesting local action: %s\n", participantUserId, action);
@@ -153,7 +153,7 @@ public class ParticipantActionManager implements ActionManager {
             pendingActions.put(action.getActionId(), action);
 
             // 2. Serialize
-            SerializedAction serializedAction = serializer.serialize(action);
+            final SerializedAction serializedAction = serializer.serialize(action);
 
             // 3. Send to host
             sendToHostQueue.post(serializedAction);
@@ -171,10 +171,10 @@ public class ParticipantActionManager implements ActionManager {
 
     @Override
     public void performUndo() {
-        Action actionToUndo = undoRedoStack.popUndo();
+        final Action actionToUndo = undoRedoStack.popUndo();
         if (actionToUndo != null) {
             System.out.printf("[Part. %s] Performing UNDO on %s.\n", participantUserId, actionToUndo);
-            Action inverseAction = actionFactory.createInverseAction(actionToUndo, participantUserId);
+            final Action inverseAction = actionFactory.createInverseAction(actionToUndo, participantUserId);
             // Request the inverse action (send to host for validation)
             requestLocalAction(inverseAction);
         } else {
@@ -186,7 +186,7 @@ public class ParticipantActionManager implements ActionManager {
     public void performRedo() {
         // This logic relies on the UndoRedoStack.popRedo()
         // implementation, which pops from redo and pushes to undo.
-        Action actionToRedo = undoRedoStack.popRedo();
+        final Action actionToRedo = undoRedoStack.popRedo();
         if (actionToRedo != null) {
             System.out.printf("[Part. %s] Performing REDO on %s.\n", participantUserId, actionToRedo);
             // The action is now on the undo stack.
@@ -208,7 +208,7 @@ public class ParticipantActionManager implements ActionManager {
      *
      * @param action The validated action from the host.
      */
-    private void apply(Action action) {
+    private void apply(final Action action) {
         canvasState.applyState(action.getShapeId(), action.getNewState());
     }
 }

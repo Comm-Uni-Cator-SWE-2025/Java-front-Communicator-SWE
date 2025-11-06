@@ -2,8 +2,9 @@ package com.swe.canvas.datamodel.canvas;
 
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
-import com.swe.canvas.datamodel.action.Action;
-import com.swe.canvas.datamodel.manager.ActionManager;
+
+// import com.swe.canvas.datamodel.action.Action;
+// import com.swe.canvas.datamodel.manager.ActionManager;
 
 import java.util.Collection;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class CanvasState {
      * @return The current {@link ShapeState}, or {@code null} if the shape
      * does not exist in the state map.
      */
-    public ShapeState getShapeState(ShapeId shapeId) {
+    public ShapeState getShapeState(final ShapeId shapeId) {
         return state.get(shapeId);
     }
 
@@ -72,7 +73,7 @@ public class CanvasState {
      * @param shapeId    The ID of the shape to update.
      * @param newState   The new state to apply.
      */
-    public void applyState(ShapeId shapeId, ShapeState newState) {
+    public void applyState(final ShapeId shapeId, final ShapeState newState) {
         Objects.requireNonNull(shapeId, "shapeId cannot be null");
         Objects.requireNonNull(newState, "newState cannot be null");
         state.put(shapeId, newState);
@@ -108,7 +109,7 @@ public class CanvasState {
      */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("CanvasState:\n");
+        final StringBuilder sb = new StringBuilder("CanvasState:\n");
         if (state.isEmpty()) {
             sb.append("  [Empty]\n");
         }

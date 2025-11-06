@@ -1,6 +1,6 @@
 package com.swe.canvas.datamodel.shape;
 
-import com.swe.canvas.datamodel.canvas.CanvasState;
+// import com.swe.canvas.datamodel.canvas.CanvasState;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -34,8 +34,8 @@ public class FreehandShape extends Shape {
      * @param createdBy     The creating user's ID.
      * @param lastUpdatedBy The last modifying user's ID.
      */
-    public FreehandShape(ShapeId shapeId, List<Point> points, double thickness,
-                         Color color, String createdBy, String lastUpdatedBy) {
+    public FreehandShape(final ShapeId shapeId, final List<Point> points, final double thickness,
+                         final Color color, final String createdBy, final String lastUpdatedBy) {
         super(shapeId, ShapeType.FREEHAND, points, thickness, color, createdBy, lastUpdatedBy);
     }
 

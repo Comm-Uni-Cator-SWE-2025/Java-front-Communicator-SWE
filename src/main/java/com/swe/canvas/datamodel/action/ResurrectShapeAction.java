@@ -38,8 +38,8 @@ public class ResurrectShapeAction extends Action {
      * @param prevState The state before the action (isDeleted=true).
      * @param newState  The state after the action (isDeleted=false).
      */
-    public ResurrectShapeAction(String actionId, String userId, long timestamp,
-                                ShapeId shapeId, ShapeState prevState, ShapeState newState) {
+    public ResurrectShapeAction(final String actionId, final String userId, final long timestamp,
+                                final ShapeId shapeId, final ShapeState prevState, final ShapeState newState) {
         super(actionId, userId, timestamp, ActionType.RESURRECT, shapeId, prevState, newState);
 
         if (!prevState.isDeleted()) {

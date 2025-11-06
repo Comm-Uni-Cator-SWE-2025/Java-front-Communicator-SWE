@@ -32,13 +32,13 @@ public class DefaultActionSerializer implements ActionSerializer {
      * @throws SerializationException if an {@link IOException} occurs.
      */
     @Override
-    public SerializedAction serialize(Action action) throws SerializationException {
+    public SerializedAction serialize(final Action action) throws SerializationException {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(bos)) {
 
             oos.writeObject(action);
             oos.flush();
-            byte[] data = bos.toByteArray();
+            final byte[] data = bos.toByteArray();
             return new SerializedAction(data);
 
         } catch (IOException e) {

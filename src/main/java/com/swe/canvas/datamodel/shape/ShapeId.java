@@ -38,7 +38,7 @@ public final class ShapeId implements Serializable {
      * @param id The string ID.
      * @throws NullPointerException if the id is null.
      */
-    public ShapeId(String id) {
+    public ShapeId(final String id) {
         this.id = Objects.requireNonNull(id, "ID cannot be null");
     }
 
@@ -66,10 +66,14 @@ public final class ShapeId implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ShapeId shapeId = (ShapeId) o;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        } 
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ShapeId shapeId = (ShapeId) o;
         return id.equals(shapeId.id);
     }
 

@@ -86,10 +86,10 @@ public class HostActionManager implements ActionManager {
      * @param broadcastQueue The message queue to send actions to all participants.
      * @param hostUserId     The user ID of the host.
      */
-    public HostActionManager(CanvasState canvasState, UndoRedoStack undoRedoStack,
-                             ActionFactory actionFactory, ActionSerializer serializer,
-                             ActionDeserializer deserializer, MessageQueue broadcastQueue,
-                             String hostUserId) {
+    public HostActionManager(final CanvasState canvasState, final UndoRedoStack undoRedoStack,
+                             final ActionFactory actionFactory, final ActionSerializer serializer,
+                             final ActionDeserializer deserializer, final MessageQueue broadcastQueue,
+                             final String hostUserId) {
         this.canvasState = canvasState;
         this.undoRedoStack = undoRedoStack;
         this.actionFactory = actionFactory;
@@ -100,9 +100,9 @@ public class HostActionManager implements ActionManager {
     }
 
     @Override
-    public synchronized void processIncomingAction(SerializedAction serializedAction) {
+    public synchronized void processIncomingAction(final SerializedAction serializedAction) {
         try {
-            Action action = deserializer.deserialize(serializedAction);
+            final Action action = deserializer.deserialize(serializedAction);
 
             System.out.printf("[Host] Received %s from %s.\n", action, action.getUserId());
 
@@ -113,7 +113,7 @@ public class HostActionManager implements ActionManager {
 
                 // 2. Add to host's own undo stack
                 // Only add if the action was from the host
-                if(action.getUserId().equals(hostUserId)) {
+                if (action.getUserId().equals(hostUserId)) {
                     // This push clears the redo stack
                     undoRedoStack.pushUndo(action);
                 }
@@ -131,12 +131,12 @@ public class HostActionManager implements ActionManager {
     }
 
     @Override
-    public void requestLocalAction(Action action) {
+    public void requestLocalAction(final Action action) {
         // A local action from the host is just serialized and fed back
         // into its own processing queue.
         System.out.printf("[Host] Requesting local action: %s\n", action);
         try {
-            SerializedAction serializedAction = serializer.serialize(action);
+            final SerializedAction serializedAction = serializer.serialize(action);
             // Process it as if it came from the network
             processIncomingAction(serializedAction);
         } catch (SerializationException e) {
@@ -146,10 +146,10 @@ public class HostActionManager implements ActionManager {
 
     @Override
     public void performUndo() {
-        Action actionToUndo = undoRedoStack.popUndo();
+        final Action actionToUndo = undoRedoStack.popUndo();
         if (actionToUndo != null) {
             System.out.printf("[Host] Performing UNDO on %s.\n", actionToUndo);
-            Action inverseAction = actionFactory.createInverseAction(actionToUndo, hostUserId);
+            final Action inverseAction = actionFactory.createInverseAction(actionToUndo, hostUserId);
             // Request the inverse action
             requestLocalAction(inverseAction);
         } else {
@@ -161,7 +161,7 @@ public class HostActionManager implements ActionManager {
     public void performRedo() {
         // This logic relies on the UndoRedoStack.popRedo()
         // implementation, which pops from redo and pushes to undo.
-        Action actionToRedo = undoRedoStack.popRedo();
+        final Action actionToRedo = undoRedoStack.popRedo();
         if (actionToRedo != null) {
             System.out.printf("[Host] Performing REDO on %s.\n", actionToRedo);
             // The action is now on the undo stack.
@@ -184,7 +184,7 @@ public class HostActionManager implements ActionManager {
      *
      * @param action The action to apply.
      */
-    private void apply(Action action) {
+    private void apply(final Action action) {
         canvasState.applyState(action.getShapeId(), action.getNewState());
     }
 
@@ -193,7 +193,7 @@ public class HostActionManager implements ActionManager {
      *
      * @param serializedAction The action to send.
      */
-    private void broadcast(SerializedAction serializedAction) {
+    private void broadcast(final SerializedAction serializedAction) {
         try {
             broadcastQueue.post(serializedAction);
         } catch (InterruptedException e) {
@@ -208,9 +208,9 @@ public class HostActionManager implements ActionManager {
      * @param action The action to validate.
      * @return True if the action is valid, false if a conflict is detected.
      */
-    private boolean validate(Action action) {
-        ShapeState currentState = canvasState.getShapeState(action.getShapeId());
-        ShapeState actionPrevState = action.getPrevState();
+    private boolean validate(final Action action) {
+        final ShapeState currentState = canvasState.getShapeState(action.getShapeId());
+        final ShapeState actionPrevState = action.getPrevState();
 
         // Host validation is a direct, exact comparison.
         // Objects.equals handles null cases correctly.
@@ -222,7 +222,7 @@ public class HostActionManager implements ActionManager {
         //   - action.prevState is non-null
         //   - currentState must be non-null and *exactly equal*
 
-        boolean isValid = Objects.equals(actionPrevState, currentState);
+        final boolean isValid = Objects.equals(actionPrevState, currentState);
 
         if (!isValid) {
             System.err.println("[Host] Validation Conflict!");

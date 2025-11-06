@@ -32,17 +32,25 @@ public class DefaultActionDeserializer implements ActionDeserializer {
      * {@link ClassNotFoundException} occurs.
      */
     @Override
-    public Action deserialize(SerializedAction data) throws SerializationException {
-        byte[] bytes = data.getData();
+    public Action deserialize(final SerializedAction data) throws SerializationException {
+        final byte[] bytes = data.getData();
         try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
              ObjectInputStream ois = new ObjectInputStream(bis)) {
 
-            Object obj = ois.readObject();
+            final Object obj = ois.readObject();
+            String className = "";
+            if (obj != null){
+                className = obj.getClass().getName();
+            }
+            else {
+                className = "null";
+            }
+
             if (obj instanceof Action) {
                 return (Action) obj;
             } else {
-                throw new SerializationException("Deserialized object is not of type Action: " +
-                        (obj != null ? obj.getClass().getName() : "null"));
+                throw new SerializationException("Deserialized object is not of type Action: " 
+                + className);
             }
 
         } catch (IOException | ClassNotFoundException e) {

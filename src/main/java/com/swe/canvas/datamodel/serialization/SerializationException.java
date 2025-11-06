@@ -26,7 +26,7 @@ public class SerializationException extends RuntimeException {
      *
      * @param message The detail message.
      */
-    public SerializationException(String message) {
+    public SerializationException(final String message) {
         super(message);
     }
 
@@ -36,7 +36,7 @@ public class SerializationException extends RuntimeException {
      * @param message The detail message.
      * @param cause   The underlying cause of the failure.
      */
-    public SerializationException(String message, Throwable cause) {
+    public SerializationException(final String message, final Throwable cause) {
         super(message, cause);
     }
 }

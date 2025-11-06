@@ -52,11 +52,11 @@ public class ActionFactory {
      * @param userId   The user performing the action.
      * @return A new {@link CreateShapeAction}.
      */
-    public Action createCreateAction(Shape newShape, String userId) {
+    public Action createCreateAction(final Shape newShape, final String userId) {
         long timestamp = now();
         newShape.setLastUpdatedBy(userId);
 
-        ShapeState newState = new ShapeState(newShape.copy(), false, timestamp);
+        final ShapeState newState = new ShapeState(newShape.copy(), false, timestamp);
 
         return new CreateShapeAction(
                 newActionId(),
@@ -77,24 +77,24 @@ public class ActionFactory {
      * @return A new {@link ModifyShapeAction}.
      * @throws IllegalStateException if the shape does not exist or is deleted.
      */
-    public Action createModifyAction(CanvasState canvasState, ShapeId shapeId,
-                                     Shape modifiedShape, String userId) {
+    public Action createModifyAction(final CanvasState canvasState, final ShapeId shapeId,
+                                     final Shape modifiedShape, final String userId) {
 
-        ShapeState prevState = canvasState.getShapeState(shapeId);
+        final ShapeState prevState = canvasState.getShapeState(shapeId);
         if (prevState == null || prevState.isDeleted()) {
             throw new IllegalStateException("Cannot modify non-existent or deleted shape: " + shapeId);
         }
 
-        long timestamp = now();
+        final long timestamp = now();
 
         // Create the new shape for the newState
-        Shape newShape = prevState.getShape().copy(); // Start from previous shape
+        final Shape newShape = prevState.getShape().copy(); // Start from previous shape
         newShape.setPoints(modifiedShape.getPoints());
         newShape.setColor(modifiedShape.getColor());
         newShape.setThickness(modifiedShape.getThickness());
         newShape.setLastUpdatedBy(userId);
 
-        ShapeState newState = new ShapeState(newShape, false, timestamp);
+        final ShapeState newState = new ShapeState(newShape, false, timestamp);
 
         return new ModifyShapeAction(
                 newActionId(),
@@ -115,19 +115,19 @@ public class ActionFactory {
      * @return A new {@link DeleteShapeAction}.
      * @throws IllegalStateException if the shape does not exist or is already deleted.
      */
-    public Action createDeleteAction(CanvasState canvasState, ShapeId shapeId, String userId) {
-        ShapeState prevState = canvasState.getShapeState(shapeId);
+    public Action createDeleteAction(final CanvasState canvasState, final ShapeId shapeId, final String userId) {
+        final ShapeState prevState = canvasState.getShapeState(shapeId);
         if (prevState == null || prevState.isDeleted()) {
             throw new IllegalStateException("Cannot delete non-existent or already deleted shape: " + shapeId);
         }
 
-        long timestamp = now();
+        final long timestamp = now();
 
         // New state keeps the same shape data but flags it as deleted
-        Shape shapeCopy = prevState.getShape().copy();
+        final Shape shapeCopy = prevState.getShape().copy();
         shapeCopy.setLastUpdatedBy(userId);
 
-        ShapeState newState = new ShapeState(shapeCopy, true, timestamp);
+        final ShapeState newState = new ShapeState(shapeCopy, true, timestamp);
 
         return new DeleteShapeAction(
                 newActionId(),
@@ -147,14 +147,14 @@ public class ActionFactory {
      * @return A new {@link Action} that reverses the effect of the input action.
      * @throws IllegalArgumentException if the action type cannot be undone.
      */
-    public Action createInverseAction(Action actionToUndo, String userId) {
-        long timestamp = now();
+    public Action createInverseAction(final Action actionToUndo, final String userId) {
+        final long timestamp = now();
 
         // The inverse action's "prevState" is the original action's "newState"
         // The inverse action's "newState" is the original action's "prevState"
 
-        ShapeState originalNewState = actionToUndo.getNewState();
-        ShapeState originalPrevState = actionToUndo.getPrevState();
+        final ShapeState originalNewState = actionToUndo.getNewState();
+        final ShapeState originalPrevState = actionToUndo.getPrevState();
 
         // We must update the lastUpdatedBy field and timestamp in the "new" state
         // of the inverse action.

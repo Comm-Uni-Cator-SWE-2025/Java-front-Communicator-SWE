@@ -10,13 +10,12 @@ import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class CanvasApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(getClass().getResource("CanvasView.fxml")));
+        FXMLLoader loader = new FXMLLoader(CanvasApp.class.getResource("../fxml/canvas-view.fxml"));
         Parent root = loader.load();
         CanvasController controller = loader.getController();
 
@@ -36,7 +35,7 @@ public class CanvasApp extends Application {
                     controller.getViewModel().undo();
                 });
 
-        primaryStage.setTitle("JavaFX Collaborative Canvas (FXML)");
+        primaryStage.setTitle("JavaFX Canvas (FXML)");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

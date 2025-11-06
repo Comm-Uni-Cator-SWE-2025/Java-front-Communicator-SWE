@@ -48,7 +48,7 @@ public class UndoRedoStack {
      *
      * @param action The action to add.
      */
-    public synchronized void pushUndo(Action action) {
+    public synchronized void pushUndo(final Action action) {
         undoStack.push(action);
         // A new action invalidates the previous redo history
         redoStack.clear();
@@ -64,7 +64,7 @@ public class UndoRedoStack {
         if (undoStack.isEmpty()) {
             return null;
         }
-        Action action = undoStack.pop();
+        final Action action = undoStack.pop();
         redoStack.push(action);
         return action;
     }
@@ -86,7 +86,7 @@ public class UndoRedoStack {
         if (redoStack.isEmpty()) {
             return null;
         }
-        Action action = redoStack.pop();
+        final Action action = redoStack.pop();
         // We push to undo *without* clearing redo.
         undoStack.push(action);
         return action;
@@ -101,6 +101,7 @@ public class UndoRedoStack {
     }
 
     /**
+     * @summary Checks if there are actions that can be undone.
      * @return True if the undo stack is not empty.
      */
     public synchronized boolean canUndo() {

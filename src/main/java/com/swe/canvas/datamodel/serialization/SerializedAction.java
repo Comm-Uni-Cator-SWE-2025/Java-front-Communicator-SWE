@@ -1,6 +1,6 @@
 package com.swe.canvas.datamodel.serialization;
 
-import com.swe.canvas.datamodel.action.Action;
+// import com.swe.canvas.datamodel.action.Action;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -37,7 +37,7 @@ public final class SerializedAction implements Serializable {
      *
      * @param data The raw byte data.
      */
-    public SerializedAction(byte[] data) {
+    public SerializedAction(final byte[] data) {
         // Defensive copy for immutability
         this.data = data.clone();
     }
@@ -57,9 +57,13 @@ public final class SerializedAction implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SerializedAction that = (SerializedAction) o;
         return Arrays.equals(data, that.data);
     }

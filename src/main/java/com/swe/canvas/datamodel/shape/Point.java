@@ -1,6 +1,6 @@
 package com.swe.canvas.datamodel.shape;
 
-import com.swe.canvas.datamodel.canvas.ShapeState;
+// import com.swe.canvas.datamodel.canvas.ShapeState;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -42,7 +42,7 @@ public final class Point implements Serializable {
      * @param x The x-coordinate.
      * @param y The y-coordinate.
      */
-    public Point(double x, double y) {
+    public Point(final double x, final double y) {
         this.x = x;
         this.y = y;
     }
@@ -71,10 +71,14 @@ public final class Point implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Point point = (Point) o;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        } 
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        } 
+        final Point point = (Point) o;
         return Double.compare(point.x, x) == 0 && Double.compare(point.y, y) == 0;
     }
 

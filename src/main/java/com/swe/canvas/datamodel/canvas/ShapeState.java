@@ -2,7 +2,8 @@ package com.swe.canvas.datamodel.canvas;
 
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
-import com.swe.canvas.datamodel.action.Action;
+
+// import com.swe.canvas.datamodel.action.Action;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -60,7 +61,7 @@ public final class ShapeState implements Serializable {
      * @param isDeleted    The deletion status.
      * @param lastModified The modification timestamp.
      */
-    public ShapeState(Shape shape, boolean isDeleted, long lastModified) {
+    public ShapeState(final Shape shape, final boolean isDeleted, final long lastModified) {
         // We trust the shape is a deep copy, which Shape.copy() ensures.
         this.shape = shape;
         this.isDeleted = isDeleted;
@@ -68,6 +69,7 @@ public final class ShapeState implements Serializable {
     }
 
     /**
+     * @summary Retrieves the shape snapshot.
      * @return The shape snapshot.
      */
     public Shape getShape() {
@@ -75,13 +77,19 @@ public final class ShapeState implements Serializable {
     }
 
     /**
+     * @summary Retrieves the shape's ID.
      * @return The shape's ID.
      */
     public ShapeId getShapeId() {
-        return shape != null ? shape.getShapeId() : null;
+        if (shape == null) {
+            return null;
+        }
+        
+        return shape.getShapeId();
     }
 
     /**
+     * @summary Checks if the shape is soft-deleted.
      * @return True if the shape is soft-deleted, false otherwise.
      */
     public boolean isDeleted() {
@@ -112,16 +120,21 @@ public final class ShapeState implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ShapeState that = (ShapeState) o;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        } 
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        } 
+        
+        final ShapeState that = (ShapeState) o;
 
         // Note: We check shape equality using Objects.equals to handle
         // the null case (e.g., in a CreateAction's prevState).
-        return isDeleted == that.isDeleted &&
-                lastModified == that.lastModified &&
-                Objects.equals(shape, that.shape);
+        return isDeleted == that.isDeleted
+            && lastModified == that.lastModified
+            && Objects.equals(shape, that.shape);
     }
 
     @Override

@@ -58,8 +58,8 @@ public abstract class Shape implements Serializable {
      * @param lastUpdatedBy The identifier of the user who last modified this shape (non-null).
      * @throws NullPointerException if any required argument is {@code null}.
      */
-    protected Shape(ShapeId shapeId, ShapeType shapeType, List<Point> points,
-                    double thickness, Color color, String createdBy, String lastUpdatedBy) {
+    protected Shape(final ShapeId shapeId, final ShapeType shapeType, final List<Point> points,
+                    final double thickness, final Color color, final String createdBy, final String lastUpdatedBy) {
         this.shapeId = Objects.requireNonNull(shapeId, "shapeId cannot be null");
         this.shapeType = Objects.requireNonNull(shapeType, "shapeType cannot be null");
         this.points = Objects.requireNonNull(points, "points list cannot be null");
@@ -79,7 +79,7 @@ public abstract class Shape implements Serializable {
      * @param dx The horizontal displacement.
      * @param dy The vertical displacement.
      */
-    public void translate(double dx, double dy) {
+    public void translate(final double dx, final double dy) {
         List<Point> newPoints = new ArrayList<>(points.size());
         for (Point p : points) {
             newPoints.add(new Point(p.getX() + dx, p.getY() + dy));
@@ -97,37 +97,58 @@ public abstract class Shape implements Serializable {
      */
     public abstract Shape copy();
 
-    /** @return The unique identifier of this shape. */
+    /**
+     * @summary Gets the unique identifier of this shape. 
+     * @return The unique identifier of this shape. 
+     */
     public ShapeId getShapeId() {
         return shapeId;
     }
 
-    /** @return The list of defining points for this shape. */
+    /**
+     * @summary Gets the list of defining points for this shape. 
+     * @return The list of defining points for this shape. 
+     */
     public List<Point> getPoints() {
         return points;
     }
 
-    /** @return The line thickness of the shape. */
+    /**
+     * @summary Gets the line thickness of the shape.
+     * @return The line thickness of the shape. 
+     */
     public double getThickness() {
         return thickness;
     }
 
-    /** @return The color used to render this shape. */
+    /**
+     * @summary Gets the color used to render this shape. 
+     * @return The color used to render this shape. 
+     */
     public Color getColor() {
         return color;
     }
 
-    /** @return The user ID of the creator of this shape. */
+    /**
+     * @summary Gets the user ID of the creator of this shape.
+     * @return The user ID of the creator of this shape.
+     */
     public String getCreatedBy() {
         return createdBy;
     }
 
-    /** @return The user ID of the last person who updated this shape. */
+    /**
+     * @summary Gets the user ID of the last person who updated this shape.
+     * @return The user ID of the last person who updated this shape.
+     */
     public String getLastUpdatedBy() {
         return lastUpdatedBy;
     }
 
-    /** @return The type of this shape. */
+    /**
+     * @summary Gets the type of this shape.
+     * @return The type of this shape. 
+     */
     public ShapeType getShapeType() {
         return shapeType;
     }
@@ -135,9 +156,10 @@ public abstract class Shape implements Serializable {
     /**
      * Updates the defining points of this shape.
      *
+     * @summary Updates the defining points of this shape.
      * @param points The new list of points.
      */
-    public void setPoints(List<Point> points) {
+    public void setPoints(final List<Point> points) {
         this.points = points;
     }
 
@@ -146,7 +168,7 @@ public abstract class Shape implements Serializable {
      *
      * @param thickness The new line thickness.
      */
-    public void setThickness(double thickness) {
+    public void setThickness(final double thickness) {
         this.thickness = thickness;
     }
 
@@ -155,7 +177,7 @@ public abstract class Shape implements Serializable {
      *
      * @param color The new color.
      */
-    public void setColor(Color color) {
+    public void setColor(final Color color) {
         this.color = color;
     }
 
@@ -164,7 +186,7 @@ public abstract class Shape implements Serializable {
      *
      * @param lastUpdatedBy The last updating user ID.
      */
-    public void setLastUpdatedBy(String lastUpdatedBy) {
+    public void setLastUpdatedBy(final String lastUpdatedBy) {
         this.lastUpdatedBy = lastUpdatedBy;
     }
 
@@ -178,19 +200,23 @@ public abstract class Shape implements Serializable {
      * @return {@code true} if the objects are equal; {@code false} otherwise.
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+            
+        if (o == null || getClass() != o.getClass()) {
             return false;
-        Shape shape = (Shape) o;
-        return Double.compare(shape.thickness, thickness) == 0 &&
-                shapeId.equals(shape.shapeId) &&
-                points.equals(shape.points) &&
-                color.equals(shape.color) &&
-                createdBy.equals(shape.createdBy) &&
-                lastUpdatedBy.equals(shape.lastUpdatedBy) &&
-                shapeType == shape.shapeType;
+        }
+            
+        final Shape shape = (Shape) o;
+        return Double.compare(shape.thickness, thickness) == 0 
+        && shapeId.equals(shape.shapeId)
+        && points.equals(shape.points) 
+        && color.equals(shape.color) 
+        && createdBy.equals(shape.createdBy) 
+        && lastUpdatedBy.equals(shape.lastUpdatedBy) 
+        && shapeType == shape.shapeType;
     }
 
     /**

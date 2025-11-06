@@ -1,7 +1,8 @@
 package com.swe.canvas.datamodel.manager;
 
 import com.swe.canvas.datamodel.action.Action;
-import com.swe.canvas.datamodel.action.ActionFactory;
+
+// import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.serialization.SerializedAction;
 
 /**
@@ -64,6 +65,7 @@ public interface ActionManager {
     void performRedo();
 
     /**
+     * @summary Retrieves the user's local undo/redo stack manager.
      * @return A reference to the user's local undo/redo stack manager.
      */
     UndoRedoStack getUndoRedoStack();

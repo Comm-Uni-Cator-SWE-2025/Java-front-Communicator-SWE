@@ -1,6 +1,6 @@
 package com.swe.canvas.datamodel.shape;
 
-import com.swe.canvas.datamodel.canvas.CanvasState;
+// import com.swe.canvas.datamodel.canvas.CanvasState;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -35,8 +35,8 @@ public class LineShape extends Shape {
      * @param lastUpdatedBy The last modifying user's ID.
      * @throws IllegalArgumentException if points list does not contain exactly 2 points.
      */
-    public LineShape(ShapeId shapeId, List<Point> points, double thickness,
-                     Color color, String createdBy, String lastUpdatedBy) {
+    public LineShape(final ShapeId shapeId, final List<Point> points, final double thickness,
+                     final Color color, final String createdBy, final String lastUpdatedBy) {
         super(shapeId, ShapeType.LINE, points, thickness, color, createdBy, lastUpdatedBy);
         if (points.size() != 2) {
             throw new IllegalArgumentException("LineShape must be defined by exactly 2 points.");

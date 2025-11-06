@@ -1,6 +1,6 @@
 package com.swe.canvas.datamodel.action;
 
-import com.swe.canvas.datamodel.manager.ActionManager;
+// import com.swe.canvas.datamodel.manager.ActionManager;
 
 /**
  * Enumerates the types of actions that can be performed on the canvas.

@@ -35,8 +35,8 @@ public class CreateShapeAction extends Action {
      * @param shapeId   The target shape's ID.
      * @param newState  The state after the action (shape created, isDeleted=false).
      */
-    public CreateShapeAction(String actionId, String userId, long timestamp,
-                             ShapeId shapeId, ShapeState newState) {
+    public CreateShapeAction(final String actionId, final String userId, final long timestamp,
+                             final ShapeId shapeId, final ShapeState newState) {
         super(actionId, userId, timestamp, ActionType.CREATE, shapeId, null, newState);
 
         if (newState.isDeleted()) {
