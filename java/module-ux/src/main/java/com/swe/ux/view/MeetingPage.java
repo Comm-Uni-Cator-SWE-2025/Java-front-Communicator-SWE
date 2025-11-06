@@ -1,5 +1,6 @@
 package com.swe.ux.view;
 
+import com.swe.screenNVideo.Utils;
 import com.swe.ux.model.User;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.CustomButton;
@@ -27,6 +28,7 @@ import java.util.List;
 public class MeetingPage extends JPanel {
 
     private final MeetingViewModel meetingViewModel;
+    private String localIP = Utils.getSelfIP();
 
     // UI Components
     private JSplitPane mainSplitPane;
@@ -38,6 +40,7 @@ public class MeetingPage extends JPanel {
     private JPanel participantsPanel;
     private CustomButton cameraButton;
     private CustomButton screenShareButton;
+    private ScreenNVideo screenNVideoComponent;
 
     public MeetingPage(MeetingViewModel meetingViewModel) {
         this.meetingViewModel = meetingViewModel;
@@ -76,7 +79,8 @@ public class MeetingPage extends JPanel {
         centerTabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         // --- PLACEHOLDER PANELS (Team Ownership) ---
-        centerTabs.addTab("ScreenNVideo", new ScreenNVideo(meetingViewModel));
+        screenNVideoComponent = new ScreenNVideo(meetingViewModel);
+        centerTabs.addTab("ScreenNVideo", screenNVideoComponent);
         centerTabs.addTab("Canvas", createPlaceholderPanel(" Canvas Module - To be integrated by Canvas Team"));
         centerTabs.addTab("AI Insights", createPlaceholderPanel(" AI Insights Module - To be integrated by AI Team"));
 
@@ -216,6 +220,7 @@ public class MeetingPage extends JPanel {
         }));
 
     }
+
 
     /**
      * Sends a message in the chat.
