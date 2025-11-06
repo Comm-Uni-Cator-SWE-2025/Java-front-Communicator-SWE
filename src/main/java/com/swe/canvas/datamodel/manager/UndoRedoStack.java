@@ -101,7 +101,7 @@ public class UndoRedoStack {
     }
 
     /**
-     * @summary Checks if there are actions that can be undone.
+     * Checks if there are actions that can be undone.
      * @return True if the undo stack is not empty.
      */
     public synchronized boolean canUndo() {
@@ -109,6 +109,7 @@ public class UndoRedoStack {
     }
 
     /**
+     * Checks if there are actions that can be redone
      * @return True if the redo stack is not empty.
      */
     public synchronized boolean canRedo() {

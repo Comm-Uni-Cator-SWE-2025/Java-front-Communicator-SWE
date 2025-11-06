@@ -102,6 +102,8 @@ public class CanvasState {
         state.clear();
     }
 
+    private static final int SUBSTRING_LENGTH = 8;
+
     /**
      * Provides a string representation of the current state for debugging.
      *
@@ -115,7 +117,7 @@ public class CanvasState {
         }
         for (Map.Entry<ShapeId, ShapeState> entry : state.entrySet()) {
             sb.append(String.format("  - ID: %s... | State: %s\n",
-                    entry.getKey().getValue().substring(0, 8),
+                    entry.getKey().getValue().substring(0, SUBSTRING_LENGTH),
                     entry.getValue().toString()));
         }
         return sb.toString();

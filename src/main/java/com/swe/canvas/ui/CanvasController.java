@@ -23,18 +23,67 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.geometry.Pos;
 
+/**
+ * Controller for the fxml view
+ */
 public class CanvasController {
 
-    @FXML private ToggleButton selectBtn;
-    @FXML private ToggleButton freehandBtn;
-    @FXML private ToggleButton rectBtn;
+    /**
+     * The select button
+     */
+    @FXML
+    private ToggleButton selectBtn;
+
+    /**
+     * The freehand draw button
+     */
+    @FXML
+    private ToggleButton freehandBtn;
+
+    /**
+     * Rectangle button
+     */
+    @FXML
+    private ToggleButton rectBtn;
+
+    /**
+     * Ellipse button
+     */
     @FXML private ToggleButton ellipseBtn;
+
+    /**
+     * Line button
+     */
     @FXML private ToggleButton lineBtn;
+
+    /**
+     * Triangle button
+     */
     @FXML private ToggleButton triangleBtn;
+
+    /**
+     * Slider
+     */
     @FXML private Slider sizeSlider;
+
+    /**
+     * Current color
+     */
     @FXML private Rectangle currentColorRect;
+
+    /**
+     * Delete button
+     */
     @FXML private Button deleteBtn;
+
+    /**
+     * Canvas(Whiteboard) object
+     */
     @FXML private Canvas canvas;
+
+    /**
+     * Container for canvas
+     */
     @FXML private Pane canvasContainer;
 
     private CanvasViewModel viewModel;
@@ -42,6 +91,9 @@ public class CanvasController {
     private boolean isUpdatingUI = false;
     private final Label sizeValueLabel = new Label();
 
+    /**
+     * Initializes the view/GUI
+     */
     public void initialize() {
         viewModel = new CanvasViewModel(new CanvasState());
         renderer = new CanvasRenderer(canvas);
@@ -52,10 +104,15 @@ public class CanvasController {
 
         // --- Bindings & Listeners ---
         sizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (isUpdatingUI) return;
-            double thickness = newVal.doubleValue();
+            if (isUpdatingUI) {
+                return;
+            }
+
+            final double thickness = newVal.doubleValue();
             viewModel.activeStrokeWidth.set(thickness);
-            if (viewModel.selectedShapeId.get() != null) viewModel.updateSelectedShapeThickness(thickness);
+            if (viewModel.selectedShapeId.get() != null) {
+                viewModel.updateSelectedShapeThickness(thickness);
+            }
         });
 
         // Enable/Disable Delete button based on selection
@@ -118,7 +175,7 @@ public class CanvasController {
     }
 
     private void attachValueLabelToThumb() {
-        StackPane thumb = (StackPane) sizeSlider.lookup(".thumb");
+        final StackPane thumb = (StackPane) sizeSlider.lookup(".thumb");
         if (thumb != null && !thumb.getChildren().contains(sizeValueLabel)) {
             StackPane.setAlignment(sizeValueLabel, Pos.CENTER);
             thumb.getChildren().add(sizeValueLabel);
@@ -128,10 +185,10 @@ public class CanvasController {
     // --- FXML Event Handlers ---
 
     @FXML
-    private void onColorClick(ActionEvent event) {
-        Object data = ((Button) event.getSource()).getUserData();
+    private void onColorClick(final ActionEvent event) {
+        final Object data = ((Button) event.getSource()).getUserData();
         if (data instanceof String) {
-            Color selectedColor = Color.web((String) data);
+            final Color selectedColor = Color.web((String) data);
             currentColorRect.setFill(selectedColor);
             viewModel.activeColor.set(selectedColor);
             if (viewModel.selectedShapeId.get() != null) {
@@ -142,8 +199,8 @@ public class CanvasController {
     }
 
     @FXML
-    private void onToolSelected(ActionEvent event) {
-        ToggleButton source = (ToggleButton) event.getSource();
+    private void onToolSelected(final ActionEvent event) {
+        final ToggleButton source = (ToggleButton) event.getSource();
         if (source.getUserData() != null) {
             viewModel.activeTool.set((ToolType) source.getUserData());
             if (viewModel.activeTool.get() != ToolType.SELECT) {
@@ -164,9 +221,23 @@ public class CanvasController {
         }
     }
 
-    @FXML private void onCanvasMousePressed(MouseEvent e) { viewModel.onMousePressed(e.getX(), e.getY()); redraw(); }
-    @FXML private void onCanvasMouseDragged(MouseEvent e) { viewModel.onMouseDragged(e.getX(), e.getY()); redraw(); }
-    @FXML private void onCanvasMouseReleased(MouseEvent e) { viewModel.onMouseReleased(e.getX(), e.getY()); redraw(); }
-    @FXML private void onUndo() { viewModel.undo(); }
-    @FXML private void onRedo() { viewModel.redo(); }
+    @FXML private void onCanvasMousePressed(final MouseEvent e) {
+        viewModel.onMousePressed(e.getX(), e.getY()); redraw();
+    }
+
+    @FXML private void onCanvasMouseDragged(final MouseEvent e) {
+        viewModel.onMouseDragged(e.getX(), e.getY()); redraw();
+    }
+
+    @FXML private void onCanvasMouseReleased(final MouseEvent e) {
+        viewModel.onMouseReleased(e.getX(), e.getY()); redraw();
+    }
+
+    @FXML private void onUndo() {
+        viewModel.undo();
+    }
+
+    @FXML private void onRedo() {
+        viewModel.redo();
+    }
 }

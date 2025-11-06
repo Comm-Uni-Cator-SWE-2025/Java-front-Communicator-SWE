@@ -66,7 +66,7 @@ public class MessageQueue {
     }
 
     /**
-     * @summary Gets the current size of the queue.
+     * Gets the current size of the queue.
      * @return The current number of messages in the queue.
      */
     public int size() {

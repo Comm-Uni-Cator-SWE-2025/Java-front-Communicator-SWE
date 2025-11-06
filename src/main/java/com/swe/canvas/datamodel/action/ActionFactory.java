@@ -53,7 +53,7 @@ public class ActionFactory {
      * @return A new {@link CreateShapeAction}.
      */
     public Action createCreateAction(final Shape newShape, final String userId) {
-        long timestamp = now();
+        final long timestamp = now();
         newShape.setLastUpdatedBy(userId);
 
         final ShapeState newState = new ShapeState(newShape.copy(), false, timestamp);
@@ -158,7 +158,7 @@ public class ActionFactory {
 
         // We must update the lastUpdatedBy field and timestamp in the "new" state
         // of the inverse action.
-        ShapeState inverseNewState;
+        final ShapeState inverseNewState;
 
         switch (actionToUndo.getActionType()) {
             case CREATE:

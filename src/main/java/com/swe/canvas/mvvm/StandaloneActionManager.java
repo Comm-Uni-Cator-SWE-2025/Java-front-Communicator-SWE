@@ -10,6 +10,7 @@ import com.swe.canvas.datamodel.serialization.SerializedAction;
 /**
  * A simplified ActionManager for single-user mode.
  * Bypasses network queues and validates/applies immediately.
+ * @author Bhogaraju Shanmukha Sri Krishna
  */
 public class StandaloneActionManager implements ActionManager {
 
@@ -19,28 +20,40 @@ public class StandaloneActionManager implements ActionManager {
     private final String userId;
     private Runnable onUpdateCallback;
 
-    public StandaloneActionManager(CanvasState canvasState, ActionFactory actionFactory, String userId) {
-        this.canvasState = canvasState;
+    /**
+     * Constructor for the class
+     * @param canvasState_ State of the canvas
+     * @param actionFactory_ action factory
+     * @param userId_ id of the user
+     */
+    public StandaloneActionManager(final CanvasState canvasState_, final ActionFactory actionFactory_, final String userId_) {
+        this.canvasState = canvasState_;
         this.undoRedoStack = new UndoRedoStack();
-        this.actionFactory = actionFactory;
-        this.userId = userId;
+        this.actionFactory = actionFactory_;
+        this.userId = userId_;
     }
 
-    public void setOnUpdate(Runnable callback) {
+    /**
+     * Set the canvas on update
+     * @param callback callback function to runnable
+     */
+    public void setOnUpdate(final Runnable callback) {
         this.onUpdateCallback = callback;
     }
 
     private void notifyUpdate() {
-        if (onUpdateCallback != null) onUpdateCallback.run();
+        if (onUpdateCallback != null) {
+            onUpdateCallback.run();
+        }
     }
 
     @Override
-    public void processIncomingAction(SerializedAction serializedAction) {
+    public void processIncomingAction(final SerializedAction serializedAction) {
         // Not used in standalone mode
     }
 
     @Override
-    public synchronized void requestLocalAction(Action action) {
+    public synchronized void requestLocalAction(final Action action) {
         // In single user mode, we trust local actions implicitly.
         // Apply immediately.
         canvasState.applyState(action.getShapeId(), action.getNewState());
@@ -50,9 +63,9 @@ public class StandaloneActionManager implements ActionManager {
 
     @Override
     public synchronized void performUndo() {
-        Action actionToUndo = undoRedoStack.popUndo();
+        final Action actionToUndo = undoRedoStack.popUndo();
         if (actionToUndo != null) {
-            Action inverse = actionFactory.createInverseAction(actionToUndo, userId);
+            final Action inverse = actionFactory.createInverseAction(actionToUndo, userId);
             // Apply inverse directly, don't push to standard undo stack yet
             canvasState.applyState(inverse.getShapeId(), inverse.getNewState());
             notifyUpdate();
@@ -61,7 +74,7 @@ public class StandaloneActionManager implements ActionManager {
 
     @Override
     public synchronized void performRedo() {
-        Action actionToRedo = undoRedoStack.popRedo();
+        final Action actionToRedo = undoRedoStack.popRedo();
         if (actionToRedo != null) {
             // Re-apply original new state
             canvasState.applyState(actionToRedo.getShapeId(), actionToRedo.getNewState());

@@ -11,15 +11,19 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+/**
+ * Main running class in the app
+ * @author Bhogaraju Shanmukha Sri Krishna
+ */
 public class CanvasApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        FXMLLoader loader = new FXMLLoader(CanvasApp.class.getResource("../fxml/canvas-view.fxml"));
-        Parent root = loader.load();
-        CanvasController controller = loader.getController();
+        final FXMLLoader loader = new FXMLLoader(CanvasApp.class.getResource("../fxml/canvas-view.fxml"));
+        final Parent root = loader.load();
+        final CanvasController controller = loader.getController();
 
-        Scene scene = new Scene(root);
+        final Scene scene = new Scene(root);
 
         // Setup Accelerators
         // Ctrl+Z -> Undo
@@ -40,7 +44,7 @@ public class CanvasApp extends Application {
         primaryStage.show();
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         launch(args);
     }
 }
