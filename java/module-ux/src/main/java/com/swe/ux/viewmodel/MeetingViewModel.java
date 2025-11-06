@@ -38,6 +38,12 @@ public class MeetingViewModel extends BaseViewModel {
     public void startMeeting() {
         currentMeeting = new Meeting(meetingTitle.get());
         currentMeeting.addParticipant(currentUser);
+//        User newUser = new User("2", "JaneDoe", "Jane Doe", "password");
+//        currentMeeting.addParticipant(newUser);
+//        User newUser1 = new User("2", "JaneDoe", "Jane Doe", "password");
+//        currentMeeting.addParticipant(newUser1);
+//        User newUser2 = new User("2", "JaneDoe", "Jane Doe", "password");
+//        currentMeeting.addParticipant(newUser2);
         isMeetingActive.set(true);
         updateParticipants();
         addSystemMessage("Meeting started");

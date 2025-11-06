@@ -48,8 +48,6 @@ public class ScreenNVideo extends JPanel {
         initializeUI();
         setupBindings();
 
-        addParticipant("You", getSelfIP());
-
         updateVideoGridLayout();
         applyTheme();
     }
