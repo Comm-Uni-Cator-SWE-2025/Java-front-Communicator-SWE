@@ -3,9 +3,9 @@ package com.swe.ux.view;
 import com.swe.ux.model.User;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.CustomButton;
+import com.swe.ux.viewmodel.ChatViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
 import com.swe.ux.binding.PropertyListeners;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -32,7 +32,7 @@ public class MeetingPage extends JPanel {
     private JSplitPane mainSplitPane;
     private JPanel rightPanel;
     private boolean rightPanelVisible = true;
-    
+
     // Placeholder panels for team integration
     private JPanel chatPanel;
     private JPanel participantsPanel;
@@ -102,7 +102,7 @@ public class MeetingPage extends JPanel {
         return panel;
     }
 
-    /** 
+    /**
      * Creates the right panel with chat and participants sections.
      * These are placeholders that will be replaced by the respective teams.
      */
@@ -110,9 +110,10 @@ public class MeetingPage extends JPanel {
         JPanel sidebar = new JPanel(new BorderLayout(8, 8));
 
         // Chat Panel (To be implemented by Chat Team)
-        chatPanel = createTeamPlaceholderPanel("Chat Module", "To be implemented by Chat Team");
+//        chatPanel = createTeamPlaceholderPanel("Chat Module", "To be implemented by Chat Team");
+        chatPanel = new ChatView(ChatViewModel.getInstance());
         chatPanel.setBorder(BorderFactory.createTitledBorder("Chat"));
-        
+
         // Participants Panel (To be implemented by Controller Team)
         participantsPanel = createTeamPlaceholderPanel("Participants Module", "To be implemented by Controller Team");
         participantsPanel.setBorder(BorderFactory.createTitledBorder("Participants"));
@@ -125,14 +126,14 @@ public class MeetingPage extends JPanel {
         sidebar.add(split, BorderLayout.CENTER);
         return sidebar;
     }
-    
+
     /**
      * Creates a placeholder panel for team-specific implementations
      */
     private JPanel createTeamPlaceholderPanel(String title, String description) {
         JPanel panel = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("<html><center><h2>" + title + "</h2>" + description + "</center></html>", 
-            SwingConstants.CENTER);
+        JLabel label = new JLabel("<html><center><h2>" + title + "</h2>" + description + "</center></html>",
+                SwingConstants.CENTER);
         label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         panel.add(label, BorderLayout.CENTER);
         panel.setBackground(new Color(245, 247, 250));
@@ -166,7 +167,7 @@ public class MeetingPage extends JPanel {
         repaint();
     }
 
-    /** 
+    /**
      * Setup bindings between ViewModel and UI components.
      * These bindings will be used by the respective team implementations.
      */
@@ -174,7 +175,7 @@ public class MeetingPage extends JPanel {
         // These bindings are now the responsibility of the respective teams
         // Chat team should implement their bindings in their module
         // Controller team should implement participants bindings in their module
-        
+
         // Example structure (commented out as these will be implemented by the respective teams):
         /*
         // Chat team should implement:

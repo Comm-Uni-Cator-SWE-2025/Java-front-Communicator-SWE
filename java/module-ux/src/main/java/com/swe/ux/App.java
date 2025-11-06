@@ -1,5 +1,7 @@
 package com.swe.ux;
 
+import com.swe.chat.AbstractRPC;
+import com.swe.chat.SocketryClientRPC;
 import com.swe.ux.model.User;
 import com.swe.ux.service.AuthService;
 import com.swe.ux.service.impl.InMemoryAuthService;
@@ -15,7 +17,9 @@ import com.swe.ux.viewmodel.RegisterViewModel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 
 import com.swe.ux.binding.PropertyListeners;
 
@@ -28,16 +32,16 @@ public class App extends JFrame {
     private final JPanel mainPanel;
     private final Stack<String> viewHistory = new Stack<>();
     private final AuthService authService;
-    
+
     // View names
     public static final String LOGIN_VIEW = "LOGIN";
     public static final String REGISTER_VIEW = "REGISTER";
     public static final String MAIN_VIEW = "MAIN";
     public static final String MEETING_VIEW = "MEETING";
-    
+
     // Current user
     private User currentUser;
-    
+
     /**
      * Gets the singleton instance of the application.
      */
@@ -47,42 +51,46 @@ public class App extends JFrame {
         }
         return instance;
     }
-    
+
     /**
      * Private constructor for singleton pattern.
      */
     private App() {
         // Initialize services
         this.authService = new InMemoryAuthService();
-        
-        // Set up the main window
-        setTitle("Comm-Uni-Cate");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700);
-        setLocationRelativeTo(null);
-        
+
         // Set up the main panel with card layout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
-        
+
         // Initialize views
         initViews();
-        
+    }
+
+    public void start() {
+
+        // Set up the main window
+        setTitle("Comm-Uni-Cate");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1200, 700);
+        setLocationRelativeTo(null);
+
         // Add main panel to the frame
         add(mainPanel, BorderLayout.CENTER);
-        
+
         // Apply theme
         ThemeManager themeManager = ThemeManager.getInstance();
         themeManager.setMainFrame(this);
         themeManager.setApp(this);
-        
+
         // Show login view by default
         showView(MEETING_VIEW);
-        
+
         // Center the window
         setLocationRelativeTo(null);
     }
-    
+
+
     /**
      * Refreshes the theme for the entire application
      */
@@ -101,20 +109,31 @@ public class App extends JFrame {
         // Initialize ViewModels
         LoginViewModel loginViewModel = new LoginViewModel(authService);
         MainViewModel mainViewModel = new MainViewModel(authService);
-        MeetingViewModel meetingViewModel = new MeetingViewModel(null); // Will be set when user joins a meeting
-        
+        MeetingViewModel meetingViewModel = new MeetingViewModel(currentUser); // Will be set when user joins a meeting
+
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
         RegisterPage registerView = new RegisterPage(new RegisterViewModel(authService));
         MainPage mainView = new MainPage(mainViewModel);
         MeetingPage meetingView = new MeetingPage(meetingViewModel);
-        
+
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
         mainPanel.add(registerView, REGISTER_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
         mainPanel.add(meetingView, MEETING_VIEW);
-        
+
+        final SocketryClientRPC rpc = SocketryClientRPC.getInstance();
+
+        rpc.subscribe("subscribe_as_viewer", data -> {
+            final String viewerIP = new String(data);
+            User new_user = new User(viewerIP, viewerIP, "New", "new");
+            meetingViewModel.addParticipant(new_user);
+            return new byte[0];
+        });
+
+
+//        meetingViewModel.startMeeting();
         // Set up navigation listeners
         loginViewModel.loginSuccess.addListener(PropertyListeners.onBooleanChanged(loggedIn -> {
             if (loggedIn) {
@@ -123,7 +142,7 @@ public class App extends JFrame {
                 showView(MAIN_VIEW);
             }
         }));
-        
+
         // Handle register navigation from login
         loginViewModel.showRegisterRequested.addListener(PropertyListeners.onBooleanChanged(showRegister -> {
             if (showRegister) {
@@ -132,33 +151,33 @@ public class App extends JFrame {
                 loginViewModel.showRegisterRequested.set(false);
             }
         }));
-        
+
         mainViewModel.logoutRequested.addListener(PropertyListeners.onBooleanChanged(logoutRequested -> {
             if (logoutRequested) {
                 logout();
             }
         }));
-        
+
         // Use an array to hold the meeting view reference for use in lambda
         MeetingPage[] meetingViewRef = new MeetingPage[]{meetingView};
-        
+
         // Handle meeting navigation
         mainViewModel.startMeetingRequested.addListener(PropertyListeners.onBooleanChanged(startMeeting -> {
             if (startMeeting && currentUser != null) {
                 // Create a new meeting view model for this meeting
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser);
                 newMeetingViewModel.startMeeting();
-                
+
                 // Create a new MeetingPage with the new view model
                 meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
                 showView(MEETING_VIEW);
             }
         }));
-        
+
         // Update the original reference when the array changes
         meetingView = meetingViewRef[0];
-        
+
         // When meeting ends, go back to main view
         meetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
             if (!isActive) {
@@ -166,20 +185,20 @@ public class App extends JFrame {
             }
         }));
     }
-    
+
     /**
      * Shows the specified view.
      * @param viewName The name of the view to show
      */
     public void showView(String viewName) {
         cardLayout.show(mainPanel, viewName);
-        
+
         // Add to history if it's different from the current view
         if (viewHistory.isEmpty() || !viewHistory.peek().equals(viewName)) {
             viewHistory.push(viewName);
         }
     }
-    
+
     /**
      * Navigates back to the previous view.
      */
@@ -196,6 +215,18 @@ public class App extends JFrame {
      */
     public static void main(String[] args) {
         // Run on the Event Dispatch Thread
+        final AbstractRPC rpc = SocketryClientRPC.getInstance();
+
+        App app = App.getInstance();
+
+        Thread handler = null;
+
+        try {
+            handler = rpc.connect();
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         SwingUtilities.invokeLater(() -> {
             try {
                 // Set system look and feel
@@ -203,22 +234,28 @@ public class App extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            
+
             // Create and show the application window
-            App app = App.getInstance();
+            app.start();
             app.setVisible(true);
         });
+
+        try {
+            handler.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
-    
+
     // Getters
     public AuthService getAuthService() {
         return authService;
     }
-    
+
     public User getCurrentUser() {
         return currentUser;
     }
-    
+
     /**
      * Sets the current user and updates the UI accordingly.
      * @param user The user to set as current, or null to log out
@@ -232,7 +269,7 @@ public class App extends JFrame {
             showView(LOGIN_VIEW);
         }
     }
-    
+
     /**
      * Logs out the current user.
      */

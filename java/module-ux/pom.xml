@@ -33,6 +33,14 @@
         <jacoco.branch.coverage.ratio>0.85</jacoco.branch.coverage.ratio>
     </properties>
 
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Module Dependencies -->
         <dependency>
@@ -40,7 +48,7 @@
             <artifactId>module-controller</artifactId>
             <version>${project.version}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>module-networking</artifactId>
@@ -53,6 +61,7 @@
             <artifactId>javafx-controls</artifactId>
             <version>17.0.2</version>
         </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
@@ -95,8 +104,8 @@
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
         </dependency>
-        
-        
+
+
         <!-- SLF4J API -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -107,6 +116,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.enchanteddev</groupId>
+            <artifactId>socketry</artifactId>
+            <version>V3</version>
         </dependency>
     </dependencies>
 
@@ -255,7 +270,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
             </plugin>
-            
+
             <!-- Checkstyle Report -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -266,15 +281,10 @@
                     <suppressionsLocation>${project.basedir}/../../config/checkstyle/suppressions.xml</suppressionsLocation>
                 </configuration>
             </plugin>
-            
+
             <!-- Project Info Reports -->
 
             <!-- Surefire Test Reports -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${maven.surefire.version}</version>
-            </plugin>
         </plugins>
     </reporting>
 </project>
