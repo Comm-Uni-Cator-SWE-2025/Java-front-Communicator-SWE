@@ -3,6 +3,9 @@
  */
 package com.swe.ux.view;
 
+import com.swe.screenNVideo.AbstractRPC;
+import com.swe.screenNVideo.DummyRPC;
+import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.model.UIImage;
 import com.swe.ux.model.User;
@@ -138,6 +141,22 @@ public class ScreenNVideo extends JPanel {
     }
 
     /**
+     * Nullify the image for a participant panel.
+     * @param ip The participant's ip.
+     */
+    public void nullifyImage(String ip) {
+
+        final ParticipantPanel activeParticipantPanel = participantPanels.get(ip);
+        if (activeParticipantPanel == null) {
+            System.err.println("No active participant panel initialized");
+            return;
+        }
+        SwingUtilities.invokeLater(() -> {
+            activeParticipantPanel.setImage(null);
+        });
+    }
+
+    /**
      * Display a frame from int[][] pixels.
      * The image fully covers the active ParticipantPanel.
      * Drops new frames if the previous one is still being processed.
@@ -186,6 +205,14 @@ public class ScreenNVideo extends JPanel {
         }));
 
         ScreenNVideoModel.getInstance().setOnImageReceived(ScreenNVideo::displayFrame);
+
+        AbstractRPC rpc = DummyRPC.getInstance();
+        rpc.subscribe(Utils.STOP_SHARE, (args) -> {
+            String ip = new String(args);
+            nullifyImage(ip);
+            return new byte[0];
+        });
+
     }
 
     private void applyTheme() {
