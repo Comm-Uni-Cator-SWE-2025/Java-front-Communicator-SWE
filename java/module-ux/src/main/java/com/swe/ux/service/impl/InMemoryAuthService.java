@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.swe.controller.Auth.GoogleAuthService;
 import com.swe.core.Meeting.UserProfile;
+import com.swe.screenNVideo.Utils;
 import com.swe.ux.model.User;
 import com.swe.ux.service.AuthService;
 
@@ -22,7 +23,7 @@ public class InMemoryAuthService implements AuthService {
     public InMemoryAuthService() {
         // Add a demo user
         User demoUser = new User(
-            UUID.randomUUID().toString(),
+            Utils.getSelfIP(),
             "demo",
             "Demo User",
             "demo@example.com"
@@ -96,7 +97,7 @@ public class InMemoryAuthService implements AuthService {
         }
 
         User newUser = new User(
-            UUID.randomUUID().toString(),
+            Utils.getSelfIP(),
             username.trim(),
             username.trim(), // Use username as display name by default
             email != null ? email.trim() : null
@@ -119,7 +120,7 @@ public class InMemoryAuthService implements AuthService {
         User user = users.get(username);
         if (user == null) {
             user = new User(
-                UUID.randomUUID().toString(),
+Utils.getSelfIP(),
                 username,
                 displayName != null ? displayName : username,
                 email
@@ -172,7 +173,7 @@ public class InMemoryAuthService implements AuthService {
             User user = users.get(email);
             if (user == null) {
                 user = new User(
-                    java.util.UUID.randomUUID().toString(),
+                    Utils.getSelfIP(),
                     email,
                     displayName,
                     email

@@ -30,6 +30,7 @@ public class MeetingViewModel extends BaseViewModel {
     public final BindableProperty<String> role = new BindableProperty<>("", "role");
 
     public MeetingViewModel(User currentUser) {
+        System.out.println("User  " + currentUser);
         this.currentUser = currentUser;
         this.rpc = DummyRPC.getInstance();
     }
