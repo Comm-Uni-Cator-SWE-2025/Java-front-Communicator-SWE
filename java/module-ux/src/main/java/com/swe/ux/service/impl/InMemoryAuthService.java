@@ -1,11 +1,11 @@
 package com.swe.ux.service.impl;
 
-import com.swe.ux.model.User;
-import com.swe.ux.service.AuthService;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import com.swe.ux.model.User;
+import com.swe.ux.service.AuthService;
 
 /**
  * In-memory implementation of AuthService for demonstration purposes.
@@ -83,5 +83,29 @@ public class InMemoryAuthService implements AuthService {
 
         users.put(username, newUser);
         return newUser;
+    }
+
+    @Override
+    public User loginWithGoogle(String email, String displayName) {
+        // Extract username from email (part before @)
+        String username = email != null && email.contains("@") 
+            ? email.substring(0, email.indexOf("@")) 
+            : "google_user_" + UUID.randomUUID().toString().substring(0, 8);
+        
+        // Check if user already exists, otherwise create new one
+        User user = users.get(username);
+        if (user == null) {
+            user = new User(
+                UUID.randomUUID().toString(),
+                username,
+                displayName != null ? displayName : username,
+                email
+            );
+            users.put(username, user);
+        }
+        
+        // Set as current user
+        this.currentUser = user;
+        return user;
     }
 }

@@ -1,14 +1,14 @@
 package com.swe.ux.viewmodel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.swe.screenNVideo.AbstractRPC;
 import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.Utils;
+import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.Meeting;
 import com.swe.ux.model.User;
-import com.swe.ux.binding.BindableProperty;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * ViewModel for managing meeting-related business logic and state.
@@ -26,10 +26,17 @@ public class MeetingViewModel extends BaseViewModel {
     public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
     public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
     public final BindableProperty<List<User>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
+    public final BindableProperty<String> role = new BindableProperty<>("", "role");
 
     public MeetingViewModel(User currentUser) {
         this.currentUser = currentUser;
         this.rpc = DummyRPC.getInstance();
+    }
+    
+    public MeetingViewModel(User currentUser, String role) {
+        this.currentUser = currentUser;
+        this.rpc = DummyRPC.getInstance();
+        this.role.set(role);
     }
 
     /**
