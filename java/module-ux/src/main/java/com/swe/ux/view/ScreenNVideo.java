@@ -201,7 +201,9 @@ public class ScreenNVideo extends JPanel {
 
         // Bind participant added event
         meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<User> participants) -> {
+            System.out.println("Participants updated");
             participants.forEach(participant -> {
+                System.out.println("Adding participant: " + participant.getUsername() + " with IP: " + participant.getId());
                 addParticipant(participant.getUsername(), participant.getId());
             });
         }));

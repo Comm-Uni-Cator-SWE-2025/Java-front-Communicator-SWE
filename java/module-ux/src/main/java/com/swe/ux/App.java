@@ -114,6 +114,7 @@ public class App extends JFrame {
         // Initialize ViewModels
         loginViewModel = new LoginViewModel(authService);
         mainViewModel = new MainViewModel(authService);
+        System.out.println("Meeting");
         MeetingViewModel meetingViewModel = new MeetingViewModel(new User(Utils.getSelfIP(),"You", "You", "you")); // Will be set when user joins a meeting
 
 
@@ -174,7 +175,6 @@ public class App extends JFrame {
             if (startMeeting && currentUser != null) {
                 // Create a new meeting view model for this meeting with Instructor role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor");
-                newMeetingViewModel.startMeeting();
                 
                 // Set up listener for when meeting ends - navigate back to main view
                 newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
@@ -187,6 +187,7 @@ public class App extends JFrame {
                 
                 // Create a new MeetingPage with the new view model
                 meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
+                newMeetingViewModel.startMeeting();
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
                 showView(MEETING_VIEW);
                 
@@ -214,6 +215,7 @@ public class App extends JFrame {
                 // Create a new MeetingPage with the new view model
                 meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                System.out.println("here");
                 showView(MEETING_VIEW);
                 
                 // Reset the flag
@@ -267,12 +269,12 @@ public class App extends JFrame {
         App app = App.getInstance();
 
 
-        // Thread handler = null;
-        // try {
-        //     handler = rpc.connect();
-        // } catch (IOException | ExecutionException | InterruptedException e) {
-        //     throw new RuntimeException(e);
-        // }
+         Thread handler = null;
+         try {
+             handler = rpc.connect();
+         } catch (IOException | ExecutionException | InterruptedException e) {
+             throw new RuntimeException(e);
+         }
 
         // Run on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
@@ -288,11 +290,11 @@ public class App extends JFrame {
         });
 
 
-        // try {
-        //     handler.join();
-        // } catch (InterruptedException e) {
-        //     throw new RuntimeException(e);
-        // }
+         try {
+             handler.join();
+         } catch (InterruptedException e) {
+             throw new RuntimeException(e);
+         }
     }
 
     // Getters
