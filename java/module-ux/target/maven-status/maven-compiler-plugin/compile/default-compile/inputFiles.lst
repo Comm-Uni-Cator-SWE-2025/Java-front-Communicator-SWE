@@ -26,6 +26,7 @@
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/view/LoginPage.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/view/MainPage.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/view/MeetingPage.java
+/Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/view/ParticipantsView.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/view/RegisterPage.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/view/ScreenNVideo.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/BaseViewModel.java
@@ -34,6 +35,7 @@
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/LoginViewModel.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/MainViewModel.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/MeetingViewModel.java
+/Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/ParticipantsViewModel.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/RegisterViewModel.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/ScreenNVideoModel.java
 /Users/vaibhav.yadav/Desktop/here/Java-front-Communicator-SWE/java/module-ux/src/main/java/com/swe/ux/viewmodel/StandaloneActionManager.java

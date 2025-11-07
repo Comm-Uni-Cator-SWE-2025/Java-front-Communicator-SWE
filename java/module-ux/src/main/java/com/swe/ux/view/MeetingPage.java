@@ -7,6 +7,7 @@ import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.CustomButton;
 import com.swe.ux.viewmodel.CanvasViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
+import com.swe.ux.viewmodel.ParticipantsViewModel;
 import com.swe.ux.binding.PropertyListeners;
 
 import javax.swing.*;
@@ -136,8 +137,10 @@ public class MeetingPage extends JPanel {
         chatPanel = createTeamPlaceholderPanel("Chat Module", "To be implemented by Chat Team");
         chatPanel.setBorder(BorderFactory.createTitledBorder("Chat"));
         
-        // Participants Panel (To be implemented by Controller Team)
-        participantsPanel = createTeamPlaceholderPanel("Participants Module", "To be implemented by Controller Team");
+        // Participants Panel - Using ParticipantsViewModel
+        ParticipantsViewModel participantsViewModel = new ParticipantsViewModel(meetingViewModel);
+        ParticipantsView participantsView = new ParticipantsView(participantsViewModel);
+        participantsPanel = participantsView;
         participantsPanel.setBorder(BorderFactory.createTitledBorder("Participants"));
 
         // Split vertically

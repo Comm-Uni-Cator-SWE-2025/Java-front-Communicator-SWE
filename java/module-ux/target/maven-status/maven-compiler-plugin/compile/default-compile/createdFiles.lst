@@ -18,8 +18,8 @@ com/swe/ux/viewmodel/ScreenNVideoModel.class
 com/swe/ux/view/RegisterPage$3.class
 com/swe/ux/model/User.class
 com/swe/ux/ui/PlaceholderTextField.class
+com/swe/ux/view/ParticipantsView.class
 com/swe/screenNVideo/DummyRPC.class
-com/swe/ux/view/LoginPage$1.class
 com/swe/ux/viewmodel/LoginViewModel.class
 com/swe/ux/ui/TitledPanel.class
 com/swe/ux/ui/PlaceholderTextField$1.class
@@ -31,6 +31,7 @@ com/swe/ux/theme/ThemeManager.class
 com/swe/screenNVideo/AbstractRPC.class
 com/swe/ux/ui/ThemeToggleButton.class
 com/swe/ux/service/AuthService.class
+com/swe/ux/viewmodel/ParticipantsViewModel.class
 com/swe/ux/view/CanvasPage.class
 com/swe/ux/viewmodel/ToolType.class
 com/swe/ux/viewmodel/CanvasRenderer.class
