@@ -43,6 +43,10 @@ public class App extends JFrame {
     // Current user
     private User currentUser;
     
+    // ViewModel references for resetting on logout
+    private LoginViewModel loginViewModel;
+    private MainViewModel mainViewModel;
+    
     /**
      * Gets the singleton instance of the application.
      */
@@ -86,7 +90,7 @@ public class App extends JFrame {
         themeManager.setApp(this);
 
         // Show login view by default
-        showView(MEETING_VIEW);
+        showView(LOGIN_VIEW);
 
         // Center the window
         setLocationRelativeTo(null);
@@ -108,8 +112,8 @@ public class App extends JFrame {
      */
     private void initViews() {
         // Initialize ViewModels
-        LoginViewModel loginViewModel = new LoginViewModel(authService);
-        MainViewModel mainViewModel = new MainViewModel(authService);
+        loginViewModel = new LoginViewModel(authService);
+        mainViewModel = new MainViewModel(authService);
         MeetingViewModel meetingViewModel = new MeetingViewModel(new User(Utils.getSelfIP(),"You", "You", "you")); // Will be set when user joins a meeting
 
 
@@ -315,10 +319,34 @@ public class App extends JFrame {
     }
     
     /**
-     * Logs out the current user.
+     * Logs out the current user completely.
+     * Clears all user state and returns to login view.
      */
     public void logout() {
+        // Clear current user
+        this.currentUser = null;
+        
+        // Reset MainViewModel's current user
+        if (mainViewModel != null) {
+            mainViewModel.setCurrentUser(null);
+            // Reset all flags
+            mainViewModel.logoutRequested.set(false);
+            mainViewModel.startMeetingRequested.set(false);
+            mainViewModel.joinMeetingRequested.set(false);
+        }
+        
+        // Reset LoginViewModel to ensure clean state
+        if (loginViewModel != null) {
+            loginViewModel.reset();
+        }
+        
+        // Logout from auth service (this will clear all user data)
         authService.logout();
-        setCurrentUser(null);
+        
+        // Clear view history
+        viewHistory.clear();
+        
+        // Navigate to login view - this will trigger reset on LoginPage
+        showView(LOGIN_VIEW);
     }
 }

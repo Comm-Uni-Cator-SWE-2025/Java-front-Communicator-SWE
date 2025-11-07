@@ -76,7 +76,8 @@ public class LoginViewModel extends BaseViewModel {
     }
 
     /**
-     * Logs in with Google (bypasses normal authentication).
+     * Logs in with Google using OAuth2 authentication.
+     * Always forces account selection to allow changing email/account.
      */
     public void loginWithGoogle() {
         // Clear previous errors
@@ -86,22 +87,38 @@ public class LoginViewModel extends BaseViewModel {
         // Perform Google login in background thread
         new Thread(() -> {
             try {
-                // Simulate network delay
-                Thread.sleep(500);
+                // Check if authService supports Google authentication
+                if (authService instanceof com.swe.ux.service.impl.InMemoryAuthService) {
+                    com.swe.ux.service.impl.InMemoryAuthService inMemoryAuthService = 
+                        (com.swe.ux.service.impl.InMemoryAuthService) authService;
+                    
+                    // Perform actual Google OAuth2 authentication
+                    // Force account selection to allow changing email
+                    inMemoryAuthService.authenticateWithGoogle(true);
+                    
+                    // Update UI on the EDT
+                    SwingUtilities.invokeLater(() -> {
+                        isLoading.set(false);
+                        loginSuccess.set(true);
+                    });
+                } else {
+                    // Fallback to dummy implementation if service doesn't support Google auth
+                    authService.loginWithGoogle(
+                        "user@gmail.com",
+                        "Google User"
+                    );
+                    
+                    SwingUtilities.invokeLater(() -> {
+                        isLoading.set(false);
+                        loginSuccess.set(true);
+                    });
+                }
                 
-                // Call the auth service to login with Google
-                // Using dummy Google account info for bypass
-                authService.loginWithGoogle(
-                    "user@gmail.com",
-                    "Google User"
-                );
-                
-                // Update UI on the EDT
+            } catch (AuthService.AuthenticationException e) {
                 SwingUtilities.invokeLater(() -> {
+                    errorMessage.set("Google login failed: " + e.getMessage());
                     isLoading.set(false);
-                    loginSuccess.set(true);
                 });
-                
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     errorMessage.set("Google login failed: " + e.getMessage());

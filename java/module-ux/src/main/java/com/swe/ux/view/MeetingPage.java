@@ -37,7 +37,6 @@ public class MeetingPage extends JPanel {
     private JSplitPane mainSplitPane;
     private JPanel rightPanel;
     private boolean rightPanelVisible = true;
-    private JLabel roleLabel;
     
     // Placeholder panels for team integration
     private JPanel chatPanel;
@@ -61,17 +60,13 @@ public class MeetingPage extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        // Left side: Title and Role
+        // Left side: Title
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         leftPanel.setOpaque(false);
         
         JLabel titleLabel = new JLabel("Meeting");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         leftPanel.add(titleLabel);
-        
-        roleLabel = new JLabel("");
-        roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        leftPanel.add(roleLabel);
         
         headerPanel.add(leftPanel, BorderLayout.WEST);
 
@@ -207,24 +202,6 @@ public class MeetingPage extends JPanel {
      * These bindings will be used by the respective team implementations.
      */
     private void setupBindings() {
-        // Bind role to role label
-        meetingViewModel.role.addListener(evt -> {
-            SwingUtilities.invokeLater(() -> {
-                String role = meetingViewModel.role.get();
-                if (role != null && !role.isEmpty()) {
-                    roleLabel.setText("Role: " + role);
-                } else {
-                    roleLabel.setText("");
-                }
-            });
-        });
-        
-        // Initial update
-        String role = meetingViewModel.role.get();
-        if (role != null && !role.isEmpty()) {
-            roleLabel.setText("Role: " + role);
-        }
-        
         // These bindings are now the responsibility of the respective teams
         // Chat team should implement their bindings in their module
         // Controller team should implement participants bindings in their module
