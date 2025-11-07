@@ -5,8 +5,6 @@
 **/.idea/
 
 **/**.jar
-**/**.class
-
 
 # User-specific files
 *.rsuser
