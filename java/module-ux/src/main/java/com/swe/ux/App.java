@@ -86,7 +86,7 @@ public class App extends JFrame {
         themeManager.setApp(this);
 
         // Show login view by default
-        showView(MEETING_VIEW);
+        showView(LOGIN_VIEW);
 
         // Center the window
         setLocationRelativeTo(null);
@@ -157,30 +157,70 @@ public class App extends JFrame {
         mainViewModel.logoutRequested.addListener(PropertyListeners.onBooleanChanged(logoutRequested -> {
             if (logoutRequested) {
                 logout();
+                // Reset the flag
+                mainViewModel.logoutRequested.set(false);
             }
         }));
         
         // Use an array to hold the meeting view reference for use in lambda
         MeetingPage[] meetingViewRef = new MeetingPage[]{meetingView};
         
-        // Handle meeting navigation
+        // Handle meeting navigation - Start Meeting (Instructor role)
         mainViewModel.startMeetingRequested.addListener(PropertyListeners.onBooleanChanged(startMeeting -> {
             if (startMeeting && currentUser != null) {
-                // Create a new meeting view model for this meeting
-                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser);
+                // Create a new meeting view model for this meeting with Instructor role
+                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor");
                 newMeetingViewModel.startMeeting();
+                
+                // Set up listener for when meeting ends - navigate back to main view
+                newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
+                    if (!isActive) {
+                        showView(MAIN_VIEW);
+                        // Reset the flag so the button can be clicked again
+                        mainViewModel.startMeetingRequested.set(false);
+                    }
+                }));
                 
                 // Create a new MeetingPage with the new view model
                 meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
                 showView(MEETING_VIEW);
+                
+                // Reset the flag
+                mainViewModel.startMeetingRequested.set(false);
+            }
+        }));
+        
+        // Handle join meeting navigation - Join Meeting (Student role)
+        mainViewModel.joinMeetingRequested.addListener(PropertyListeners.onBooleanChanged(joinMeeting -> {
+            if (joinMeeting && currentUser != null) {
+                // Create a new meeting view model for joining meeting with Student role
+                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student");
+                newMeetingViewModel.startMeeting();
+                
+                // Set up listener for when meeting ends - navigate back to main view
+                newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
+                    if (!isActive) {
+                        showView(MAIN_VIEW);
+                        // Reset the flag so the button can be clicked again
+                        mainViewModel.joinMeetingRequested.set(false);
+                    }
+                }));
+                
+                // Create a new MeetingPage with the new view model
+                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
+                mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                showView(MEETING_VIEW);
+                
+                // Reset the flag
+                mainViewModel.joinMeetingRequested.set(false);
             }
         }));
         
         // Update the original reference when the array changes
         meetingView = meetingViewRef[0];
         
-        // When meeting ends, go back to main view
+        // When meeting ends (for initial meeting view model), go back to main view
         meetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
             if (!isActive) {
                 showView(MAIN_VIEW);
