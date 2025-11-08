@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.swe.controller.Auth.GoogleAuthService;
-import com.swe.core.Meeting.UserProfile;
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.model.User;
 import com.swe.ux.service.AuthService;

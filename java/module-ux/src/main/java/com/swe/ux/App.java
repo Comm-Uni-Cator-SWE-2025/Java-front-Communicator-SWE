@@ -263,18 +263,18 @@ public class App extends JFrame {
      */
     public static void main(String[] args) {
 
-        final AbstractRPC rpc = DummyRPC.getInstance();
+        // final AbstractRPC rpc = DummyRPC.getInstance();
 
         // Create and show the application window
         App app = App.getInstance();
 
 
          Thread handler = null;
-         try {
-             handler = rpc.connect();
-         } catch (IOException | ExecutionException | InterruptedException e) {
-             throw new RuntimeException(e);
-         }
+        //  try {
+        //      handler = rpc.connect();
+        //  } catch (IOException | ExecutionException | InterruptedException e) {
+        //      throw new RuntimeException(e);
+        //  }
 
         // Run on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
@@ -290,11 +290,11 @@ public class App extends JFrame {
         });
 
 
-         try {
-             handler.join();
-         } catch (InterruptedException e) {
-             throw new RuntimeException(e);
-         }
+        //  try {
+        //      handler.join();
+        //  } catch (InterruptedException e) {
+        //      throw new RuntimeException(e);
+        //  }
     }
 
     // Getters

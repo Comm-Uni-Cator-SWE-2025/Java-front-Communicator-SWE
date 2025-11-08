@@ -5,8 +5,8 @@ import java.security.GeneralSecurityException;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.swe.controller.Auth.AuthHelper.GoogleUserInfo;
-import com.swe.core.Meeting.ParticipantRole;
-import com.swe.core.Meeting.UserProfile;
+import com.swe.controller.Meeting.ParticipantRole;
+import com.swe.controller.Meeting.UserProfile;
 
 /**
  * Handles Google authentication and returns UserProfile objects.
