@@ -49,15 +49,15 @@ public class UserProfile {
      * Constructs a new UserProfile.
      * This is the 5-argument constructor expected by AuthService and UserAnalytics.
      *
-     * @param finalEmail        The user's unique email address.
-     * @param finalDisplayName  The user's display name.
-     * @param finalLogoUrl      The URL for the user's avatar.
-     * @param finalUserRole     The user's role (e.g., "student").
+     * @param finalEmail       The user's unique email address.
+     * @param finalDisplayName The user's display name.
+     * @param finalLogoUrl     The URL for the user's avatar.
+     * @param finalUserRole    The user's role (e.g., "student").
      */
     public UserProfile(final String finalEmail,
-                       final String finalDisplayName,
-                       final String finalLogoUrl,
-                       final ParticipantRole finalUserRole) {
+            final String finalDisplayName,
+            final String finalLogoUrl,
+            final ParticipantRole finalUserRole) {
         this.email = finalEmail;
         this.displayName = finalDisplayName;
         this.role = finalUserRole;
