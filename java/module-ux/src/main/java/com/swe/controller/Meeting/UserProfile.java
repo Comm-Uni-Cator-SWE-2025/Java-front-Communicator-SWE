@@ -1,4 +1,4 @@
-package com.swe.core.Meeting;
+package com.swe.controller.Meeting;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
