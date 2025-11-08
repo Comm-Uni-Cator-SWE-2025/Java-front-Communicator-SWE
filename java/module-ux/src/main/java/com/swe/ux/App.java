@@ -90,7 +90,7 @@ public class App extends JFrame {
         themeManager.setApp(this);
 
         // Show login view by default
-        showView(LOGIN_VIEW);
+        showView(MEETING_VIEW);
 
         // Center the window
         setLocationRelativeTo(null);
