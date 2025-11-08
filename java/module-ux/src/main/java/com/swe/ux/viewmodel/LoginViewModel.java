@@ -1,9 +1,9 @@
 package com.swe.ux.viewmodel;
 
-import com.swe.ux.model.User;
-import com.swe.ux.service.AuthService;
-import com.swe.ux.binding.BindableProperty;
 import javax.swing.SwingUtilities;
+
+import com.swe.ux.binding.BindableProperty;
+import com.swe.ux.service.AuthService;
 
 /**
  * ViewModel for the login screen.
@@ -53,7 +53,7 @@ public class LoginViewModel extends BaseViewModel {
                 Thread.sleep(1000);
                 
                 // Call the auth service
-                User user = authService.authenticate(username.get(), password.get());
+                authService.authenticate(username.get(), password.get());
                 
                 // Update UI on the EDT
                 SwingUtilities.invokeLater(() -> {
@@ -69,6 +69,59 @@ public class LoginViewModel extends BaseViewModel {
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     errorMessage.set("An unexpected error occurred");
+                    isLoading.set(false);
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * Logs in with Google using OAuth2 authentication.
+     * Always forces account selection to allow changing email/account.
+     */
+    public void loginWithGoogle() {
+        // Clear previous errors
+        errorMessage.set("");
+        isLoading.set(true);
+
+        // Perform Google login in background thread
+        new Thread(() -> {
+            try {
+                // Check if authService supports Google authentication
+                if (authService instanceof com.swe.ux.service.impl.InMemoryAuthService) {
+                    com.swe.ux.service.impl.InMemoryAuthService inMemoryAuthService = 
+                        (com.swe.ux.service.impl.InMemoryAuthService) authService;
+                    
+                    // Perform actual Google OAuth2 authentication
+                    // Force account selection to allow changing email
+                    inMemoryAuthService.authenticateWithGoogle(true);
+                    
+                    // Update UI on the EDT
+                    SwingUtilities.invokeLater(() -> {
+                        isLoading.set(false);
+                        loginSuccess.set(true);
+                    });
+                } else {
+                    // Fallback to dummy implementation if service doesn't support Google auth
+                    authService.loginWithGoogle(
+                        "user@gmail.com",
+                        "Google User"
+                    );
+                    
+                    SwingUtilities.invokeLater(() -> {
+                        isLoading.set(false);
+                        loginSuccess.set(true);
+                    });
+                }
+                
+            } catch (AuthService.AuthenticationException e) {
+                SwingUtilities.invokeLater(() -> {
+                    errorMessage.set("Google login failed: " + e.getMessage());
+                    isLoading.set(false);
+                });
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    errorMessage.set("Google login failed: " + e.getMessage());
                     isLoading.set(false);
                 });
             }

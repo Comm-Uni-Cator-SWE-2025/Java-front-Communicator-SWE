@@ -43,6 +43,15 @@ public interface AuthService {
     User register(String username, String password, String email) throws RegistrationException;
 
     /**
+     * Logs in with Google (bypasses normal authentication).
+     * Creates a user from Google account information and sets them as the current user.
+     * @param email The Google email address
+     * @param displayName The display name from Google
+     * @return The authenticated user
+     */
+    User loginWithGoogle(String email, String displayName);
+
+    /**
      * Exception thrown when authentication fails.
      */
     class AuthenticationException extends Exception {

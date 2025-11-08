@@ -51,6 +51,11 @@ public class MainPage extends JPanel {
         startMeetingButton.addActionListener(e -> viewModel.startMeetingRequested.set(true));
         buttonPanel.add(startMeetingButton);
         
+        // Join Meeting button
+        JButton joinMeetingButton = new CustomButton("Join Meeting", true);
+        joinMeetingButton.addActionListener(e -> viewModel.joinMeetingRequested.set(true));
+        buttonPanel.add(joinMeetingButton);
+        
         // Logout button
         logoutButton = new CustomButton("Logout", false);
         buttonPanel.add(logoutButton);
@@ -123,7 +128,7 @@ public class MainPage extends JPanel {
         for (Component comp : components) {
             if (comp instanceof JButton) {
                 JButton button = (JButton) comp;
-                if (button.getText().equals("Start Meeting")) {
+                if (button.getText().equals("Start Meeting") || button.getText().equals("Join Meeting")) {
                     button.setBackground(theme.getPrimaryColor());
                     button.setForeground(Color.WHITE);
                 } else if (button.getText().equals("Logout")) {
