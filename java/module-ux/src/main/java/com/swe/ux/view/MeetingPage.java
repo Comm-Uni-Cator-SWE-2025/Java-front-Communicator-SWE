@@ -42,6 +42,7 @@ public class MeetingPage extends JPanel {
     private JPanel chatPanel;
     private JPanel participantsPanel;
     private CustomButton cameraButton;
+    private CustomButton audioButton;
     private CustomButton screenShareButton;
     private ScreenNVideo screenNVideoComponent;
 
@@ -164,7 +165,11 @@ public class MeetingPage extends JPanel {
     private JPanel createMeetingControlsPanel() {
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
 
-        controlsPanel.add(new CustomButton(" Mute", false));
+        audioButton = new CustomButton(" Voice", false);
+        audioButton.addActionListener(e -> {
+            meetingViewModel.toggleAudio();
+        });
+        controlsPanel.add(audioButton);
         cameraButton = new CustomButton(" Camera", false);
         cameraButton.addActionListener(e -> {
             meetingViewModel.toggleVideo();
@@ -228,6 +233,13 @@ public class MeetingPage extends JPanel {
                 cameraButton.setPrimary(val);
             });
         }));
+
+        meetingViewModel.isAudioEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
+            SwingUtilities.invokeLater(() -> {
+                audioButton.setPrimary(val);
+            });
+        }));
+
 
         meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
             SwingUtilities.invokeLater(() -> {

@@ -17,6 +17,7 @@ public class Meeting {
     private final List<ChatMessage> messages;
     private boolean videoEnabled;
     private boolean screenSharingEnabled;
+    private boolean audioEnabled;
 
     public Meeting(String title) {
         this.id = UUID.randomUUID().toString();
@@ -41,6 +42,14 @@ public class Meeting {
         if (!participants.contains(user)) {
             participants.add(user);
         }
+    }
+
+    public boolean isAudioEnabled() {
+        return audioEnabled;
+    }
+
+    public void setAudioEnabled(boolean audioEnabled) {
+        this.audioEnabled = audioEnabled;
     }
 
     public void setVideoEnabled(boolean enabled) {
