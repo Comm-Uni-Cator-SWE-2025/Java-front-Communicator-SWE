@@ -3,18 +3,18 @@ package com.swe.ux.viewmodel;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.screenNVideo.AbstractRPC;
 import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.Meeting;
-import com.swe.ux.model.User;
 
 /**
  * ViewModel for managing meeting-related business logic and state.
  */
 public class MeetingViewModel extends BaseViewModel {
-    private final User currentUser;
+    private final UserProfile currentUser;
     private Meeting currentMeeting;
     private AbstractRPC rpc;
     
@@ -26,16 +26,16 @@ public class MeetingViewModel extends BaseViewModel {
     public final BindableProperty<Boolean> isMeetingActive = new BindableProperty<>(false, "isMeetingActive");
     public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
     public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
-    public final BindableProperty<List<User>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
+    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
     public final BindableProperty<String> role = new BindableProperty<>("", "role");
 
-    public MeetingViewModel(User currentUser) {
+    public MeetingViewModel(UserProfile currentUser) {
         System.out.println("User  " + currentUser);
         this.currentUser = currentUser;
         this.rpc = DummyRPC.getInstance();
     }
     
-    public MeetingViewModel(User currentUser, String role) {
+    public MeetingViewModel(UserProfile currentUser, String role) {
         this.currentUser = currentUser;
         this.rpc = DummyRPC.getInstance();
         this.role.set(role);
@@ -97,22 +97,22 @@ public class MeetingViewModel extends BaseViewModel {
     /**
      * Add a participant to the current meeting.
      */
-    public void addParticipant(User user) {
+    public void addParticipant(UserProfile user) {
         if (currentMeeting != null) {
             currentMeeting.addParticipant(user);
             updateParticipants();
-            addSystemMessage(user.getUsername() + " joined the meeting");
+            addSystemMessage(user.getDisplayName() + " joined the meeting");
         }
     }
 
     /**
      * Remove a participant from the current meeting.
      */
-    public void removeParticipant(User user) {
+    public void removeParticipant(UserProfile user) {
         if (currentMeeting != null) {
             currentMeeting.removeParticipant(user);
             updateParticipants();
-            addSystemMessage(user.getUsername() + " left the meeting");
+            addSystemMessage(user.getDisplayName() + " left the meeting");
         }
     }
 

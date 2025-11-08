@@ -2,77 +2,33 @@ package com.swe.ux.viewmodel;
 
 import javax.swing.SwingUtilities;
 
+import com.swe.controller.Auth.AuthService;
+import com.swe.controller.Meeting.UserProfile;
+import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.controller.serialize.DataSerializer;
 import com.swe.ux.binding.BindableProperty;
-import com.swe.ux.service.AuthService;
 
 /**
  * ViewModel for the login screen.
  */
 public class LoginViewModel extends BaseViewModel {
     // Bindable properties for the view
-    public final BindableProperty<String> username = new BindableProperty<>("", "username");
-    public final BindableProperty<String> password = new BindableProperty<>("", "password");
+    // public final BindableProperty<String> username = new BindableProperty<>("", "username");
+    // public final BindableProperty<String> password = new BindableProperty<>("", "password");
     public final BindableProperty<Boolean> isLoading = new BindableProperty<>(false, "isLoading");
-    public final BindableProperty<String> errorMessage = new BindableProperty<>("", "errorMessage");
-    public final BindableProperty<Boolean> loginSuccess = new BindableProperty<>(false, "loginSuccess");
-    public final BindableProperty<Boolean> showRegisterRequested = new BindableProperty<>(false, "showRegisterRequested");
+    public final BindableProperty<String> authErrorMessage = new BindableProperty<>("", "authErrorMessage");
+    public final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
 
     private final AuthService authService;
-
+    private final AbstractRPC rpc;
     /**
      * Creates a new LoginViewModel.
      * @param authService The authentication service to use
+     * @param rpc The RPC service to use
      */
-    public LoginViewModel(AuthService authService) {
+    public LoginViewModel(AuthService authService, AbstractRPC rpc) {
         this.authService = authService;
-    }
-
-    /**
-     * Attempts to log in with the current username and password.
-     */
-    public void login() {
-        // Validate input
-        if (username.get().trim().isEmpty()) {
-            errorMessage.set("Username is required");
-            return;
-        }
-
-        if (password.get().isEmpty()) {
-            errorMessage.set("Password is required");
-            return;
-        }
-
-        // Clear previous errors
-        errorMessage.set("");
-        isLoading.set(true);
-
-        // Perform login in background thread
-        new Thread(() -> {
-            try {
-                // Simulate network delay
-                Thread.sleep(1000);
-                
-                // Call the auth service
-                authService.authenticate(username.get(), password.get());
-                
-                // Update UI on the EDT
-                SwingUtilities.invokeLater(() -> {
-                    isLoading.set(false);
-                    loginSuccess.set(true);
-                });
-                
-            } catch (AuthService.AuthenticationException e) {
-                SwingUtilities.invokeLater(() -> {
-                    errorMessage.set("Login failed: " + e.getMessage());
-                    isLoading.set(false);
-                });
-            } catch (Exception e) {
-                SwingUtilities.invokeLater(() -> {
-                    errorMessage.set("An unexpected error occurred");
-                    isLoading.set(false);
-                });
-            }
-        }).start();
+        this.rpc = rpc;
     }
 
     /**
@@ -80,62 +36,83 @@ public class LoginViewModel extends BaseViewModel {
      * Always forces account selection to allow changing email/account.
      */
     public void loginWithGoogle() {
+        System.out.println("Login with Google");
         // Clear previous errors
-        errorMessage.set("");
+        authErrorMessage.set("");
         isLoading.set(true);
 
+        try {
+            System.out.println("Calling core/register" + rpc);
+            byte[] data = rpc.call("core/register", new byte[0]).get();
+            System.out.println("Data: " + data.length);
+            UserProfile user = DataSerializer.deserialize(data, UserProfile.class);
+            currentUser.set(user);
+        } catch (Exception e) {
+            authErrorMessage.set("Authentication failed with an unexpected error: " + e.getMessage());
+            isLoading.set(false);
+        }
+
         // Perform Google login in background thread
-        new Thread(() -> {
-            try {
-                // Check if authService supports Google authentication
-                if (authService instanceof com.swe.ux.service.impl.InMemoryAuthService) {
-                    com.swe.ux.service.impl.InMemoryAuthService inMemoryAuthService = 
-                        (com.swe.ux.service.impl.InMemoryAuthService) authService;
+        // new Thread(() -> {
+        //     // try {
+        //     //     UserProfile user = authService.authenticate();
+        //     //     currentUser.set(user);
+        //     // } catch (AuthService.AuthenticationException e) {
+        //     //     authErrorMessage.set("Authentication failed: " + e.getMessage());
+        //     //     isLoading.set(false);
+        //     // } catch (Exception e) {
+        //     //     authErrorMessage.set("Authentication failed with an unexpected error: " + e.getMessage());
+        //     //     isLoading.set(false);
+        //     // }
+            
+        //     // try {
+        //     //     // Check if authService supports Google authentication
+        //     //     if (authService instanceof com.swe.ux.service.impl.InMemoryAuthService) {
+        //     //         com.swe.ux.service.impl.InMemoryAuthService inMemoryAuthService = 
+        //     //             (com.swe.ux.service.impl.InMemoryAuthService) authService;
                     
-                    // Perform actual Google OAuth2 authentication
-                    // Force account selection to allow changing email
-                    inMemoryAuthService.authenticateWithGoogle(true);
+        //     //         // Perform actual Google OAuth2 authentication
+        //     //         // Force account selection to allow changing email
+        //     //         inMemoryAuthService.authenticateWithGoogle(true);
                     
-                    // Update UI on the EDT
-                    SwingUtilities.invokeLater(() -> {
-                        isLoading.set(false);
-                        loginSuccess.set(true);
-                    });
-                } else {
-                    // Fallback to dummy implementation if service doesn't support Google auth
-                    authService.loginWithGoogle(
-                        "user@gmail.com",
-                        "Google User"
-                    );
+        //     //         // Update UI on the EDT
+        //     //         SwingUtilities.invokeLater(() -> {
+        //     //             isLoading.set(false);
+        //     //             loginSuccess.set(true);
+        //     //         });
+        //     //     } else {
+        //     //         // Fallback to dummy implementation if service doesn't support Google auth
+        //     //         authService.loginWithGoogle(
+        //     //             "user@gmail.com",
+        //     //             "Google User"
+        //     //         );
                     
-                    SwingUtilities.invokeLater(() -> {
-                        isLoading.set(false);
-                        loginSuccess.set(true);
-                    });
-                }
+        //     //         SwingUtilities.invokeLater(() -> {
+        //     //             isLoading.set(false);
+        //     //             loginSuccess.set(true);
+        //     //         });
+        //     //     }
                 
-            } catch (AuthService.AuthenticationException e) {
-                SwingUtilities.invokeLater(() -> {
-                    errorMessage.set("Google login failed: " + e.getMessage());
-                    isLoading.set(false);
-                });
-            } catch (Exception e) {
-                SwingUtilities.invokeLater(() -> {
-                    errorMessage.set("Google login failed: " + e.getMessage());
-                    isLoading.set(false);
-                });
-            }
-        }).start();
+        //     // } catch (AuthService.AuthenticationException e) {
+        //     //     SwingUtilities.invokeLater(() -> {
+        //     //         authErrorMessage.set("Google login failed: " + e.getMessage());
+        //     //         isLoading.set(false);
+        //     //     });
+        //     // } catch (Exception e) {
+        //     //     SwingUtilities.invokeLater(() -> {
+        //     //         authErrorMessage.set("Google login failed: " + e.getMessage());
+        //     //         isLoading.set(false);
+        //     //     });
+        //     // }
+        // }).start();
     }
 
     /**
      * Resets the login form.
      */
     public void reset() {
-        username.set("");
-        password.set("");
-        errorMessage.set("");
+        authErrorMessage.set("");
         isLoading.set(false);
-        loginSuccess.set(false);
+        currentUser.set(null);
     }
 }

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.swe.controller.Meeting.UserProfile;
+
 /**
  * Represents a meeting with participants and messages.
  */
@@ -13,7 +15,7 @@ public class Meeting {
     private final String title;
     private final LocalDateTime startTime;
     private LocalDateTime endTime;
-    private final List<User> participants;
+    private final List<UserProfile> participants;
     private final List<ChatMessage> messages;
     private boolean videoEnabled;
     private boolean screenSharingEnabled;
@@ -33,11 +35,11 @@ public class Meeting {
     public String getTitle() { return title; }
     public LocalDateTime getStartTime() { return startTime; }
     public LocalDateTime getEndTime() { return endTime; }
-    public List<User> getParticipants() { return new ArrayList<>(participants); }
+    public List<UserProfile> getParticipants() { return new ArrayList<>(participants); }
     public List<ChatMessage> getMessages() { return new ArrayList<>(messages); }
 
     // Methods
-    public void addParticipant(User user) {
+    public void addParticipant(UserProfile user) {
         if (!participants.contains(user)) {
             participants.add(user);
         }
@@ -51,7 +53,7 @@ public class Meeting {
         this.screenSharingEnabled = enabled;
     }
 
-    public void removeParticipant(User user) {
+    public void removeParticipant(UserProfile user) {
         participants.remove(user);
     }
 
@@ -71,24 +73,24 @@ public class Meeting {
      * Represents a chat message within a meeting.
      */
     public static class ChatMessage {
-        private final User sender;
+        private final UserProfile sender;
         private final String content;
         private final LocalDateTime timestamp;
 
-        public ChatMessage(User sender, String content) {
+        public ChatMessage(UserProfile sender, String content) {
             this.sender = sender;
             this.content = content;
             this.timestamp = LocalDateTime.now();
         }
 
         // Getters
-        public User getSender() { return sender; }
+        public UserProfile getSender() { return sender; }
         public String getContent() { return content; }
         public LocalDateTime getTimestamp() { return timestamp; }
 
         @Override
         public String toString() {
-            return String.format("%s: %s", sender.getUsername(), content);
+            return String.format("%s: %s", sender.getDisplayName(), content);
         }
     }
 }
