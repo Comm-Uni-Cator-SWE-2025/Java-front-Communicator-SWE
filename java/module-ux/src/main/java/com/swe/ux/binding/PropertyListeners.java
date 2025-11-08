@@ -1,5 +1,7 @@
 package com.swe.ux.binding;
 
+import com.swe.controller.Meeting.UserProfile;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -66,6 +68,15 @@ public class PropertyListeners {
      */
     @SuppressWarnings("unchecked")
     public static <T> PropertyChangeListener onListChanged(Consumer<List<T>> consumer) {
+        return onChanged(consumer);
+    }
+    
+    /**
+     * Creates a property change listener for UserProfile properties.
+     * @param consumer The consumer to call with the new UserProfile value when the property changes
+     * @return A PropertyChangeListener
+     */
+    public static PropertyChangeListener onUserProfileChanged(Consumer<UserProfile> consumer) {
         return onChanged(consumer);
     }
     

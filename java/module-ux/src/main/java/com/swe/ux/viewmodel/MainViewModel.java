@@ -1,8 +1,8 @@
 package com.swe.ux.viewmodel;
 
+import com.swe.controller.Auth.AuthService;
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.binding.BindableProperty;
-import com.swe.ux.model.User;
-import com.swe.ux.service.AuthService;
 
 /**
  * ViewModel for the main application screen.
@@ -11,7 +11,7 @@ public class MainViewModel extends BaseViewModel {
     private final AuthService authService;
     
     // Bindable properties
-    public final BindableProperty<User> currentUser = new BindableProperty<>(null, "currentUser");
+    public final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
     public final BindableProperty<Boolean> logoutRequested = new BindableProperty<>(false, "logoutRequested");
     public final BindableProperty<Boolean> startMeetingRequested = new BindableProperty<>(false, "startMeetingRequested");
     public final BindableProperty<Boolean> joinMeetingRequested = new BindableProperty<>(false, "joinMeetingRequested");
@@ -28,7 +28,7 @@ public class MainViewModel extends BaseViewModel {
      * Sets the current user and updates the UI accordingly.
      * @param user The current user, or null if logged out
      */
-    public void setCurrentUser(User user) {
+    public void setCurrentUser(UserProfile user) {
         this.currentUser.set(user);
     }
     

@@ -8,7 +8,7 @@ import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.model.UIImage;
-import com.swe.ux.model.User;
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.ParticipantPanel;
 import com.swe.ux.viewmodel.MeetingViewModel;
@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.swe.screenNVideo.Utils.getSelfIP;
 
 public class ScreenNVideo extends JPanel {
 
@@ -200,11 +198,11 @@ public class ScreenNVideo extends JPanel {
     private void setupBindings() {
 
         // Bind participant added event
-        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<User> participants) -> {
+        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<UserProfile> participants) -> {
             System.out.println("Participants updated");
             participants.forEach(participant -> {
-                System.out.println("Adding participant: " + participant.getUsername() + " with IP: " + participant.getId());
-                addParticipant(participant.getUsername(), participant.getId());
+                System.out.println("Adding participant: " + participant.getDisplayName() + " with email: " + participant.getEmail());
+                addParticipant(participant.getDisplayName(), participant.getEmail());
             });
         }));
 

@@ -1,20 +1,19 @@
 package com.swe.ux;
 
-import com.swe.screenNVideo.AbstractRPC;
-import com.swe.screenNVideo.DummyRPC;
+import com.swe.controller.RPC;
+import com.swe.controller.Auth.AuthService;
+import com.swe.controller.Auth.GoogleAuthService;
+import com.swe.controller.Meeting.ParticipantRole;
+import com.swe.controller.Meeting.UserProfile;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
-import com.swe.ux.model.User;
-import com.swe.ux.service.AuthService;
-import com.swe.ux.service.impl.InMemoryAuthService;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.view.LoginPage;
 import com.swe.ux.view.MainPage;
 import com.swe.ux.view.MeetingPage;
-import com.swe.ux.view.RegisterPage;
 import com.swe.ux.viewmodel.LoginViewModel;
 import com.swe.ux.viewmodel.MainViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
-import com.swe.ux.viewmodel.RegisterViewModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,18 +41,20 @@ public class App extends JFrame {
     public static final String MEETING_VIEW = "MEETING";
 
     // Current user
-    private User currentUser;
+    private UserProfile currentUser;
 
     // ViewModel references for resetting on logout
     private LoginViewModel loginViewModel;
     private MainViewModel mainViewModel;
 
+    private AbstractRPC rpc;
+
     /**
      * Gets the singleton instance of the application.
      */
-    public static App getInstance() {
+    public static App getInstance(AbstractRPC rpc) {
         if (instance == null) {
-            instance = new App();
+            instance = new App(rpc);
         }
         return instance;
     }
@@ -61,10 +62,10 @@ public class App extends JFrame {
     /**
      * Private constructor for singleton pattern.
      */
-    private App() {
+    private App(AbstractRPC rpc) {
         // Initialize services
-        this.authService = new InMemoryAuthService();
-
+        this.authService = new GoogleAuthService();
+        this.rpc = rpc;
         // Set up the main panel with card layout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
@@ -113,56 +114,31 @@ public class App extends JFrame {
      */
     private void initViews() {
         // Initialize ViewModels
-        loginViewModel = new LoginViewModel(authService);
+        loginViewModel = new LoginViewModel(authService, rpc);
         mainViewModel = new MainViewModel(authService);
         System.out.println("Meeting");
-        MeetingViewModel meetingViewModel = new MeetingViewModel(new User(Utils.getSelfIP(), "You", "You", "you")); // Will
-                                                                                                                    // be
-                                                                                                                    // set
-                                                                                                                    // when
-                                                                                                                    // user
-                                                                                                                    // joins
-                                                                                                                    // a
-                                                                                                                    // meeting
+
+        // Will be set when user joins a meeting
+        MeetingViewModel meetingViewModel = new MeetingViewModel(
+                new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT));
 
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
-        RegisterPage registerView = new RegisterPage(new RegisterViewModel(authService));
         MainPage mainView = new MainPage(mainViewModel);
         MeetingPage meetingView = new MeetingPage(meetingViewModel);
 
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
-        mainPanel.add(registerView, REGISTER_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
         mainPanel.add(meetingView, MEETING_VIEW);
 
-        // final DummyRPC rpc = DummyRPC.getInstance();
-
-        // New participant
-        // rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
-        // final String viewerIP = new String(data);
-        // User new_user = new User(viewerIP, viewerIP, "New", "new");
-        // meetingViewModel.addParticipant(new_user);
-        // return new byte[0];
-        // });
-
         meetingViewModel.startMeeting();
         // Set up navigation listeners
-        loginViewModel.loginSuccess.addListener(PropertyListeners.onBooleanChanged(loggedIn -> {
-            if (loggedIn) {
-                this.currentUser = authService.getCurrentUser();
+        loginViewModel.currentUser.addListener(PropertyListeners.onUserProfileChanged(user -> {
+            if (user != null) {
+                this.currentUser = user;
                 mainViewModel.setCurrentUser(currentUser);
                 showView(MAIN_VIEW);
-            }
-        }));
-
-        // Handle register navigation from login
-        loginViewModel.showRegisterRequested.addListener(PropertyListeners.onBooleanChanged(showRegister -> {
-            if (showRegister) {
-                showView(REGISTER_VIEW);
-                // Reset the flag
-                loginViewModel.showRegisterRequested.set(false);
             }
         }));
 
@@ -270,17 +246,30 @@ public class App extends JFrame {
      * Main entry point of the application.
      */
     public static void main(String[] args) {
+        int portNumber = 6942;
 
-        // final AbstractRPC rpc = DummyRPC.getInstance();
+        if (args.length > 0) { 
+            String port = args[0];
+            portNumber = Integer.parseInt(port);
+        }
 
-        // // Create and show the application window
-        App app = App.getInstance();
+        final AbstractRPC rpc = new RPC();
 
-        // Thread handler = null;
+        // Create and show the application window
+        App app = App.getInstance(rpc);
+
+        Thread handler = null;
+        try {
+            handler = rpc.connect(portNumber);
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         // try {
-        // handler = rpc.connect();
-        // } catch (IOException | ExecutionException | InterruptedException e) {
-        // throw new RuntimeException(e);
+        //     byte[] data = rpc.call("core/register", new byte[0]).get();
+        //     System.out.println("Data: " + data.length);
+        // } catch (InterruptedException | ExecutionException e) {
+        //     throw new RuntimeException(e);
         // }
 
         // Run on the Event Dispatch Thread
@@ -296,20 +285,19 @@ public class App extends JFrame {
             app.setVisible(true);
         });
 
-
-        //  try {
-        //      handler.join();
-        //  } catch (InterruptedException e) {
-        //      throw new RuntimeException(e);
-        //  }
+        try {
+            handler.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
-
+    
     // Getters
     public AuthService getAuthService() {
         return authService;
     }
 
-    public User getCurrentUser() {
+    public UserProfile getCurrentUser() {
         return currentUser;
     }
 
@@ -318,7 +306,7 @@ public class App extends JFrame {
      * 
      * @param user The user to set as current, or null to log out
      */
-    public void setCurrentUser(User user) {
+    public void setCurrentUser(UserProfile user) {
         this.currentUser = user;
         // Update UI based on authentication state
         if (user != null) {
