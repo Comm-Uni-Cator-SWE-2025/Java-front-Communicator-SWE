@@ -1,11 +1,14 @@
 package com.swe.ux.viewmodel;
 
-import com.swe.ux.model.Meeting;
-import com.swe.ux.model.User;
-import com.swe.ux.binding.BindableProperty;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.swe.screenNVideo.AbstractRPC;
+import com.swe.screenNVideo.DummyRPC;
+import com.swe.screenNVideo.Utils;
+import com.swe.ux.binding.BindableProperty;
+import com.swe.ux.model.Meeting;
+import com.swe.ux.model.User;
 
 /**
  * ViewModel for managing meeting-related business logic and state.
@@ -13,27 +16,56 @@ import java.util.List;
 public class MeetingViewModel extends BaseViewModel {
     private final User currentUser;
     private Meeting currentMeeting;
+    private AbstractRPC rpc;
     
     // Bindable properties
     public final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
+    public final BindableProperty<String> meetingId = new BindableProperty<>("", "meetingId");
     public final BindableProperty<String> messageText = new BindableProperty<>("", "messageText");
     public final BindableProperty<List<String>> messages = new BindableProperty<>(new ArrayList<>(), "messages");
     public final BindableProperty<Boolean> isMeetingActive = new BindableProperty<>(false, "isMeetingActive");
+    public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
+    public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
     public final BindableProperty<List<User>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
+    public final BindableProperty<String> role = new BindableProperty<>("", "role");
 
     public MeetingViewModel(User currentUser) {
+        System.out.println("User  " + currentUser);
         this.currentUser = currentUser;
+        this.rpc = DummyRPC.getInstance();
+    }
+    
+    public MeetingViewModel(User currentUser, String role) {
+        this.currentUser = currentUser;
+        this.rpc = DummyRPC.getInstance();
+        this.role.set(role);
     }
 
     /**
      * Start a new meeting with the current user as a participant.
+     * Creates a new meeting with a unique meeting ID and sets role as Instructor.
      */
     public void startMeeting() {
-        currentMeeting = new Meeting(meetingTitle.get());
+        // Generate a new unique meeting ID
+        String newMeetingId = java.util.UUID.randomUUID().toString();
+        meetingId.set(newMeetingId);
+        
+        // Ensure role is set to Instructor when starting a meeting
+        if (!"Instructor".equals(role.get())) {
+            role.set("Instructor");
+        }
+        
+        // Create the meeting with the generated ID
+        String title = meetingTitle.get();
+        if (title == null || title.trim().isEmpty()) {
+            title = "Meeting " + newMeetingId.substring(0, 8);
+        }
+        currentMeeting = new Meeting(title);
         currentMeeting.addParticipant(currentUser);
+        
         isMeetingActive.set(true);
         updateParticipants();
-        addSystemMessage("Meeting started");
+        addSystemMessage("Meeting started with ID: " + newMeetingId);
     }
 
     /**
@@ -45,6 +77,8 @@ public class MeetingViewModel extends BaseViewModel {
             currentMeeting.endMeeting();
             isMeetingActive.set(false);
             currentMeeting = null;
+            // Clear meeting ID when meeting ends
+            meetingId.set("");
         }
     }
 
@@ -82,6 +116,40 @@ public class MeetingViewModel extends BaseViewModel {
         }
     }
 
+    /**
+     * Toggle video state for the current meeting.
+     */
+    public void toggleVideo() {
+        if (currentMeeting != null) {
+            boolean newState = !isVideoEnabled.get();
+            isVideoEnabled.set(newState);
+            if (newState) {
+                rpc.call(Utils.START_VIDEO_CAPTURE, new byte[0]);
+            } else {
+                rpc.call(Utils.STOP_VIDEO_CAPTURE, new byte[0]);
+            }
+            currentMeeting.setVideoEnabled(newState);
+            addSystemMessage("Video " + (newState ? "enabled" : "disabled"));
+        }
+    }
+
+    /**
+     * Toggle screen sharing state for the current meeting.
+     */
+    public void toggleScreenSharing() {
+        if (currentMeeting != null) {
+            boolean newState = !isScreenShareEnabled.get();
+            isScreenShareEnabled.set(newState);
+            if (newState) {
+                rpc.call(Utils.START_SCREEN_CAPTURE, new byte[0]);
+            } else {
+                rpc.call(Utils.STOP_SCREEN_CAPTURE, new byte[0]);
+            }
+            currentMeeting.setScreenSharingEnabled(newState);
+            addSystemMessage("Screen sharing " + (newState ? "enabled" : "disabled"));
+        }
+    }
+
     private void updateMessages() {
         if (currentMeeting != null) {
             List<String> messageList = new ArrayList<>();
@@ -100,7 +168,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     private void addSystemMessage(String message) {
         if (currentMeeting != null) {
-            currentMeeting.addMessage(new Meeting.ChatMessage(null, "[System] " + message));
+//            currentMeeting.addMessage(new Meeting.ChatMessage(null, "[System] " + message));
             updateMessages();
         }
     }

@@ -1,22 +1,29 @@
 package com.swe.ux.service;
 
-import com.swe.controller.AuthService;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
+import com.swe.controller.Auth.GoogleAuthService;
 import com.swe.controller.MeetingServices;
-import com.swe.controller.UserProfile;
+import com.swe.core.Meeting.UserProfile;
 
 /**
  * Singleton service that manages the controller module integration.
- * Provides centralized access to AuthService, MeetingServices, and current user session.
+ * Uses the new controller logic from module-ux/controller that allows any Google account.
+ * 
+ * NOTE: This service uses GoogleAuthService which allows anyone with a Google account to login.
+ * The old restricted AuthService from module-controller is no longer used.
  */
 public class ControllerService {
     private static ControllerService instance;
     
-    private final AuthService authService;
+    private final GoogleAuthService googleAuthService;
     private final MeetingServices meetingServices;
     private UserProfile currentUser;
     
     private ControllerService() {
-        this.authService = new AuthService();
+        // Use new controller logic that allows any Google account
+        this.googleAuthService = new GoogleAuthService();
         this.meetingServices = new MeetingServices();
         this.currentUser = null;
     }
@@ -28,21 +35,33 @@ public class ControllerService {
         return instance;
     }
     
-    // AuthService methods
-    public UserProfile login(String email, String password) {
-        UserProfile user = authService.login(email, password);
+    /**
+     * Authenticates a user using Google OAuth2.
+     * Allows any Google account - no domain restrictions.
+     * 
+     * @param forceAccountSelection If true, clears stored tokens to allow selecting a different account
+     * @return UserProfile if authentication succeeds, null otherwise
+     * @throws GeneralSecurityException if authentication fails
+     * @throws IOException if authentication fails
+     */
+    public UserProfile loginWithGoogle(boolean forceAccountSelection) throws GeneralSecurityException, IOException {
+        UserProfile user = googleAuthService.authenticateWithGoogle(forceAccountSelection);
         if (user != null) {
             this.currentUser = user;
         }
         return user;
     }
     
-    public UserProfile register(String email, String password, String displayName, String logoUrl) {
-        UserProfile user = authService.register(email, password, displayName, logoUrl);
-        if (user != null) {
-            this.currentUser = user;
-        }
-        return user;
+    /**
+     * Authenticates a user using Google OAuth2.
+     * Allows any Google account - no domain restrictions.
+     * 
+     * @return UserProfile if authentication succeeds, null otherwise
+     * @throws GeneralSecurityException if authentication fails
+     * @throws IOException if authentication fails
+     */
+    public UserProfile loginWithGoogle() throws GeneralSecurityException, IOException {
+        return loginWithGoogle(false);
     }
     
     // Session management
@@ -56,6 +75,14 @@ public class ControllerService {
     
     public void logout() {
         this.currentUser = null;
+        // Clear stored Google OAuth tokens
+        try {
+            com.swe.controller.Auth.GoogleAuthServices googleAuthServices = new com.swe.controller.Auth.GoogleAuthServices();
+            googleAuthServices.clearStoredTokens();
+        } catch (IOException e) {
+            // Log but don't fail logout if token clearing fails
+            System.err.println("Warning: Failed to clear Google OAuth tokens: " + e.getMessage());
+        }
     }
     
     public boolean isLoggedIn() {
@@ -63,8 +90,8 @@ public class ControllerService {
     }
     
     // Direct access to services (if needed)
-    public AuthService getAuthService() {
-        return authService;
+    public GoogleAuthService getGoogleAuthService() {
+        return googleAuthService;
     }
     
     public MeetingServices getMeetingServices() {

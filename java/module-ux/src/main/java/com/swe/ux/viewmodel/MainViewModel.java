@@ -1,8 +1,8 @@
 package com.swe.ux.viewmodel;
 
+import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.User;
 import com.swe.ux.service.AuthService;
-import com.swe.ux.binding.BindableProperty;
 
 /**
  * ViewModel for the main application screen.
@@ -14,6 +14,7 @@ public class MainViewModel extends BaseViewModel {
     public final BindableProperty<User> currentUser = new BindableProperty<>(null, "currentUser");
     public final BindableProperty<Boolean> logoutRequested = new BindableProperty<>(false, "logoutRequested");
     public final BindableProperty<Boolean> startMeetingRequested = new BindableProperty<>(false, "startMeetingRequested");
+    public final BindableProperty<Boolean> joinMeetingRequested = new BindableProperty<>(false, "joinMeetingRequested");
     
     /**
      * Creates a new MainViewModel.

@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Java-front-Communicator-SWE
 =======
 # Java Front Communicator SWE — Project Structure & Contribution Guidelines

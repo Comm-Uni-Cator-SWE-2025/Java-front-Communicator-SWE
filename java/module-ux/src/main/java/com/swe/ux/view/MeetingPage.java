@@ -1,9 +1,13 @@
 package com.swe.ux.view;
 
+import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.screenNVideo.Utils;
 import com.swe.ux.model.User;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.CustomButton;
+import com.swe.ux.viewmodel.CanvasViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
+import com.swe.ux.viewmodel.ParticipantsViewModel;
 import com.swe.ux.binding.PropertyListeners;
 
 import javax.swing.*;
@@ -27,6 +31,7 @@ import java.util.List;
 public class MeetingPage extends JPanel {
 
     private final MeetingViewModel meetingViewModel;
+    private String localIP = Utils.getSelfIP();
 
     // UI Components
     private JSplitPane mainSplitPane;
@@ -36,6 +41,9 @@ public class MeetingPage extends JPanel {
     // Placeholder panels for team integration
     private JPanel chatPanel;
     private JPanel participantsPanel;
+    private CustomButton cameraButton;
+    private CustomButton screenShareButton;
+    private ScreenNVideo screenNVideoComponent;
 
     public MeetingPage(MeetingViewModel meetingViewModel) {
         this.meetingViewModel = meetingViewModel;
@@ -52,9 +60,15 @@ public class MeetingPage extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
+        // Left side: Title
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        leftPanel.setOpaque(false);
+        
         JLabel titleLabel = new JLabel("Meeting");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        leftPanel.add(titleLabel);
+        
+        headerPanel.add(leftPanel, BorderLayout.WEST);
 
         JButton toggleSidebarBtn = new CustomButton("Hide Sidebar", false);
         toggleSidebarBtn.addActionListener(e -> toggleRightPanel(toggleSidebarBtn));
@@ -74,9 +88,14 @@ public class MeetingPage extends JPanel {
         centerTabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         // --- PLACEHOLDER PANELS (Team Ownership) ---
-        centerTabs.addTab("Video", createPlaceholderPanel(" Video Module - To be integrated by Video Team"));
-        centerTabs.addTab("Screensharing", createPlaceholderPanel(" Screensharing Module - To be integrated by Screen Team"));
-        centerTabs.addTab("Canvas", createPlaceholderPanel(" Canvas Module - To be integrated by Canvas Team"));
+        screenNVideoComponent = new ScreenNVideo(meetingViewModel);
+        centerTabs.addTab("ScreenNVideo", screenNVideoComponent);
+        
+        // Canvas Module - Integrated
+        CanvasViewModel canvasViewModel = new CanvasViewModel(new CanvasState());
+        CanvasPage canvasPage = new CanvasPage(canvasViewModel);
+        centerTabs.addTab("Canvas", canvasPage);
+        
         centerTabs.addTab("AI Insights", createPlaceholderPanel(" AI Insights Module - To be integrated by AI Team"));
 
         // Right-side (Chat + Participants)
@@ -113,8 +132,10 @@ public class MeetingPage extends JPanel {
         chatPanel = createTeamPlaceholderPanel("Chat Module", "To be implemented by Chat Team");
         chatPanel.setBorder(BorderFactory.createTitledBorder("Chat"));
         
-        // Participants Panel (To be implemented by Controller Team)
-        participantsPanel = createTeamPlaceholderPanel("Participants Module", "To be implemented by Controller Team");
+        // Participants Panel - Using ParticipantsViewModel
+        ParticipantsViewModel participantsViewModel = new ParticipantsViewModel(meetingViewModel);
+        ParticipantsView participantsView = new ParticipantsView(participantsViewModel);
+        participantsPanel = participantsView;
         participantsPanel.setBorder(BorderFactory.createTitledBorder("Participants"));
 
         // Split vertically
@@ -144,8 +165,18 @@ public class MeetingPage extends JPanel {
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
 
         controlsPanel.add(new CustomButton(" Mute", false));
-        controlsPanel.add(new CustomButton(" Camera", false));
-        controlsPanel.add(new CustomButton(" Share", false));
+        cameraButton = new CustomButton(" Camera", false);
+        cameraButton.addActionListener(e -> {
+            meetingViewModel.toggleVideo();
+        });
+        controlsPanel.add(cameraButton);
+
+        screenShareButton = new CustomButton(" Share", false);
+        screenShareButton.addActionListener(e -> {
+            meetingViewModel.toggleScreenSharing();
+        });
+        controlsPanel.add(screenShareButton);
+
         JButton leaveButton = new CustomButton(" Leave", true);
         leaveButton.addActionListener(e -> meetingViewModel.endMeeting());
         controlsPanel.add(leaveButton);
@@ -191,7 +222,21 @@ public class MeetingPage extends JPanel {
             })
         ));
         */
+
+        meetingViewModel.isVideoEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
+            SwingUtilities.invokeLater(() -> {
+                cameraButton.setPrimary(val);
+            });
+        }));
+
+        meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
+            SwingUtilities.invokeLater(() -> {
+                screenShareButton.setPrimary(val);
+            });
+        }));
+
     }
+
 
     /**
      * Sends a message in the chat.
