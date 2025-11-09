@@ -1,8 +1,6 @@
 package com.swe.ux;
 
 import com.swe.controller.RPC;
-import com.swe.controller.Auth.AuthService;
-import com.swe.controller.Auth.GoogleAuthService;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
@@ -32,7 +30,6 @@ public class App extends JFrame {
     private final CardLayout cardLayout;
     private final JPanel mainPanel;
     private final Stack<String> viewHistory = new Stack<>();
-    private final AuthService authService;
 
     // View names
     public static final String LOGIN_VIEW = "LOGIN";
@@ -64,7 +61,6 @@ public class App extends JFrame {
      */
     private App(AbstractRPC rpc) {
         // Initialize services
-        this.authService = new GoogleAuthService();
         this.rpc = rpc;
         // Set up the main panel with card layout
         cardLayout = new CardLayout();
@@ -114,8 +110,8 @@ public class App extends JFrame {
      */
     private void initViews() {
         // Initialize ViewModels
-        loginViewModel = new LoginViewModel(authService, rpc);
-        mainViewModel = new MainViewModel(authService);
+        loginViewModel = new LoginViewModel(rpc);
+        mainViewModel = new MainViewModel();
         System.out.println("Meeting");
 
         // Will be set when user joins a meeting
@@ -293,10 +289,6 @@ public class App extends JFrame {
     }
     
     // Getters
-    public AuthService getAuthService() {
-        return authService;
-    }
-
     public UserProfile getCurrentUser() {
         return currentUser;
     }
@@ -339,7 +331,7 @@ public class App extends JFrame {
         }
 
         // Logout from auth service (this will clear all user data)
-        authService.logout();
+        // TODO USE RPC TO LOGOUT
 
         // Clear view history
         viewHistory.clear();

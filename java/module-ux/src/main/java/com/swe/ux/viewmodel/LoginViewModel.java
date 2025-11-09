@@ -1,8 +1,5 @@
 package com.swe.ux.viewmodel;
 
-import javax.swing.SwingUtilities;
-
-import com.swe.controller.Auth.AuthService;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
@@ -19,15 +16,13 @@ public class LoginViewModel extends BaseViewModel {
     public final BindableProperty<String> authErrorMessage = new BindableProperty<>("", "authErrorMessage");
     public final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
 
-    private final AuthService authService;
     private final AbstractRPC rpc;
     /**
      * Creates a new LoginViewModel.
      * @param authService The authentication service to use
      * @param rpc The RPC service to use
      */
-    public LoginViewModel(AuthService authService, AbstractRPC rpc) {
-        this.authService = authService;
+    public LoginViewModel(AbstractRPC rpc) {
         this.rpc = rpc;
     }
 

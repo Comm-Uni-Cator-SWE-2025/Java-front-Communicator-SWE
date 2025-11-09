@@ -1,6 +1,5 @@
 package com.swe.ux.viewmodel;
 
-import com.swe.controller.Auth.AuthService;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.binding.BindableProperty;
 
@@ -8,7 +7,6 @@ import com.swe.ux.binding.BindableProperty;
  * ViewModel for the main application screen.
  */
 public class MainViewModel extends BaseViewModel {
-    private final AuthService authService;
     
     // Bindable properties
     public final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
@@ -18,10 +16,8 @@ public class MainViewModel extends BaseViewModel {
     
     /**
      * Creates a new MainViewModel.
-     * @param authService The authentication service
      */
-    public MainViewModel(AuthService authService) {
-        this.authService = authService;
+    public MainViewModel() {
     }
     
     /**
@@ -36,7 +32,7 @@ public class MainViewModel extends BaseViewModel {
      * Logs out the current user.
      */
     public void logout() {
-        authService.logout();
+        // TODO USE RPC TO LOGOUT
         logoutRequested.set(true);
     }
 }
