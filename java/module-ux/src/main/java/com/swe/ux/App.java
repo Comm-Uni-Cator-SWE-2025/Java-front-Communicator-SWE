@@ -20,6 +20,7 @@ import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 
 import com.swe.ux.binding.PropertyListeners;
+import com.swe.ux.model.User;
 
 /**
  * Main application class that initializes the UI and coordinates between
@@ -88,7 +89,7 @@ public class App extends JFrame {
         themeManager.setApp(this);
 
         // Show login view by default
-        showView(LOGIN_VIEW);
+        showView(MEETING_VIEW);
 
         // Center the window
         setLocationRelativeTo(null);
@@ -116,7 +117,7 @@ public class App extends JFrame {
 
         // Will be set when user joins a meeting
         MeetingViewModel meetingViewModel = new MeetingViewModel(
-                new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT));
+                new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT), rpc);
 
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
@@ -149,11 +150,19 @@ public class App extends JFrame {
         // Use an array to hold the meeting view reference for use in lambda
         MeetingPage[] meetingViewRef = new MeetingPage[] { meetingView };
 
+        // New participant
+        rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
+            final String viewerIP = new String(data);
+            UserProfile new_user = new UserProfile(viewerIP, "New User", "New User", ParticipantRole.STUDENT);
+            meetingViewModel.addParticipant(new_user);
+            return new byte[0];
+        });
+
         // Handle meeting navigation - Start Meeting (Instructor role)
         mainViewModel.startMeetingRequested.addListener(PropertyListeners.onBooleanChanged(startMeeting -> {
             if (startMeeting && currentUser != null) {
                 // Create a new meeting view model for this meeting with Instructor role
-                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor");
+                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
 
                 // Set up listener for when meeting ends - navigate back to main view
                 newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
@@ -179,7 +188,7 @@ public class App extends JFrame {
         mainViewModel.joinMeetingRequested.addListener(PropertyListeners.onBooleanChanged(joinMeeting -> {
             if (joinMeeting && currentUser != null) {
                 // Create a new meeting view model for joining meeting with Student role
-                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student");
+                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
                 newMeetingViewModel.startMeeting();
 
                 // Set up listener for when meeting ends - navigate back to main view

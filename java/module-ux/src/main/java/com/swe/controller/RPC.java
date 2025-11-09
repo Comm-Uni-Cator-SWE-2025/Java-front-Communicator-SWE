@@ -23,6 +23,7 @@ public class RPC implements AbstractRPC {
     }
 
     public Thread connect(int portNumber) throws IOException, InterruptedException, ExecutionException {
+        System.out.println("Connecting to port: " + portNumber + " " + methods.keySet());
         socketryServer = new SocketryServer(portNumber, methods);
         Thread rpcThread = new Thread(socketryServer::listenLoop);
         rpcThread.start();

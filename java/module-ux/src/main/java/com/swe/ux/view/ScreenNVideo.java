@@ -3,8 +3,7 @@
  */
 package com.swe.ux.view;
 
-import com.swe.screenNVideo.AbstractRPC;
-import com.swe.screenNVideo.DummyRPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.model.UIImage;
@@ -206,10 +205,10 @@ public class ScreenNVideo extends JPanel {
             });
         }));
 
-        ScreenNVideoModel.getInstance().setOnImageReceived(ScreenNVideo::displayFrame);
+        ScreenNVideoModel.getInstance(this.meetingViewModel.rpc).setOnImageReceived(ScreenNVideo::displayFrame);
 
-        AbstractRPC rpc = DummyRPC.getInstance();
-        rpc.subscribe(Utils.STOP_SHARE, (args) -> {
+        // AbstractRPC rpc = DummyRPC.getInstance();
+        this.meetingViewModel.rpc.subscribe(Utils.STOP_SHARE, (args) -> {
             String ip = new String(args);
             nullifyImage(ip);
             return new byte[0];

@@ -3,8 +3,10 @@ package com.swe.ux.viewmodel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.checkerframework.checker.units.qual.A;
+
 import com.swe.controller.Meeting.UserProfile;
-import com.swe.screenNVideo.AbstractRPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
@@ -16,7 +18,7 @@ import com.swe.ux.model.Meeting;
 public class MeetingViewModel extends BaseViewModel {
     private final UserProfile currentUser;
     private Meeting currentMeeting;
-    private AbstractRPC rpc;
+    public AbstractRPC rpc;
     
     // Bindable properties
     public final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
@@ -29,15 +31,15 @@ public class MeetingViewModel extends BaseViewModel {
     public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
     public final BindableProperty<String> role = new BindableProperty<>("", "role");
 
-    public MeetingViewModel(UserProfile currentUser) {
+    public MeetingViewModel(UserProfile currentUser, AbstractRPC rpc) {
         System.out.println("User  " + currentUser);
         this.currentUser = currentUser;
-        this.rpc = DummyRPC.getInstance();
+        this.rpc = rpc;
     }
     
-    public MeetingViewModel(UserProfile currentUser, String role) {
+    public MeetingViewModel(UserProfile currentUser, String role, AbstractRPC rpc) {
         this.currentUser = currentUser;
-        this.rpc = DummyRPC.getInstance();
+        this.rpc = rpc;
         this.role.set(role);
     }
 
