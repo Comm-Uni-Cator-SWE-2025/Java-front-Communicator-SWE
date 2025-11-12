@@ -3,6 +3,9 @@ package com.swe.networking;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
+
+import com.swe.app.RPCinterface.AbstractRPC;
 
 /**
  * The frontend networking class to connect to the RPC and to the core
@@ -10,11 +13,19 @@ import java.util.HashMap;
  */
 public class NetworkFront implements AbstractController, AbstractNetworking {
 
-    /** Variable to store the function mappings. */
+    /**
+     * Variable to store the function mappings.
+     */
     private HashMap<Integer, MessageListener> listeners;
 
-    /** Variable to track the number of functions. */
+    /**
+     * Variable to track the number of functions.
+     */
     private int functionCount = 1;
+    /**
+     * Variable to store the RPC.
+     */
+    private AbstractRPC moduleRPC = null;
 
     @Override
     public void sendData(final byte[] data, final ClientNode[] dest, final int module, final int priority) {
@@ -40,7 +51,7 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
         buffer.putInt(priority);
         final byte[] args = buffer.array();
 
-        // TOD: Call RPC broadcast
+        moduleRPC.call("networkRPCSendData", args);
     }
 
     @Override
@@ -54,18 +65,17 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
         buffer.putInt(priority);
         final byte[] args = buffer.array();
 
-        // TOD: Call RPC broadcast
+        moduleRPC.call("networkRPCBroadcast", args);
     }
 
     @Override
     public void subscribe(final int name, final MessageListener function) {
         listeners.put(name, function);
-        final int bufferSize = Integer.BYTES;
-        final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-        buffer.putInt(name);
-        final byte[] args = buffer.array();
-
-        // TOD: Call RPC Add function
+        final String callbackName = "callback" + name;
+        moduleRPC.subscribe(callbackName, (byte[] args) -> {
+            function.receiveData(args);
+            return null;
+        });
     }
 
     @Override
@@ -75,7 +85,7 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
         buffer.putInt(name);
         final byte[] args = buffer.array();
 
-        // TOD: Call RPC remove
+        moduleRPC.call("networkRPCRemoveSubscription", args);
     }
 
     @Override
@@ -93,7 +103,7 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
         buffer.putInt(mainServerAddress.port());
         final byte[] args = buffer.array();
 
-        // TOD: Call RPC addUser
+        moduleRPC.call("getNetworkRPCAddUser", args);
     }
 
     /**
@@ -109,6 +119,24 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
         final MessageListener function = listeners.get(module);
         if (function != null) {
             function.receiveData(newData);
+        }
+    }
+
+    @Override
+    public void closeNetworking() {
+        System.out.println("Closing Networking in front...");
+        moduleRPC.call("networkRPCCloseNetworking", new byte[0]);
+    }
+
+    @Override
+    public void consumeRPC(AbstractRPC rpc) {
+        moduleRPC = rpc;
+        for (Map.Entry<Integer, MessageListener> listener : listeners.entrySet()) {
+            final int bufferSize = Integer.BYTES;
+            final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+            buffer.putInt(listener.getKey());
+            final byte[] args = buffer.array();
+            moduleRPC.call("networkRPCSubscribe", args);
         }
     }
 }
