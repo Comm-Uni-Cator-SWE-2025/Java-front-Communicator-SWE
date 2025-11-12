@@ -129,7 +129,7 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
     }
 
     @Override
-    public void consumeRPC(AbstractRPC rpc) {
+    public void consumeRPC(final AbstractRPC rpc) {
         moduleRPC = rpc;
         for (Map.Entry<Integer, MessageListener> listener : listeners.entrySet()) {
             final int bufferSize = Integer.BYTES;
