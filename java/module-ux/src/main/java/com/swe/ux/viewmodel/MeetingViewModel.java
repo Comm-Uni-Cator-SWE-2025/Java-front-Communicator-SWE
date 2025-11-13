@@ -3,20 +3,22 @@ package com.swe.ux.viewmodel;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.swe.screenNVideo.AbstractRPC;
+import org.checkerframework.checker.units.qual.A;
+
+import com.swe.controller.Meeting.UserProfile;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.Meeting;
-import com.swe.ux.model.User;
 
 /**
  * ViewModel for managing meeting-related business logic and state.
  */
 public class MeetingViewModel extends BaseViewModel {
-    private final User currentUser;
+    private final UserProfile currentUser;
     private Meeting currentMeeting;
-    private AbstractRPC rpc;
+    public AbstractRPC rpc;
     
     // Bindable properties
     public final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
@@ -27,18 +29,18 @@ public class MeetingViewModel extends BaseViewModel {
     public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
     public final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
     public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
-    public final BindableProperty<List<User>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
+    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
     public final BindableProperty<String> role = new BindableProperty<>("", "role");
 
-    public MeetingViewModel(User currentUser) {
+    public MeetingViewModel(UserProfile currentUser, AbstractRPC rpc) {
         System.out.println("User  " + currentUser);
         this.currentUser = currentUser;
-        this.rpc = DummyRPC.getInstance();
+        this.rpc = rpc;
     }
     
-    public MeetingViewModel(User currentUser, String role) {
+    public MeetingViewModel(UserProfile currentUser, String role, AbstractRPC rpc) {
         this.currentUser = currentUser;
-        this.rpc = DummyRPC.getInstance();
+        this.rpc = rpc;
         this.role.set(role);
     }
 
@@ -98,22 +100,22 @@ public class MeetingViewModel extends BaseViewModel {
     /**
      * Add a participant to the current meeting.
      */
-    public void addParticipant(User user) {
+    public void addParticipant(UserProfile user) {
         if (currentMeeting != null) {
             currentMeeting.addParticipant(user);
             updateParticipants();
-            addSystemMessage(user.getUsername() + " joined the meeting");
+            addSystemMessage(user.getDisplayName() + " joined the meeting");
         }
     }
 
     /**
      * Remove a participant from the current meeting.
      */
-    public void removeParticipant(User user) {
+    public void removeParticipant(UserProfile user) {
         if (currentMeeting != null) {
             currentMeeting.removeParticipant(user);
             updateParticipants();
-            addSystemMessage(user.getUsername() + " left the meeting");
+            addSystemMessage(user.getDisplayName() + " left the meeting");
         }
     }
 

@@ -421,3 +421,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+**/*.class
+**/target/
+
+tokens/
+
+.idea/

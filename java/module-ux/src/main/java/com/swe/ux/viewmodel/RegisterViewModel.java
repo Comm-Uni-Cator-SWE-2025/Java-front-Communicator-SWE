@@ -1,8 +1,9 @@
 package com.swe.ux.viewmodel;
 
-import com.swe.ux.model.User;
-import com.swe.ux.service.AuthService;
+import com.swe.controller.Meeting.UserProfile;
+import com.swe.controller.Auth.AuthService;
 import com.swe.ux.binding.BindableProperty;
+import com.swe.ux.service.impl.InMemoryAuthService;
 import javax.swing.SwingUtilities;
 
 /**
@@ -57,11 +58,14 @@ public class RegisterViewModel extends BaseViewModel {
                 Thread.sleep(1000); // Simulate network delay
                 
                 // Call the auth service
-                User newUser = authService.register(
-                    username.get().trim(),
-                    password.get(),
-                    email.get().trim()
-                );
+                UserProfile newUser = null;
+                if (authService instanceof InMemoryAuthService) {
+                    newUser = ((InMemoryAuthService) authService).register(
+                        username.get().trim(),
+                        password.get(),
+                        email.get().trim()
+                    );
+                }
                 
                 // Notify success
                 SwingUtilities.invokeLater(() -> {
