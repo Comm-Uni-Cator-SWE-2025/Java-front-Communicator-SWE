@@ -5,7 +5,7 @@ import java.security.GeneralSecurityException;
 
 import com.swe.controller.Auth.GoogleAuthService;
 import com.swe.controller.MeetingServices;
-import com.swe.core.Meeting.UserProfile;
+import com.swe.controller.Meeting.UserProfile;
 
 /**
  * Singleton service that manages the controller module integration.

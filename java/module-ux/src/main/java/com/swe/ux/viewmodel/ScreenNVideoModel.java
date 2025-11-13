@@ -3,7 +3,7 @@
  */
 package com.swe.ux.viewmodel;
 
-import com.swe.screenNVideo.AbstractRPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.RImage;
 import com.swe.screenNVideo.Utils;
@@ -20,15 +20,15 @@ public class ScreenNVideoModel extends BaseViewModel {
 
     private static ScreenNVideoModel INSTANCE;
 
-    public static ScreenNVideoModel getInstance() {
+    public static ScreenNVideoModel getInstance(AbstractRPC rpc) {
         if (INSTANCE == null) {
-            INSTANCE = new ScreenNVideoModel();
+            INSTANCE = new ScreenNVideoModel(rpc);
         }
         return INSTANCE;
     }
     
-    private ScreenNVideoModel() {
-        this.rpc = DummyRPC.getInstance();
+    private ScreenNVideoModel(AbstractRPC rpc) {
+        this.rpc = rpc;
         
         initComponents();
     }

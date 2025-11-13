@@ -2,7 +2,6 @@ package com.swe.ux.view;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.screenNVideo.Utils;
-import com.swe.ux.model.User;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.CustomButton;
 import com.swe.ux.viewmodel.CanvasViewModel;
@@ -13,7 +12,6 @@ import com.swe.ux.binding.PropertyListeners;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.List;
 
 /**
  * Meeting Page layout (UX Integration Layer)
@@ -221,7 +219,7 @@ public class MeetingPage extends JPanel {
         ));
         
         // Controller team should implement:
-        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<User> users) ->
+        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<UserProfile> users) ->
             SwingUtilities.invokeLater(() -> {
                 // Controller team's implementation
             })
