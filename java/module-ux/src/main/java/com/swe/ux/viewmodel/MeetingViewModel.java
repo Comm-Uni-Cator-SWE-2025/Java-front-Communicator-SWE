@@ -3,11 +3,8 @@ package com.swe.ux.viewmodel;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.checkerframework.checker.units.qual.A;
-
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.Meeting;

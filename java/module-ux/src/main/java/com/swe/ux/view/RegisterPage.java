@@ -1,5 +1,6 @@
 package com.swe.ux.view;
 
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.theme.Theme;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.CustomButton;
@@ -35,13 +36,15 @@ public class RegisterPage extends JPanel {
     private JLabel titleLabel;
     private JPanel formPanel;
     private JPanel buttonPanel;
+    private AbstractRPC rpc;
 
     /**
      * Creates a new RegisterPage with the specified ViewModel.
      * @param viewModel The ViewModel to use for this view
      */
-    public RegisterPage(RegisterViewModel viewModel) {
+    public RegisterPage(RegisterViewModel viewModel, AbstractRPC rpcArgs) {
         this.viewModel = viewModel;
+        this.rpc = rpcArgs;
         initializeUI();
         setupBindings();
         applyTheme();
@@ -266,7 +269,7 @@ public class RegisterPage extends JPanel {
         successLabel.setVisible(false);
         
         // Navigate back to login
-        App.getInstance().showView(App.LOGIN_VIEW);
+        App.getInstance(rpc).showView(App.LOGIN_VIEW);
     }
 
     private void applyTheme() {
