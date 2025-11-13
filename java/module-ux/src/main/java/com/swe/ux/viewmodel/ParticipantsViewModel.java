@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.swe.ux.binding.BindableProperty;
-import com.swe.ux.model.User;
+import com.swe.controller.Meeting.UserProfile;
 
 /**
  * ViewModel for managing participants in a meeting.
@@ -17,7 +17,7 @@ public class ParticipantsViewModel extends BaseViewModel {
     // Bindable properties
     public final BindableProperty<Integer> participantCount = new BindableProperty<>(0, "participantCount");
     public final BindableProperty<List<String>> participantNames = new BindableProperty<>(new ArrayList<>(), "participantNames");
-    public final BindableProperty<List<User>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
+    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
     
     /**
      * Creates a new ParticipantsViewModel.
@@ -34,7 +34,7 @@ public class ParticipantsViewModel extends BaseViewModel {
     private void setupBindings() {
         // Listen to participant changes in MeetingViewModel
         meetingViewModel.participants.addListener(evt -> {
-            List<User> currentParticipants = meetingViewModel.participants.get();
+            List<UserProfile> currentParticipants = meetingViewModel.participants.get();
             updateParticipants(currentParticipants);
         });
         
@@ -46,7 +46,7 @@ public class ParticipantsViewModel extends BaseViewModel {
      * Updates participant count and names based on the current participants list.
      * @param currentParticipants The current list of participants
      */
-    private void updateParticipants(List<User> currentParticipants) {
+    private void updateParticipants(List<UserProfile> currentParticipants) {
         if (currentParticipants == null) {
             currentParticipants = new ArrayList<>();
         }
@@ -59,12 +59,8 @@ public class ParticipantsViewModel extends BaseViewModel {
         
         // Extract participant names
         List<String> names = currentParticipants.stream()
-            .map(user -> {
-                String displayName = user.getDisplayName();
-                return displayName != null && !displayName.isEmpty() ? displayName : user.getUsername();
-            })
+            .map(UserProfile::getDisplayName)
             .collect(Collectors.toList());
-        
         participantNames.set(names);
     }
     
@@ -88,7 +84,7 @@ public class ParticipantsViewModel extends BaseViewModel {
      * Gets the list of participant User objects.
      * @return List of participants
      */
-    public List<User> getParticipants() {
+    public List<UserProfile> getParticipants() {
         return new ArrayList<>(participants.get());
     }
 }

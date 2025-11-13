@@ -1,4 +1,4 @@
-package com.swe.core.Meeting;
+package com.swe.controller.Meeting;
 
 public enum ParticipantRole {
     INSTRUCTOR,
