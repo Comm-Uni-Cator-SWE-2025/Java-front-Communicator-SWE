@@ -4,7 +4,6 @@
 package com.swe.ux.viewmodel;
 
 import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.RImage;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.model.UIImage;

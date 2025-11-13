@@ -1,16 +1,16 @@
 package com.swe.ux.viewmodel;
 
 import com.swe.controller.Meeting.UserProfile;
-import com.swe.controller.Auth.AuthService;
+//import com.swe.controller.Auth.AuthService;
 import com.swe.ux.binding.BindableProperty;
-import com.swe.ux.service.impl.InMemoryAuthService;
+//import com.swe.ux.service.impl.InMemoryAuthService;
 import javax.swing.SwingUtilities;
 
 /**
  * ViewModel for the registration screen.
  */
 public class RegisterViewModel extends BaseViewModel {
-    private final AuthService authService;
+//    private final AuthService authService;
     
     // Bindable properties
     public final BindableProperty<String> username = new BindableProperty<>("", "username");
@@ -21,9 +21,9 @@ public class RegisterViewModel extends BaseViewModel {
     public final BindableProperty<String> errorMessage = new BindableProperty<>("", "errorMessage");
     public final BindableProperty<Boolean> registrationSuccess = new BindableProperty<>(false, "registrationSuccess");
 
-    public RegisterViewModel(AuthService authService) {
-        this.authService = authService;
-    }
+//    public RegisterViewModel(AuthService authService) {
+//        this.authService = authService;
+//    }
 
     /**
      * Attempts to register a new user with the provided credentials.
@@ -59,13 +59,13 @@ public class RegisterViewModel extends BaseViewModel {
                 
                 // Call the auth service
                 UserProfile newUser = null;
-                if (authService instanceof InMemoryAuthService) {
-                    newUser = ((InMemoryAuthService) authService).register(
-                        username.get().trim(),
-                        password.get(),
-                        email.get().trim()
-                    );
-                }
+//                if (authService instanceof InMemoryAuthService) {
+//                    newUser = ((InMemoryAuthService) authService).register(
+//                        username.get().trim(),
+//                        password.get(),
+//                        email.get().trim()
+//                    );
+//                }
                 
                 // Notify success
                 SwingUtilities.invokeLater(() -> {
