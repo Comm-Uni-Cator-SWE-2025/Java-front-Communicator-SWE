@@ -1,12 +1,10 @@
 package com.swe.canvas.datamodel.canvas;
 
-import com.swe.canvas.datamodel.shape.Shape;
-import com.swe.canvas.datamodel.shape.ShapeId;
-
-// import com.swe.canvas.datamodel.action.Action;
-
 import java.io.Serializable;
 import java.util.Objects;
+
+import com.swe.canvas.datamodel.shape.Shape;
+import com.swe.canvas.datamodel.shape.ShapeId;
 
 /**
  * Represents the complete state of a single shape at a specific moment.

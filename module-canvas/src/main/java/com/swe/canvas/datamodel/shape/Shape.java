@@ -65,7 +65,7 @@ public abstract class Shape implements Serializable {
         this.shapeId = Objects.requireNonNull(shapeId_, "shapeId cannot be null");
         this.shapeType = Objects.requireNonNull(shapeType_, "shapeType cannot be null");
         this.points = Objects.requireNonNull(points_, "points list cannot be null");
-        this.thickness = thickness;
+        this.thickness = Objects.requireNonNull(thickness_, "thickness cannot be null");
         this.color = Objects.requireNonNull(color_, "color cannot be null");
         this.createdBy = Objects.requireNonNull(createdBy_, "createdBy cannot be null");
         this.lastUpdatedBy = Objects.requireNonNull(lastUpdatedBy_, "lastUpdatedBy cannot be null");

@@ -1,13 +1,11 @@
 package com.swe.canvas.datamodel.action;
 
 
-import com.swe.canvas.datamodel.canvas.ShapeState;
-import com.swe.canvas.datamodel.shape.ShapeId;
-
-// import com.swe.canvas.datamodel.canvas.CanvasState;
-
 import java.io.Serializable;
 import java.util.Objects;
+
+import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.shape.ShapeId;
 
 /**
  * Abstract base class for all operations (Commands) on the canvas.
@@ -54,6 +52,7 @@ public abstract class Action implements Serializable {
 
     /**
      * The timestamp of when the action was created by the client.
+     * TO BE REMOVED
      */
     private final long timestamp;
 
@@ -64,6 +63,7 @@ public abstract class Action implements Serializable {
 
     /**
      * The ID of the shape this action targets.
+     * TO BE REMOVED
      */
     private final ShapeId shapeId;
 
