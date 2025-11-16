@@ -78,6 +78,15 @@ public abstract class Action implements Serializable {
      */
     private final ShapeState newState;
 
+
+    /**
+     * Action ID
+     * prevState
+     * newState
+     * actionType
+     * required for serialization/deserialization
+     */
+
     /**
      * Constructs a new Action.
      *

@@ -21,7 +21,7 @@ import com.swe.canvas.datamodel.shape.ShapeType;
  * NOTE: Assumes the ManualJsonConverter class and its dependencies (ShapeState, Shape, Point, etc.)
  * are available in the main source path.
  */
-public class ManualSerializerTest {
+public class ShapeSerializerTest {
 
     // IMPORTANT: The Type must be uppercase to match Java's ShapeType enum constants.
     private static final String VALID_RECTANGLE_JSON =
@@ -53,7 +53,7 @@ public class ManualSerializerTest {
         System.out.println("\n--- Running Deserialization Test: Valid Rectangle ---");
         
         // Act
-        final ShapeState state = ManualSerializer.deserializeShape(VALID_RECTANGLE_JSON);
+        final ShapeState state = ShapeSerializer.deserializeShape(VALID_RECTANGLE_JSON);
 
         // Assert
         assertNotNull(state, "ShapeState should not be null after deserialization.");
@@ -89,9 +89,9 @@ public class ManualSerializerTest {
         System.out.println("\n--- Running Deserialization Test: Null/Empty Input ---");
         
         // Act & Assert
-        assertEquals(null, ManualSerializer.deserializeShape(null), "Null input should return null.");
-        assertEquals(null, ManualSerializer.deserializeShape(""), "Empty string input should return null.");
-        assertEquals(null, ManualSerializer.deserializeShape("null"), "'null' string input should return null.");
+        assertEquals(null, ShapeSerializer.deserializeShape(null), "Null input should return null.");
+        assertEquals(null, ShapeSerializer.deserializeShape(""), "Empty string input should return null.");
+        assertEquals(null, ShapeSerializer.deserializeShape("null"), "'null' string input should return null.");
 
         System.out.println("TEST SUCCESSFUL: Null/Empty input handled.");
     }
@@ -103,7 +103,7 @@ public class ManualSerializerTest {
         // Act & Assert
         // Attempting to deserialize JSON missing the 'Type' field should fail.
         assertThrows(SerializationException.class, 
-                     () -> ManualSerializer.deserializeShape(INVALID_MISSING_TYPE_JSON), 
+                     () -> ShapeSerializer.deserializeShape(INVALID_MISSING_TYPE_JSON), 
                      "Deserialization should throw SerializationException for missing 'Type' field.");
         
         System.out.println("TEST SUCCESSFUL: Missing 'Type' field correctly triggered an exception.");

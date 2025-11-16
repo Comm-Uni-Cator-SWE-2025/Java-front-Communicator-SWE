@@ -8,7 +8,7 @@ import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
-import com.swe.canvas.datamodel.serialization.ManualSerializer;
+import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeFactory;
@@ -205,7 +205,7 @@ public class CanvasViewModel {
             
             // LOG THE SERIALIZED SHAPE HERE
             try {
-                final String shapeJson = ManualSerializer.testSerializeShapeOnly(ghostShape);
+                final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
                 System.out.println("--- NEW SHAPE SERIALIZED TO JSON ---");
                 System.out.println(shapeJson);
                 System.out.println("------------------------------------");
