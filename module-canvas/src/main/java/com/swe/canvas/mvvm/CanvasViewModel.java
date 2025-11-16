@@ -13,6 +13,7 @@ import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeFactory;
 import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.datamodel.shape.ShapeType;
+import com.swe.canvas.services.AiService;
 import com.swe.canvas.ui.util.ColorConverter;
 import com.swe.canvas.ui.util.GeometryUtils;
 
@@ -249,7 +250,6 @@ public class CanvasViewModel {
      */
     public void regularizeSelectedShape() {
         // Regularize only the currently selected FREEHAND shape.
-        final int defaultSides = 6;
         final ShapeId id = selectedShapeId.get();
         if (id == null) {
             return; // nothing selected
@@ -265,7 +265,7 @@ public class CanvasViewModel {
             return; // only applies to freehand
         }
 
-        final Shape modified = GeometryUtils.regularizeFreehandShape(original, defaultSides);
+        final Shape modified = AiService.regularizeFreehandShape(original);
         if (modified == null || modified.getPoints() == null || modified.getPoints().isEmpty()) {
             return;
         }
