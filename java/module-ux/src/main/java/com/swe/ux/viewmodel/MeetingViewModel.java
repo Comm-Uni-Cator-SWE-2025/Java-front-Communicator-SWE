@@ -3,11 +3,8 @@ package com.swe.ux.viewmodel;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.checkerframework.checker.units.qual.A;
-
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.screenNVideo.DummyRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.Meeting;
@@ -44,20 +41,32 @@ public class MeetingViewModel extends BaseViewModel {
     }
 
     /**
+     * Sets the meeting ID for this meeting.
+     * This should be called before startMeeting() to use an existing meeting ID.
+     * @param id The meeting ID to set
+     */
+    public void setMeetingId(String id) {
+        if (id != null && !id.trim().isEmpty()) {
+            meetingId.set(id);
+        }
+    }
+
+    /**
      * Start a new meeting with the current user as a participant.
-     * Creates a new meeting with a unique meeting ID and sets role as Instructor.
+     * The meeting ID must be set via setMeetingId() before calling this method.
+     * The meeting ID comes from either RPC (when creating) or user input (when joining).
      */
     public void startMeeting() {
-        // Generate a new unique meeting ID
-        String newMeetingId = java.util.UUID.randomUUID().toString();
-        meetingId.set(newMeetingId);
+        // Get the meeting ID that was set via setMeetingId()
+        String newMeetingId = meetingId.get();
         
-        // Ensure role is set to Instructor when starting a meeting
-        if (!"Instructor".equals(role.get())) {
-            role.set("Instructor");
+        // Meeting ID must be provided before starting the meeting
+        if (newMeetingId == null || newMeetingId.trim().isEmpty()) {
+            System.err.println("Error: Meeting ID must be set before starting a meeting");
+            return;
         }
         
-        // Create the meeting with the generated ID
+        // Create the meeting with the provided ID
         String title = meetingTitle.get();
         if (title == null || title.trim().isEmpty()) {
             title = "Meeting " + newMeetingId.substring(0, 8);

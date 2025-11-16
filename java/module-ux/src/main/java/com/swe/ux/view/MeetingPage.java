@@ -12,6 +12,8 @@ import com.swe.ux.binding.PropertyListeners;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Clipboard;
 
 /**
  * Meeting Page layout (UX Integration Layer)
@@ -42,6 +44,10 @@ public class MeetingPage extends JPanel {
     private CustomButton cameraButton;
     private CustomButton screenShareButton;
     private ScreenNVideo screenNVideoComponent;
+    
+    // Meeting ID components
+    private JLabel meetingIdLabel;
+    private CustomButton copyMeetingIdButton;
 
     public MeetingPage(MeetingViewModel meetingViewModel) {
         this.meetingViewModel = meetingViewModel;
@@ -58,13 +64,23 @@ public class MeetingPage extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        // Left side: Title
+        // Left side: Title and Meeting ID
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         leftPanel.setOpaque(false);
         
         JLabel titleLabel = new JLabel("Meeting");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         leftPanel.add(titleLabel);
+        
+        // Meeting ID Label
+        meetingIdLabel = new JLabel("");
+        meetingIdLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        leftPanel.add(meetingIdLabel);
+        
+        // Copy Meeting ID Button
+        copyMeetingIdButton = new CustomButton("Copy ID", false);
+        copyMeetingIdButton.addActionListener(e -> copyMeetingIdToClipboard());
+        leftPanel.add(copyMeetingIdButton);
         
         headerPanel.add(leftPanel, BorderLayout.WEST);
 
@@ -233,6 +249,18 @@ public class MeetingPage extends JPanel {
             });
         }));
 
+        // Bind meeting ID to update the label
+        meetingViewModel.meetingId.addListener(evt -> {
+            SwingUtilities.invokeLater(() -> {
+                String meetingId = meetingViewModel.meetingId.get();
+                if (meetingId != null && !meetingId.trim().isEmpty()) {
+                    meetingIdLabel.setText("- ID: " + meetingId);
+                } else {
+                    meetingIdLabel.setText("");
+                }
+            });
+        });
+
     }
 
 
@@ -243,6 +271,24 @@ public class MeetingPage extends JPanel {
     private void sendMessage() {
         // This method will be implemented by the chat team
         // meetingViewModel.sendMessage();
+    }
+
+    /**
+     * Copies the meeting ID to the system clipboard.
+     */
+    private void copyMeetingIdToClipboard() {
+        String meetingId = meetingViewModel.meetingId.get();
+        if (meetingId != null && !meetingId.trim().isEmpty()) {
+            StringSelection stringSelection = new StringSelection(meetingId);
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(stringSelection, null);
+            
+            // Optionally show a confirmation message
+            JOptionPane.showMessageDialog(this, 
+                "Meeting ID copied to clipboard!", 
+                "Copied", 
+                JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void applyTheme() {
