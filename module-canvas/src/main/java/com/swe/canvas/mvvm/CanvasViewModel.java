@@ -8,6 +8,7 @@ import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
@@ -17,6 +18,8 @@ import com.swe.canvas.datamodel.shape.ShapeType;
 import com.swe.canvas.services.AiService;
 import com.swe.canvas.ui.util.ColorConverter;
 import com.swe.canvas.ui.util.GeometryUtils;
+import com.swe.networking.AbstractNetworking;
+import com.swe.networking.ClientNode;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -48,6 +51,12 @@ public class CanvasViewModel {
     private double lastDragY;
     // Exposed so Renderer knows if we are currently moving something
     public boolean isDraggingSelection = false;
+
+    private AbstractNetworking network;
+
+    public void setNetworking(AbstractNetworking networking) {
+        this.network = networking;
+    }
 
     public CanvasViewModel(final CanvasState state) {
         this.canvasState = state;
@@ -90,6 +99,32 @@ public class CanvasViewModel {
                 actionManager.requestLocalAction(action);
             }
         }
+    }
+
+    public void processIncomingData(byte[] data) {
+        // data is an action serialized as bytes
+        String json = new String(data);
+        final Action action = NetActionSerializer.deserializeAction(json);
+
+        if(null != action.getActionType()) 
+            switch (action.getActionType()) {
+                case CREATE -> {
+                    final Action createAction = actionFactory.createCreateAction(ghostShape, userId);
+                    actionManager.requestLocalAction(createAction);
+            }
+                case MODIFY -> {
+                    final Action modifyAction = actionFactory.createModifyAction(
+                            canvasState, action.getShapeId(), action.getNewState().getShape(), userId);
+                    actionManager.requestLocalAction(modifyAction);
+            }
+                case DELETE -> {
+                    final Action deleteAction = actionFactory.createDeleteAction(canvasState, action.getShapeId(), userId);
+                    actionManager.requestLocalAction(deleteAction);
+            }
+                default -> {
+            }
+        }
+        
     }
 
     // --- Input Handling ---
@@ -161,31 +196,6 @@ public class CanvasViewModel {
         }
     }
 
-    // /**
-    //  * Handles mouse release events
-    //  * @param x x coordinate
-    //  * @param y y coordinate
-    //  */
-    // public void onMouseReleased(final double x, final double y) {
-    //     if (activeTool.get() == ToolType.SELECT) {
-    //         // If we were dragging, commit the move now
-    //         if (isDraggingSelection && ghostShape != null && selectedShapeId.get() != null) {
-    //             final Action modifyAction = actionFactory.createModifyAction(
-    //                     canvasState, selectedShapeId.get(), ghostShape, userId);
-    //             actionManager.requestLocalAction(modifyAction);
-    //         }
-    //         isDraggingSelection = false;
-    //     } else if (ghostShape != null) {
-    //         // Commit newly drawn shape
-    //         final Action createAction = actionFactory.createCreateAction(ghostShape, userId);
-    //         actionManager.requestLocalAction(createAction);
-    //     }
-
-    //     sendNetworkMessage();
-
-    //     ghostShape = null;
-    //     currentPoints.clear();
-    // }
     
     /**
      * Handles mouse release events
@@ -204,14 +214,20 @@ public class CanvasViewModel {
         } else if (ghostShape != null) {
             
             // LOG THE SERIALIZED SHAPE HERE
-            try {
-                final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
-                System.out.println("--- NEW SHAPE SERIALIZED TO JSON ---");
-                System.out.println(shapeJson);
-                System.out.println("------------------------------------");
-            } catch (Exception e) {
-                System.err.println("Error during shape serialization logging: " + e.getMessage());
-            }
+            // try {
+            //     final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
+            //     System.out.println("--- NEW SHAPE SERIALIZED TO JSON ---");
+            //     System.out.println(shapeJson);
+            //     System.out.println("------------------------------------");
+            // } catch (Exception e) {
+            //     System.err.println("Error during shape serialization logging: " + e.getMessage());
+            // }
+            final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
+            byte[] shapeData = shapeJson.getBytes();
+
+            ClientNode[] clients = generateClientNodes();
+
+            network.sendData(shapeData, clients, 2, 0);
 
             // Commit newly drawn shape
             final Action createAction = actionFactory.createCreateAction(ghostShape, userId);
@@ -221,8 +237,12 @@ public class CanvasViewModel {
         currentPoints.clear();
     }
 
-    private void sendNetworkMessage() {
-        // TODO: Implement network message sending logic
+    private ClientNode[] generateClientNodes() {
+        String ip = "";
+        int port = 0;
+        ClientNode client1 = new ClientNode(ip, port);
+        ClientNode[] clients = {client1};
+        return clients;
     }
 
     private ShapeId findHitShape(final double x, final double y) {
@@ -262,6 +282,7 @@ public class CanvasViewModel {
         ghostShape = shapeFactory.createShape(
                 type, ShapeId.randomId(), new ArrayList<>(currentPoints),
                 activeStrokeWidth.get(), ColorConverter.toAwt(activeColor.get()), userId);
+
     }
 
     public void deleteSelectedShape() {
@@ -270,6 +291,9 @@ public class CanvasViewModel {
             final Action deleteAction = actionFactory.createDeleteAction(canvasState, id, userId);
             actionManager.requestLocalAction(deleteAction);
             selectedShapeId.set(null); // Clear selection after delete
+        
+            String actionJson = NetActionSerializer.serializeAction(deleteAction);
+            network.sendData(actionJson.getBytes(), generateClientNodes(), 2, 0);
         }
     }
 
@@ -307,6 +331,9 @@ public class CanvasViewModel {
 
         final Action modifyAction = actionFactory.createModifyAction(canvasState, id, modified, userId);
         actionManager.requestLocalAction(modifyAction);
+
+        String actionJson = NetActionSerializer.serializeAction(modifyAction);
+        network.sendData(actionJson.getBytes(), generateClientNodes(), 2, 0);
     }
 
     public void undo() {

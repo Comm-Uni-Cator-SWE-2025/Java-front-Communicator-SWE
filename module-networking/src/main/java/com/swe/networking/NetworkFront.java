@@ -7,11 +7,14 @@ import java.util.Map;
 
 import com.swe.app.RPCinterface.AbstractRPC;
 
+
 /**
  * The frontend networking class to connect to the RPC and to the core
  * netwroking.
  */
 public class NetworkFront implements AbstractController, AbstractNetworking {
+
+
 
     /**
      * Variable to store the function mappings.
@@ -26,6 +29,21 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
      * Variable to store the RPC.
      */
     private AbstractRPC moduleRPC = null;
+
+    
+    private static NetworkFront instance;
+
+    private NetworkFront() {
+        listeners = new HashMap<>();
+    }
+
+    public static NetworkFront getInstance() {
+        if (instance == null) {
+            instance = new NetworkFront();
+        }
+        return instance;
+    }
+
 
     @Override
     public void sendData(final byte[] data, final ClientNode[] dest, final int module, final int priority) {
@@ -139,4 +157,5 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
             moduleRPC.call("networkRPCSubscribe", args);
         }
     }
+
 }

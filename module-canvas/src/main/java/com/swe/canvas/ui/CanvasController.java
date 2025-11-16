@@ -104,7 +104,9 @@ public class CanvasController {
 
 
     public void setNetwork(AbstractNetworking abstractNetwork) {
-        this.network = abstractNetwork;
+        // this.network = abstractNetwork;
+
+        viewModel.setNetworking(abstractNetwork);
         // If viewModel is ready you can subscribe now:
         if (viewModel != null) {
             this.network.subscribe(2, (data) -> {

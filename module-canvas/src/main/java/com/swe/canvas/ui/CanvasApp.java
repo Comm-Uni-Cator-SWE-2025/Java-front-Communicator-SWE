@@ -1,5 +1,9 @@
 package com.swe.canvas.ui;
 
+import java.io.IOException;
+
+import com.swe.networking.NetworkFront;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -8,8 +12,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 
 /**
  * Main running class in the app
@@ -25,7 +27,7 @@ public class CanvasApp extends Application {
 
         final Scene scene = new Scene(root);
 
-        controller.setNetwork(NetworkProvider.getNetworking());
+        controller.setNetwork(NetworkFront.getInstance());
 
         // Setup Accelerators
         // Ctrl+Z -> Undo
