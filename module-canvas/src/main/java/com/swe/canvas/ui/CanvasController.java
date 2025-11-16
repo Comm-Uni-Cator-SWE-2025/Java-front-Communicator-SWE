@@ -4,7 +4,9 @@ import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.mvvm.CanvasViewModel;
 import com.swe.canvas.mvvm.ToolType;
+import com.swe.canvas.services.CanvasMessageListener;
 import com.swe.canvas.ui.util.ColorConverter;
+import com.swe.networking.AbstractNetworking;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -93,10 +95,25 @@ public class CanvasController {
      */
     @FXML private Pane canvasContainer;
 
+    private AbstractNetworking network;
+
     private CanvasViewModel viewModel;
     private CanvasRenderer renderer;
     private boolean isUpdatingUI = false;
     private final Label sizeValueLabel = new Label();
+
+
+    public void setNetwork(AbstractNetworking abstractNetwork) {
+        this.network = abstractNetwork;
+        // If viewModel is ready you can subscribe now:
+        if (viewModel != null) {
+            this.network.subscribe(2, (data) -> {
+                Platform.runLater(() -> {
+                    viewModel.processIncomingData(data);
+                });
+            });
+        }
+    }
 
     /**
      * Initializes the view/GUI

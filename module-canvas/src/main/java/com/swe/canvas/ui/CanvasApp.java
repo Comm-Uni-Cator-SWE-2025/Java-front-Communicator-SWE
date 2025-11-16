@@ -25,6 +25,8 @@ public class CanvasApp extends Application {
 
         final Scene scene = new Scene(root);
 
+        controller.setNetwork(NetworkProvider.getNetworking());
+
         // Setup Accelerators
         // Ctrl+Z -> Undo
         scene.getAccelerators().put(new KeyCodeCombination(KeyCode.Z, KeyCombination.SHORTCUT_DOWN),
