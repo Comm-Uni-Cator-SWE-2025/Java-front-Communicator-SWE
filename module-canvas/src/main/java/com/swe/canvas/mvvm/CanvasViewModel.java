@@ -213,15 +213,7 @@ public class CanvasViewModel {
             isDraggingSelection = false;
         } else if (ghostShape != null) {
             
-            // LOG THE SERIALIZED SHAPE HERE
-            // try {
-            //     final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
-            //     System.out.println("--- NEW SHAPE SERIALIZED TO JSON ---");
-            //     System.out.println(shapeJson);
-            //     System.out.println("------------------------------------");
-            // } catch (Exception e) {
-            //     System.err.println("Error during shape serialization logging: " + e.getMessage());
-            // }
+            
             final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
             byte[] shapeData = shapeJson.getBytes();
 
