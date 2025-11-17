@@ -100,7 +100,7 @@ public class ChatViewModel {
             try {
                 // This now runs in the background and won't freeze the UI
                 System.out.println("[FRONT] Attempting to send RPC...");
-                this.rpc.call("chat:send-message", data)
+                this.rpc.call("chat:send-text", data)
                         .thenRun(() -> System.out.println("[FRONT] RPC call successful! Core received it."))
                         .exceptionally(e -> {
                             System.err.println("[FRONT] RPC call FAILED: " + e.getMessage());
