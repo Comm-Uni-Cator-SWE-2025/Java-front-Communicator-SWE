@@ -8,7 +8,6 @@ import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
-import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeFactory;
@@ -160,32 +159,6 @@ public class CanvasViewModel {
             updateGhostShape();
         }
     }
-
-    // /**
-    //  * Handles mouse release events
-    //  * @param x x coordinate
-    //  * @param y y coordinate
-    //  */
-    // public void onMouseReleased(final double x, final double y) {
-    //     if (activeTool.get() == ToolType.SELECT) {
-    //         // If we were dragging, commit the move now
-    //         if (isDraggingSelection && ghostShape != null && selectedShapeId.get() != null) {
-    //             final Action modifyAction = actionFactory.createModifyAction(
-    //                     canvasState, selectedShapeId.get(), ghostShape, userId);
-    //             actionManager.requestLocalAction(modifyAction);
-    //         }
-    //         isDraggingSelection = false;
-    //     } else if (ghostShape != null) {
-    //         // Commit newly drawn shape
-    //         final Action createAction = actionFactory.createCreateAction(ghostShape, userId);
-    //         actionManager.requestLocalAction(createAction);
-    //     }
-
-    //     sendNetworkMessage();
-
-    //     ghostShape = null;
-    //     currentPoints.clear();
-    // }
     
     /**
      * Handles mouse release events
@@ -204,14 +177,14 @@ public class CanvasViewModel {
         } else if (ghostShape != null) {
             
             // LOG THE SERIALIZED SHAPE HERE
-            try {
-                final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
-                System.out.println("--- NEW SHAPE SERIALIZED TO JSON ---");
-                System.out.println(shapeJson);
-                System.out.println("------------------------------------");
-            } catch (Exception e) {
-                System.err.println("Error during shape serialization logging: " + e.getMessage());
-            }
+            // try {
+            //     final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
+            //     System.out.println("--- NEW SHAPE SERIALIZED TO JSON ---");
+            //     System.out.println(shapeJson);
+            //     System.out.println("------------------------------------");
+            // } catch (Exception e) {
+            //     System.err.println("Error during shape serialization logging: " + e.getMessage());
+            // }
 
             // Commit newly drawn shape
             final Action createAction = actionFactory.createCreateAction(ghostShape, userId);
