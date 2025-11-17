@@ -12,7 +12,7 @@ import com.swe.controller.Meeting.UserProfile;
  */
 public class Meeting {
     private final String id;
-    private final String title;
+    private String title;
     private final LocalDateTime startTime;
     private LocalDateTime endTime;
     private final List<UserProfile> participants;
@@ -51,6 +51,10 @@ public class Meeting {
 
     public void setScreenSharingEnabled(boolean enabled) {
         this.screenSharingEnabled = enabled;
+    }
+
+    public void setMeetingTitle(String title) {
+        this.title = title;
     }
 
     public void removeParticipant(UserProfile user) {
