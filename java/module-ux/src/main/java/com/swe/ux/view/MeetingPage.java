@@ -7,6 +7,7 @@ import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.*;
 import com.swe.ux.viewmodel.CanvasViewModel;
+import com.swe.ux.viewmodel.ChatViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
 import com.swe.ux.viewmodel.ParticipantsViewModel;
 
@@ -221,9 +222,18 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private JPanel createChatPanel() {
         SoftCardPanel panel = new SoftCardPanel(12);
         panel.setLayout(new BorderLayout());
-        JLabel l = new JLabel("<html><center>Chat module<br>Coming soon</center></html>", SwingConstants.CENTER);
-        l.setFont(FontUtil.getJetBrainsMono(14f, Font.PLAIN));
-        panel.add(l, BorderLayout.CENTER);
+
+        if (meetingViewModel == null || meetingViewModel.rpc == null) {
+            JLabel fallback = new JLabel("<html><center>Chat unavailable<br>(no RPC connection)</center></html>",
+                    SwingConstants.CENTER);
+            fallback.setFont(FontUtil.getJetBrainsMono(14f, Font.PLAIN));
+            panel.add(fallback, BorderLayout.CENTER);
+            return panel;
+        }
+
+        ChatViewModel chatViewModel = new ChatViewModel(meetingViewModel.rpc);
+        ChatView chatView = new ChatView(chatViewModel);
+        panel.add(chatView, BorderLayout.CENTER);
         return panel;
     }
 
