@@ -14,7 +14,7 @@ import com.swe.ux.model.Meeting;
  */
 public class MeetingViewModel extends BaseViewModel {
     private final UserProfile currentUser;
-    private Meeting currentMeeting;
+    private Meeting currentMeeting = new Meeting("Meeting");
     public AbstractRPC rpc;
     
     // Bindable properties
@@ -72,7 +72,7 @@ public class MeetingViewModel extends BaseViewModel {
             String displaySegment = newMeetingId.length() > 8 ? newMeetingId.substring(0, 8) : newMeetingId;
             title = "Meeting " + displaySegment;
         }
-        currentMeeting = new Meeting(title);
+        currentMeeting.setMeetingTitle(title);
         currentMeeting.addParticipant(currentUser);
         
         isMeetingActive.set(true);
@@ -114,6 +114,12 @@ public class MeetingViewModel extends BaseViewModel {
             currentMeeting.addParticipant(user);
             updateParticipants();
             addSystemMessage(user.getDisplayName() + " joined the meeting");
+        } else {
+            System.out.println("MeetingViewModel: currentMeeting is null, saving user to list");
+            // Create a new list to trigger property change notification
+            List<UserProfile> updatedParticipants = new ArrayList<>(participants.get());
+            updatedParticipants.add(user);
+            participants.set(updatedParticipants);
         }
     }
 

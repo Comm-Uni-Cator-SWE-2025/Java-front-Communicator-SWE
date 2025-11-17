@@ -1,9 +1,12 @@
 package com.swe.ux;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.swe.controller.RPC;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.controller.serialize.DataSerializer;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.view.LoginPage;
@@ -16,6 +19,7 @@ import com.swe.ux.viewmodel.MeetingViewModel;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 
@@ -147,12 +151,32 @@ public class App extends JFrame {
 
         // Use an array to hold the meeting view reference for use in lambda
         MeetingPage[] meetingViewRef = new MeetingPage[] { meetingView };
+        
+        // Use an array to hold the current active meeting view model reference
+        MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { meetingViewModel };
 
         // New participant
-        rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
-            final String viewerIP = new String(data);
-            UserProfile new_user = new UserProfile(viewerIP, "New User", "New User", ParticipantRole.STUDENT);
-            meetingViewModel.addParticipant(new_user);
+        // rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
+        //     final String viewerIP = new String(data);
+        //     UserProfile new_user = new UserProfile(viewerIP, "New User", "New User", ParticipantRole.STUDENT);
+        //     meetingViewModel.addParticipant(new_user);
+        //     return new byte[0];
+        // });
+
+        rpc.subscribe("core/setIpToMailMap", (data) -> {
+            try {
+                Map<String, String> ipToMailMap = DataSerializer.deserialize(data, new TypeReference<Map<String, String>>() {});
+                System.out.println("App: ipToMailMap: " + ipToMailMap);
+                ipToMailMap.forEach((ip, mail) -> {
+                    System.out.println("App: ip: " + ip + " mail: " + mail);
+                    UserProfile new_user = new UserProfile(ip, mail, mail, ParticipantRole.STUDENT);
+                    // Use the currently active meeting view model
+                    activeMeetingViewModelRef[0].addParticipant(new_user);
+                    System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
+                });
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             return new byte[0];
         });
 
@@ -171,6 +195,9 @@ public class App extends JFrame {
                 
                 // Create a new meeting view model for this meeting with Instructor role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
+                
+                // Update the active meeting view model reference
+                activeMeetingViewModelRef[0] = newMeetingViewModel;
                 
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingId);
@@ -223,6 +250,9 @@ public class App extends JFrame {
                 
                 // Create a new meeting view model for joining meeting with Student role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
+                
+                // Update the active meeting view model reference
+                activeMeetingViewModelRef[0] = newMeetingViewModel;
                 
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingCode);
@@ -308,9 +338,10 @@ public class App extends JFrame {
         }
 
         final AbstractRPC rpc = new RPC();
+        
+        App app = App.getInstance(rpc);
 
         // Create and show the application window
-        App app = App.getInstance(rpc);
 
         Thread handler = null;
         try {
