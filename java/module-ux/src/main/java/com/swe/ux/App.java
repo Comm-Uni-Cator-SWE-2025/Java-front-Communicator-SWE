@@ -210,6 +210,7 @@ public class App extends JFrame {
             if (joinMeeting && currentUser != null) {
                 // Get the meeting code from MainViewModel
                 String meetingCode = mainViewModel.meetingCode.get();
+
                 
                 // Only proceed if we have a valid meeting code
                 if (meetingCode == null || meetingCode.trim().isEmpty()) {
@@ -217,6 +218,8 @@ public class App extends JFrame {
                     mainViewModel.joinMeetingRequested.set(false);
                     return;
                 }
+                
+                mainViewModel.joinMeeting(meetingCode);
                 
                 // Create a new meeting view model for joining meeting with Student role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
