@@ -38,7 +38,7 @@ public class ThemeManager {
         this.app = app;
     }
 
-    public Theme getTheme() {
+    public Theme getCurrentTheme() {
         return currentTheme;
     }
 

@@ -1,181 +1,244 @@
 package com.swe.ux.view;
 
 import com.swe.controller.Meeting.UserProfile;
-import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.theme.Theme;
-import com.swe.ux.ui.CustomButton;
+import com.swe.ux.theme.ThemeManager;
+import com.swe.ux.ui.FrostedBackgroundPanel;
+import com.swe.ux.ui.FrostedBadgeLabel;
+import com.swe.ux.ui.SoftCardPanel;
+import com.swe.ux.ui.FrostedToolbarButton;
+import com.swe.ux.ui.PlaceholderTextField;
+import com.swe.ux.ui.ThemeToggleButton;
+import com.swe.ux.ui.FontUtil;
 import com.swe.ux.viewmodel.MainViewModel;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
- * Main application page that shows after successful login.
+ * Simplified Main Page: small header, large insights pane, and 
+ * meeting join/start controls left-aligned.
  */
-public class MainPage extends JPanel {
+public class MainPage extends FrostedBackgroundPanel {
+
     private final MainViewModel viewModel;
+
+    private SoftCardPanel headerCard;
+    private SoftCardPanel insightsCard;
+
     private JLabel welcomeLabel;
-    private JButton logoutButton;
+    private JLabel subtitleLabel;
+    private JLabel dateLabel;
+    private JLabel locationLabel;
+
     private JTextField meetingCodeField;
-    
-    /**
-     * Creates a new MainPage.
-     * @param viewModel The ViewModel for this view
-     */
+
+    private FrostedToolbarButton joinMeetingButton;
+    private FrostedToolbarButton createMeetingButton;
+    private FrostedToolbarButton logoutButton;
+
+    private Timer minuteTimer;
+    private boolean uiCreated = false;
+
     public MainPage(MainViewModel viewModel) {
         this.viewModel = viewModel;
         initializeUI();
+        uiCreated = true;
         setupBindings();
+        startClock();
         applyTheme();
     }
-    
+
     private void initializeUI() {
-        setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Logout button in top right corner
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        topPanel.setOpaque(false);
-        logoutButton = new CustomButton("Logout", false);
+
+        setLayout(new BorderLayout(20, 20));
+        setBorder(new EmptyBorder(20, 30, 30, 30));
+
+        // ------------------------------------------------------
+        // SMALL HEADER
+        // ------------------------------------------------------
+        headerCard = new SoftCardPanel(24);
+        headerCard.setCornerRadius(24);
+        headerCard.setLayout(new BorderLayout(20, 10));
+        headerCard.setPreferredSize(new Dimension(0, 150)); // 🔥 SMALL HEIGHT
+
+        JPanel textStack = new JPanel();
+        textStack.setOpaque(false);
+        textStack.setLayout(new BoxLayout(textStack, BoxLayout.Y_AXIS));
+
+        welcomeLabel = new JLabel("Welcome");
+        welcomeLabel.setFont(FontUtil.getJetBrainsMono(22f, Font.BOLD));
+
+        subtitleLabel = new JLabel("A quick meeting can solve a lot!");
+        subtitleLabel.setFont(FontUtil.getJetBrainsMono(13f, Font.PLAIN));
+
+        textStack.add(welcomeLabel);
+        textStack.add(Box.createVerticalStrut(4));
+        textStack.add(subtitleLabel);
+
+        JPanel metaRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        metaRow.setOpaque(false);
+
+        dateLabel = new JLabel(formatDate(new Date()));
+        dateLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+
+        locationLabel = new JLabel("Start or Join one now");
+        locationLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+
+        metaRow.add(dateLabel);
+        metaRow.add(new FrostedBadgeLabel("Campus"));
+        metaRow.add(locationLabel);
+
+        textStack.add(Box.createVerticalStrut(6));
+        textStack.add(metaRow);
+
+        // Right side: theme toggle + logout
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+        actions.add(new ThemeToggleButton());
+
+        logoutButton = new FrostedToolbarButton("Logout");
         logoutButton.addActionListener(e -> viewModel.logout());
-        topPanel.add(logoutButton);
-        add(topPanel, BorderLayout.NORTH);
-        
-        // Center panel for main content
-        JPanel centerPanel = new JPanel(new GridBagLayout());
-        centerPanel.setOpaque(false);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.anchor = GridBagConstraints.CENTER;
-        
-        // Welcome label - bigger and centered
-        welcomeLabel = new JLabel("", JLabel.CENTER);
-        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 48));
-        gbc.gridy = 0;
-        centerPanel.add(welcomeLabel, gbc);
-        
-        // App title
-        JLabel titleLabel = new JLabel("Welcome to Comm-Uni-Cate", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.PLAIN, 28));
-        gbc.gridy = 1;
-        gbc.insets = new Insets(20, 10, 30, 10);
-        centerPanel.add(titleLabel, gbc);
-        
-        // Meeting code input panel
-        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        inputPanel.setOpaque(false);
-        
-        JLabel meetingCodeLabel = new JLabel("Meeting Code:");
-        meetingCodeLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-        inputPanel.add(meetingCodeLabel);
-        
-        meetingCodeField = new JTextField(20);
-        meetingCodeField.setFont(new Font("Arial", Font.PLAIN, 18));
-        meetingCodeField.setPreferredSize(new Dimension(250, 40));
-        inputPanel.add(meetingCodeField);
-        
-        gbc.gridy = 2;
-        gbc.insets = new Insets(10, 10, 20, 10);
-        centerPanel.add(inputPanel, gbc);
-        
-        // Buttons panel
-        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        buttonsPanel.setOpaque(false);
-        
-        // Join Meeting button
-        JButton joinMeetingButton = new CustomButton("Join Meeting", true);
-        joinMeetingButton.setFont(new Font("Arial", Font.BOLD, 16));
-        joinMeetingButton.setPreferredSize(new Dimension(160, 45));
+        actions.add(logoutButton);
+
+        headerCard.add(textStack, BorderLayout.CENTER);
+        headerCard.add(actions, BorderLayout.EAST);
+
+        add(headerCard, BorderLayout.NORTH);
+
+        // Replace meetingCodeField definition:
+
+        // Inside initializeUI(), REPLACE your joinPanel block with this:
+
+        // ------------------------------------------------------
+        // JOIN / START MEETING BAR (centered UNDER HEADER)
+        // ------------------------------------------------------
+        JPanel joinPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
+        joinPanel.setOpaque(false);
+
+        // Placeholder text field
+        meetingCodeField = new PlaceholderTextField("Meeting ID");
+        meetingCodeField.setPreferredSize(new Dimension(280, 50));
+        meetingCodeField.setFont(FontUtil.getJetBrainsMono(16f, Font.PLAIN));
+
+        meetingCodeField.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+        meetingCodeField.setPreferredSize(new Dimension(280, 50)); // wider + taller
+        joinPanel.add(meetingCodeField);
+
+        // Join button
+        joinMeetingButton = new FrostedToolbarButton("Join");
+        joinMeetingButton.setPreferredSize(new Dimension(130, 50)); // 🔥 wider pill
         joinMeetingButton.addActionListener(e -> {
             viewModel.meetingCode.set(meetingCodeField.getText());
             viewModel.joinMeetingRequested.set(true);
         });
-        buttonsPanel.add(joinMeetingButton);
-        
-        // Create Meeting button
-        JButton createMeetingButton = new CustomButton("Create Meeting", true);
-        createMeetingButton.setFont(new Font("Arial", Font.BOLD, 16));
-        createMeetingButton.setPreferredSize(new Dimension(160, 45));
+        joinPanel.add(joinMeetingButton);
+
+        // Start button
+        createMeetingButton = new FrostedToolbarButton("Start");
+        createMeetingButton.setPreferredSize(new Dimension(130, 50)); // 🔥 wider pill
         createMeetingButton.addActionListener(e -> viewModel.startMeetingRequested.set(true));
-        buttonsPanel.add(createMeetingButton);
+        joinPanel.add(createMeetingButton);
+
+        // Place it ABOVE insights
         
-        gbc.gridy = 3;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        centerPanel.add(buttonsPanel, gbc);
-        
-        add(centerPanel, BorderLayout.CENTER);
+
+
+        // ------------------------------------------------------
+        // CONTENT AREA
+        // ------------------------------------------------------
+
+        JPanel mainArea = new JPanel(new BorderLayout(20, 20));
+        mainArea.setOpaque(false);
+        mainArea.add(joinPanel, BorderLayout.NORTH);
+
+        // Big insights panel
+        insightsCard = new SoftCardPanel(32);
+        insightsCard.setLayout(new BorderLayout());
+        JLabel insightsLabel = new JLabel("Insights Area (coming soon)", SwingConstants.CENTER);
+        insightsLabel.setFont(FontUtil.getJetBrainsMono(20f, Font.BOLD));
+        insightsCard.add(insightsLabel, BorderLayout.CENTER);
+
+        mainArea.add(insightsCard, BorderLayout.CENTER);
+
+
+
+
+
+        add(mainArea, BorderLayout.CENTER);
     }
-    
+
+    // ----------------------------------------------------------
+    // Bindings, updates, clock and theme logic
+    // ----------------------------------------------------------
     private void setupBindings() {
-        // Update UI when user changes
-        viewModel.currentUser.addListener(evt -> updateUserInfo());
-        
-        // Initial update
+        viewModel.currentUser.addListener(evt -> SwingUtilities.invokeLater(this::updateUserInfo));
         updateUserInfo();
     }
-    
+
     private void updateUserInfo() {
         UserProfile user = viewModel.currentUser.get();
-        if (user != null) {
-            welcomeLabel.setText("Welcome, " + user.getDisplayName() + "!");
-        } else {
-            welcomeLabel.setText("Welcome!");
-        }
+        welcomeLabel.setText(
+                user != null ? "Welcome, " + user.getDisplayName() : "Welcome"
+        );
     }
-    
-    /**
-     * Helper method to get all components in a container recursively.
-     * @param container The container to search in
-     * @return List of all components in the container
-     */
-    private List<Component> getComponentsInPanel(Container container) {
-        List<Component> components = new ArrayList<>();
-        for (Component comp : container.getComponents()) {
-            components.add(comp);
-            if (comp instanceof Container) {
-                components.addAll(getComponentsInPanel((Container) comp));
-            }
-        }
-        return components;
+
+    private void startClock() {
+        if (minuteTimer != null) minuteTimer.stop();
+
+        minuteTimer = new Timer(60_000, e -> dateLabel.setText(formatDate(new Date())));
+        minuteTimer.setInitialDelay(0);
+        minuteTimer.start();
     }
-    
+
+    private String formatDate(Date date) {
+        return new SimpleDateFormat("EEE, MMM d • hh:mm a").format(date);
+    }
+
     private void applyTheme() {
-        // Apply theme colors using ThemeManager
-        ThemeManager themeManager = ThemeManager.getInstance();
-        themeManager.applyTheme(this);
-        
-        // Get theme for additional styling
-        Theme theme = themeManager.getCurrentTheme();
-        
-        // Apply specific styles
+        if (!uiCreated) return;
+
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        if (theme == null) return;
+
         setBackground(theme.getBackgroundColor());
+
         welcomeLabel.setForeground(theme.getTextColor());
-        
-        // Make sure the buttons, text field, and labels are properly styled
-        List<Component> components = getComponentsInPanel(this);
-        for (Component comp : components) {
-            if (comp instanceof JButton) {
-                JButton button = (JButton) comp;
-                if (button.getText().equals("Create Meeting") || button.getText().equals("Join Meeting")) {
-                    button.setBackground(theme.getPrimaryColor());
-                    button.setForeground(Color.WHITE);
-                } else if (button.getText().equals("Logout")) {
-                    button.setBackground(theme.getForeground());
-                    button.setForeground(theme.getTextColor());
-                }
-            } else if (comp instanceof JTextField) {
-                JTextField textField = (JTextField) comp;
-                textField.setBackground(theme.getInputBackgroundColor());
-                textField.setForeground(theme.getTextColor());
-                textField.setCaretColor(theme.getTextColor());
-            } else if (comp instanceof JLabel) {
-                JLabel label = (JLabel) comp;
-                label.setForeground(theme.getTextColor());
-            }
+        subtitleLabel.setForeground(theme.getTextColor());
+        dateLabel.setForeground(theme.getTextColor());
+        locationLabel.setForeground(theme.getTextColor());
+
+        meetingCodeField.setBackground(theme.getInputBackgroundColor());
+        meetingCodeField.setForeground(theme.getTextColor());
+        meetingCodeField.setCaretColor(theme.getTextColor());
+
+        ThemeManager.getInstance().applyThemeRecursively(headerCard);
+        ThemeManager.getInstance().applyThemeRecursively(insightsCard);
+
+        revalidate();
+        repaint();
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (visible) {
+            updateUserInfo();
+            applyTheme();
+            startClock();
+        } else if (minuteTimer != null) {
+            minuteTimer.stop();
+        }
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if (uiCreated) {
+            applyTheme();
         }
     }
 }

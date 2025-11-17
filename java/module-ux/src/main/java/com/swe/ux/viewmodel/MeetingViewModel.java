@@ -69,7 +69,8 @@ public class MeetingViewModel extends BaseViewModel {
         // Create the meeting with the provided ID
         String title = meetingTitle.get();
         if (title == null || title.trim().isEmpty()) {
-            title = "Meeting " + newMeetingId.substring(0, 8);
+            String displaySegment = newMeetingId.length() > 8 ? newMeetingId.substring(0, 8) : newMeetingId;
+            title = "Meeting " + displaySegment;
         }
         currentMeeting = new Meeting(title);
         currentMeeting.addParticipant(currentUser);

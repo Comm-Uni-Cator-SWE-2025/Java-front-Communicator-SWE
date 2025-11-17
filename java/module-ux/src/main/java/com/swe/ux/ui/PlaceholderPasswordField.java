@@ -58,7 +58,7 @@ public class PlaceholderPasswordField extends JPasswordField {
     public void updateUI() {
         super.updateUI();
         if (ThemeManager.getInstance() != null) {
-            Theme theme = ThemeManager.getInstance().getTheme();
+            Theme theme = ThemeManager.getInstance().getCurrentTheme();
             setDisabledTextColor(theme.getText().darker());
             setBackground(theme.getForeground());
             setForeground(theme.getText());
