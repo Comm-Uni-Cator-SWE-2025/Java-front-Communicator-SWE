@@ -1,153 +1,103 @@
-.tool-toggle {
-	min-width: 44;
-	-fx-min-width: 44;
-	-fx-pref-width: 44;
-	max-width: 44;
-	-fx-max-width: 44;
-	min-height: 36;
-	-fx-min-height: 36;
-	-fx-pref-height: 36;
-	max-height: 36;
-	-fx-max-height: 36;
-	padding: 0;
-	-fx-padding: 0;
-	-fx-background-radius: 10;
-	border-radius: 10;
-	-fx-border-radius: 10;
-	border-width: 1;
-	-fx-border-width: 1;
-	border-color: #CCCCCC;
-	-fx-border-color: #CCCCCC;
-	background-color: linear-gradient(#FFFFFF, #F5F7FB);
-	-fx-background-color: linear-gradient(#FFFFFF, #F5F7FB);
-	font-family: 'Segoe UI';
-	-fx-font-family: 'Segoe UI';
-	font-size: 20;
-	-fx-font-size: 20;
-	-fx-text-fill: #2F2F2F;
-	cursor: hand;
-	-fx-cursor: hand;
+/*
+ * Updated CSS to match the style of MainWindow.xaml
+ * - New toolbar style
+ * - New button styles (icon + label, icon-only)
+ * - Removed old .tool-toggle styles
+ */
+
+/* --- Main Toolbar --- */
+.tool-bar {
+    -fx-background-color: #F3F4F6;
+    -fx-border-color: #DDDDDD;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 4 8 4 8;
 }
 
-.tool-toggle-emoji {
-	font-family: 'Segoe UI Emoji';
-	-fx-font-family: 'Segoe UI Emoji';
-	font-size: 18;
-	-fx-font-size: 18;
+/* --- Base style for all transparent toolbar buttons --- */
+.tool-button-with-label,
+.toolbar-icon-button,
+.color-picker-button,
+.menu-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
 }
 
-.tool-toggle:selected {
-	background-color: linear-gradient(#D6EBFF, #AFCFFF);
-	-fx-background-color: linear-gradient(#D6EBFF, #AFCFFF);
-	border-color: #2A76D2;
-	-fx-border-color: #2A76D2;
-	border-width: 2;
-	-fx-border-width: 2;
-	-fx-effect: dropshadow(three-pass-box, rgba(42, 118, 210, 0.35), 6, 0.2, 0, 2);
+.tool-button-with-label:hover,
+.toolbar-icon-button:hover,
+.color-picker-button:hover,
+.menu-button:hover {
+    -fx-background-color: #DCE0E5;
 }
 
-.tool-toggle:hover:not(:selected) {
-	background-color: linear-gradient(#F7FBFF, #EAF2FF);
-	-fx-background-color: linear-gradient(#F7FBFF, #EAF2FF);
-	border-color: #B5C8E6;
-	-fx-border-color: #B5C8E6;
+.tool-button-with-label:pressed,
+.toolbar-icon-button:pressed,
+.color-picker-button:pressed,
+.menu-button:pressed,
+.tool-button-with-label:selected {
+    -fx-background-color: #C9CED3;
 }
 
-.slider .thumb {
-	-fx-pref-width: 30;
-	-fx-pref-height: 30;
-	-fx-background-radius: 20;
-	-fx-background-insets: 0;
-	-fx-background-color: linear-gradient(#2A76D2, #1F5EA8);
-	background-color: linear-gradient(#2A76D2, #1F5EA8);
-	-fx-border-color: rgba(0, 0, 0, 0.15);
-	border-color: rgba(0, 0, 0, 0.15);
-	-fx-border-width: 1;
-	border-width: 1;
-	-fx-border-radius: 20;
-	border-radius: 20;
-	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.25), 6, 0.2, 0, 2);
+/* --- Style for Tool Buttons (Icon + Label) --- */
+.tool-button-with-label {
+    -fx-pref-width: 60; /* Wider to fit text */
+    -fx-pref-height: 44;
+    -fx-padding: 2;
+    -fx-font-size: 10;
+    -fx-text-fill: #555;
+    -fx-content-display: TOP;
 }
 
-.slider-value-label {
-	-fx-text-fill: #FFFFFF;
-	color: #FFFFFF;
-	-fx-font-size: 11;
-	font-size: 11;
-	-fx-font-weight: bold;
-	font-weight: bold;
-	-fx-effect: dropshadow(two-pass-box, rgba(0, 0, 0, 0.35), 4, 0.2, 0, 0);
+/* --- Style for Icon-Only Buttons (Undo, Redo, Delete) --- */
+.toolbar-icon-button,
+.menu-button {
+    -fx-pref-width: 40;
+    -fx-pref-height: 26;
+    -fx-padding: 2;
 }
 
-.delete-button {
-	-fx-font-size: 16;
-	font-size: 16;
-	-fx-background-color: linear-gradient(#FFE9E9, #FFD4D4);
-	background-color: linear-gradient(#FFE9E9, #FFD4D4);
-	-fx-background-radius: 10;
-	-fx-border-radius: 10;
-	border-radius: 10;
-	-fx-border-color: #D88989;
-	border-color: #D88989;
-	-fx-border-width: 1;
-	border-width: 1;
-	-fx-text-fill: #7A1F1F;
-	color: #7A1F1F;
-	-fx-padding: 6 10 6 10;
-	padding: 6 10 6 10;
-	-fx-font-family: 'Segoe UI Emoji';
-	font-family: 'Segoe UI Emoji';
-	-fx-cursor: hand;
-	cursor: hand;
+/* --- Style for the SVG Icons --- */
+.svg-icon {
+    -fx-fill: #333;
 }
 
-.delete-button:hover {
-	-fx-background-color: linear-gradient(#FFDADA, #FFC1C1);
-	background-color: linear-gradient(#FFDADA, #FFC1C1);
-	-fx-border-color: #CF6A6A;
-	border-color: #CF6A6A;
+/* --- Color Picker Styling --- */
+.color-picker-button {
+    -fx-pref-width: 28;
+    -fx-pref-height: 28;
+    -fx-padding: 0;
+}
+/* Style the inner color-display rectangle */
+.color-picker-button .color-picker-label .picker-color {
+    -fx-background-radius: 6;
+    -fx-border-color: #888;
+    -fx-border-width: 1;
+}
+/* Hide the default label/arrow */
+.color-picker-button .color-picker-label {
+    -fx-padding: 0;
+}
+.color-picker-button .arrow-button {
+    -fx-padding: 0;
+    -fx-pref-width: 0;
 }
 
-.delete-button:pressed {
-	-fx-background-color: linear-gradient(#FFCBCB, #FFB2B2);
-	background-color: linear-gradient(#FFCBCB, #FFB2B2);
-	-fx-border-color: #C65757;
-	border-color: #C65757;
-}
 
-/* Regularize button: used to normalize/regularize selected shapes */
-.regularize-button {
-	-fx-font-size: 15;
-	font-size: 15;
-	-fx-background-color: linear-gradient(#FFF8E6, #FFEFB8);
-	background-color: linear-gradient(#FFF8E6, #FFEFB8);
-	-fx-background-radius: 10;
-	-fx-border-radius: 10;
-	border-radius: 10;
-	-fx-border-color: #D8B24D;
-	border-color: #D8B24D;
-	-fx-border-width: 1;
-	border-width: 1;
-	-fx-text-fill: #5A3E00;
-	color: #5A3E00;
-	-fx-padding: 6 10 6 10;
-	padding: 6 10 6 10;
-	-fx-font-family: 'Segoe UI';
-	font-family: 'Segoe UI';
-	-fx-cursor: hand;
-	cursor: hand;
-}
-
-.regularize-button:hover {
-	-fx-background-color: linear-gradient(#FFF1D1, #FFE6A3);
-	background-color: linear-gradient(#FFF1D1, #FFE6A3);
-	-fx-border-color: #C99F2F;
-	border-color: #C99F2F;
-}
-
-.regularize-button:pressed {
-	-fx-background-color: linear-gradient(#FFE8B2, #FFD87A);
-	background-color: linear-gradient(#FFE8B2, #FFD87A);
-	-fx-border-color: #B98111;
-	border-color: #B98111;
-}
+/* --- Removed Old Styles --- */
+/*
+.tool-toggle { ... }
+.tool-toggle-emoji { ... }
+.tool-toggle:selected { ... }
+.tool-toggle:hover:not(:selected) { ... }
+.slider .thumb { ... }
+.slider-value-label { ... }
+.delete-button { ... }
+.delete-button:hover { ... }
+.delete-button:pressed { ... }
+.regularize-button { ... }
+.regularize-button:hover { ... }
+.regularize-button:pressed { ... }
+*/

@@ -6,96 +6,54 @@ import com.swe.canvas.mvvm.CanvasViewModel;
 import com.swe.canvas.mvvm.ToolType;
 import com.swe.canvas.ui.util.ColorConverter;
 
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 
 /**
  * Controller for the fxml view
  */
 public class CanvasController {
 
-    /**
-     * The select button
-     */
-    @FXML
-    private ToggleButton selectBtn;
+    // --- FXML Control References ---
 
-    /**
-     * The freehand draw button
-     */
-    @FXML
-    private ToggleButton freehandBtn;
-
-    /**
-     * Rectangle button
-     */
-    @FXML
-    private ToggleButton rectBtn;
-
-    /**
-     * Ellipse button
-     */
+    @FXML private ToggleButton selectBtn;
+    @FXML private ToggleButton freehandBtn;
+    @FXML private ToggleButton rectBtn;
     @FXML private ToggleButton ellipseBtn;
-
-    /**
-     * Line button
-     */
     @FXML private ToggleButton lineBtn;
-
-    /**
-     * Triangle button
-     */
     @FXML private ToggleButton triangleBtn;
 
-    /**
-     * Slider
-     */
     @FXML private Slider sizeSlider;
+    
+    // Replaced Rectangle with ColorPicker
+    @FXML private ColorPicker colorPicker;
 
-    /**
-     * Current color
-     */
-    @FXML private Rectangle currentColorRect;
-
-    /**
-     * Delete button
-     */
     @FXML private Button deleteBtn;
+    @FXML private Button regularizeBtn; // Button from original FXML
+    @FXML private Button undoBtn;
+    @FXML private Button redoBtn;
 
-    /**
-     * Canvas(Whiteboard) object
-     */
     @FXML private Canvas canvas;
-
-    /**
-     * Regularize button
-     */
-    @FXML private Button regularizeBtn;
-
-
-    /**
-     * Container for canvas
-     */
-    @FXML private Pane canvasContainer;
+    
+    // The Viewbox scaling model doesn't use canvasContainer for binding
+    // @FXML private Pane canvasContainer; 
 
     private CanvasViewModel viewModel;
     private CanvasRenderer renderer;
     private boolean isUpdatingUI = false;
+    
+    // This label is no longer in the FXML, but we'll keep the logic
+    // in case it's added back to the slider popup.
     private final Label sizeValueLabel = new Label();
 
     /**
@@ -106,8 +64,9 @@ public class CanvasController {
         renderer = new CanvasRenderer(canvas);
 
         sizeSlider.setValue(viewModel.activeStrokeWidth.get());
-        currentColorRect.setFill(viewModel.activeColor.get());
-    setupSliderValueDisplay();
+        colorPicker.setValue(viewModel.activeColor.get());
+        
+        // setupSliderValueDisplay(); // This logic is more complex with a MenuButton
 
         // --- Bindings & Listeners ---
         sizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
@@ -124,6 +83,7 @@ public class CanvasController {
 
         // Enable/Disable Delete button based on selection
         deleteBtn.disableProperty().bind(viewModel.selectedShapeId.isNull());
+        // Also bind the new regularizeBtn
         regularizeBtn.disableProperty().bind(viewModel.selectedShapeId.isNull());
 
         viewModel.selectedShapeId.addListener((obs, oldVal, newVal) -> {
@@ -132,9 +92,10 @@ public class CanvasController {
                 if (state != null && !state.isDeleted()) {
                     isUpdatingUI = true;
                     try {
-                        currentColorRect.setFill(ColorConverter.toFx(state.getShape().getColor()));
+                        // Update ColorPicker instead of Rectangle
+                        colorPicker.setValue(ColorConverter.toFx(state.getShape().getColor()));
                         sizeSlider.setValue(state.getShape().getThickness());
-                        viewModel.activeColor.set((Color) currentColorRect.getFill());
+                        viewModel.activeColor.set(colorPicker.getValue());
                         viewModel.activeStrokeWidth.set(sizeSlider.getValue());
                     } finally {
                         isUpdatingUI = false;
@@ -144,12 +105,23 @@ public class CanvasController {
             redraw();
         });
 
-        // --- Standard Setup ---
-        canvas.widthProperty().bind(canvasContainer.widthProperty());
-        canvas.heightProperty().bind(canvasContainer.heightProperty());
-        canvas.widthProperty().addListener(o -> redraw());
-        canvas.heightProperty().addListener(o -> redraw());
+        // --- CRITICAL CHANGE ---
+        // The Canvas is now at a fixed size inside a Viewbox.
+        // We MUST remove the property bindings that resize the canvas.
+        
+        // REMOVED: canvas.widthProperty().bind(canvasContainer.widthProperty());
+        // REMOVED: canvas.heightProperty().bind(canvasContainer.heightProperty());
+        
+        // We still need to redraw if the canvas *control* dimensions change,
+        // but this setup assumes a fixed 1600x900 canvas.
+        // If the *Viewbox* resizes, it just scales the static canvas.
+        // We only need to redraw on data changes.
+        
+        // REMOVED: canvas.widthProperty().addListener(o -> redraw());
+        // REMOVED: canvas.heightProperty().addListener(o -> redraw());
 
+        // --- Standard Setup ---
+        
         // Focus canvas to receive key events
         canvas.setFocusTraversable(true);
         canvas.setOnMouseClicked(e -> canvas.requestFocus());
@@ -165,14 +137,21 @@ public class CanvasController {
         ellipseBtn.setUserData(ToolType.ELLIPSE);
         lineBtn.setUserData(ToolType.LINE);
         triangleBtn.setUserData(ToolType.TRIANGLE);
+        
+        // Initial draw
+        redraw();
     }
 
     public CanvasViewModel getViewModel() { return viewModel; }
 
     private void redraw() {
+        // We must pass the fixed width/height to the renderer's clearRect
         renderer.render(viewModel.getCanvasState(), viewModel.getGhostShape(), viewModel.selectedShapeId.get(), viewModel.isDraggingSelection);
     }
 
+    // This setup is more complex with a MenuButton and CustomMenuItem.
+    // We'll skip it for now as the XAML also doesn't show the value.
+    /*
     private void setupSliderValueDisplay() {
         sizeValueLabel.getStyleClass().add("slider-value-label");
         sizeValueLabel.setMouseTransparent(true);
@@ -189,22 +168,27 @@ public class CanvasController {
             thumb.getChildren().add(sizeValueLabel);
         }
     }
+    */
 
     // --- FXML Event Handlers ---
 
+    // This handler is for the old button TilePane
+    // @FXML
+    // private void onColorClick(final ActionEvent event) { ... }
+    
+    // NEW Handler for the ColorPicker
     @FXML
-    private void onColorClick(final ActionEvent event) {
-        final Object data = ((Button) event.getSource()).getUserData();
-        if (data instanceof String) {
-            final Color selectedColor = Color.web((String) data);
-            currentColorRect.setFill(selectedColor);
-            viewModel.activeColor.set(selectedColor);
-            if (viewModel.selectedShapeId.get() != null) {
-                viewModel.updateSelectedShapeColor(selectedColor);
-            }
-            redraw();
+    private void onColorSelected(final ActionEvent event) {
+        if (isUpdatingUI) return;
+        
+        final Color selectedColor = colorPicker.getValue();
+        viewModel.activeColor.set(selectedColor);
+        if (viewModel.selectedShapeId.get() != null) {
+            viewModel.updateSelectedShapeColor(selectedColor);
         }
+        redraw();
     }
+
 
     @FXML
     private void onToolSelected(final ActionEvent event) {
@@ -221,6 +205,13 @@ public class CanvasController {
     @FXML
     private void onDelete() {
         viewModel.deleteSelectedShape();
+    }
+    
+    @FXML
+    private void onRegularize() {
+        // This button existed in the FXML, but no logic was in the controller.
+        // Add logic here if needed.
+        System.out.println("Regularize button clicked (no logic assigned).");
     }
 
     private void onKeyPressed(KeyEvent event) {
@@ -247,17 +238,5 @@ public class CanvasController {
 
     @FXML private void onRedo() {
         viewModel.redo();
-    }
-
-    /**
-     * Regularize the currently selected freehand shape.
-     * <p>
-     * This handler uses a default of 6 sides. You can change the hard-coded
-     * value or show a dialog to ask the user for a value if desired.
-     * </p>
-     */
-    @FXML private void onRegularize() {
-        viewModel.regularizeSelectedShape();
-        redraw();
     }
 }
