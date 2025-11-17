@@ -130,7 +130,7 @@ public class App {
     
     private void applyTheme() {
         if (navPanel != null) {
-            navPanel.setBackground(ThemeManager.getInstance().getTheme().getBackground());
+            navPanel.setBackground(ThemeManager.getInstance().getCurrentTheme().getBackground());
         }
     }
     

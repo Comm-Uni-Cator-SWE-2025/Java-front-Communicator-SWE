@@ -2,296 +2,425 @@ package com.swe.ux.view;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.screenNVideo.Utils;
+import com.swe.ux.App;
+import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
-import com.swe.ux.ui.CustomButton;
+import com.swe.ux.ui.*;
 import com.swe.ux.viewmodel.CanvasViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
 import com.swe.ux.viewmodel.ParticipantsViewModel;
-import com.swe.ux.binding.PropertyListeners;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Clipboard;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
- * Meeting Page layout (UX Integration Layer)
- * --------------------------------------------------------
- * This is the main meeting container that holds all modules:
- *  - Screensharing (ScreenViewModel)
- *  - Video (VideoViewModel)
- *  - Canvas (CanvasViewModel)
- *  - AI Insights (AIViewModel)
- * along with Chat + Participants sidebar and Meeting Controls.
+ * MeetingPage
  *
- * Each module team will later replace their placeholder panels
- * with actual components and logic.
+ * Stage on the left (tabs: Screen + Video, Canvas, AI Insights)
+ * Right sidebar with internal tabs: Chat | Participants
+ *
+ * - Participants button in header
+ * - Chat button in bottom bar
+ * - Hide Panels in header (toggles sidebar visibility)
+ * - Theme-consistent and re-applies custom tab UI on theme changes
  */
-public class MeetingPage extends JPanel {
+public class MeetingPage extends FrostedBackgroundPanel {
 
     private final MeetingViewModel meetingViewModel;
-    private String localIP = Utils.getSelfIP();
 
-    // UI Components
-    private JSplitPane mainSplitPane;
-    private JPanel rightPanel;
-    private boolean rightPanelVisible = true;
-    
-    // Placeholder panels for team integration
+    // header / controls
+    private SoftCardPanel headerCard;
+    private SoftCardPanel controlsBar;
+    private FrostedToolbarButton btnParticipants;   // header button (under Copy Link)
+    private FrostedToolbarButton btnHidePanels;
+    private FrostedToolbarButton btnCopyLink;
+
+    // stage (left)
+    private SoftCardPanel stageCard;
+    private JTabbedPane stageTabs;
+
+    // sidebar (right)
+    private SoftCardPanel sidebarCard;
+    private JTabbedPane sidebarTabs;
     private JPanel chatPanel;
     private JPanel participantsPanel;
-    private CustomButton cameraButton;
-    private CustomButton screenShareButton;
-    private ScreenNVideo screenNVideoComponent;
-    
-    // Meeting ID components
-    private JLabel meetingIdLabel;
-    private CustomButton copyMeetingIdButton;
+    private boolean sidebarVisible = false;
+
+    // bottom chat toggler
+    private FrostedToolbarButton btnChat;
+
+    // other controls
+    private FrostedToolbarButton btnCamera;
+    private FrostedToolbarButton btnShare;
+    private FrostedToolbarButton btnLeave;
+    private FrostedToolbarButton btnMute;
+    private FrostedToolbarButton btnRaiseHand;
+
+    // badges / labels
+    private FrostedBadgeLabel meetingIdBadge;
+    private JLabel liveClockLabel;
+    private JLabel roleLabel;
+    private Timer liveTimer;
 
     public MeetingPage(MeetingViewModel meetingViewModel) {
         this.meetingViewModel = meetingViewModel;
         initializeUI();
+        registerThemeListener();
         setupBindings();
+        startLiveClock();
         applyTheme();
     }
 
     private void initializeUI() {
-        setLayout(new BorderLayout());
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setLayout(new BorderLayout(20, 20));
+        setBorder(new EmptyBorder(24, 24, 24, 24));
 
-        // ---------- HEADER ----------
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
+        // Header
+        headerCard = buildHeader();
+        add(headerCard, BorderLayout.NORTH);
 
-        // Left side: Title and Meeting ID
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        leftPanel.setOpaque(false);
-        
-        JLabel titleLabel = new JLabel("Meeting");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        leftPanel.add(titleLabel);
-        
-        // Meeting ID Label
-        meetingIdLabel = new JLabel("");
-        meetingIdLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        leftPanel.add(meetingIdLabel);
-        
-        // Copy Meeting ID Button
-        copyMeetingIdButton = new CustomButton("Copy ID", false);
-        copyMeetingIdButton.addActionListener(e -> copyMeetingIdToClipboard());
-        leftPanel.add(copyMeetingIdButton);
-        
-        headerPanel.add(leftPanel, BorderLayout.WEST);
+        // Center area: stage (left) + sidebar (right)
+        JPanel center = new JPanel(new BorderLayout(16, 0));
+        center.setOpaque(false);
 
-        JButton toggleSidebarBtn = new CustomButton("Hide Sidebar", false);
-        toggleSidebarBtn.addActionListener(e -> toggleRightPanel(toggleSidebarBtn));
+        stageCard = buildStageCard();
+        center.add(stageCard, BorderLayout.CENTER);
 
-        JButton endMeetingButton = new CustomButton("Leave/End Meeting", true);
-        endMeetingButton.addActionListener(e -> meetingViewModel.endMeeting());
+        sidebarCard = buildSidebarCard();
+        center.add(sidebarCard, BorderLayout.EAST);
 
-        JPanel headerActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        headerActions.add(toggleSidebarBtn);
-        headerActions.add(endMeetingButton);
-        headerPanel.add(headerActions, BorderLayout.EAST);
+        add(center, BorderLayout.CENTER);
 
-        add(headerPanel, BorderLayout.NORTH);
-
-        // ---------- MAIN CENTER (Tabs + Sidebar) ----------
-        JTabbedPane centerTabs = new JTabbedPane();
-        centerTabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        // --- PLACEHOLDER PANELS (Team Ownership) ---
-        screenNVideoComponent = new ScreenNVideo(meetingViewModel);
-        centerTabs.addTab("ScreenNVideo", screenNVideoComponent);
-        
-        // Canvas Module - Integrated
-        CanvasViewModel canvasViewModel = new CanvasViewModel(new CanvasState());
-        CanvasPage canvasPage = new CanvasPage(canvasViewModel);
-        centerTabs.addTab("Canvas", canvasPage);
-        
-        centerTabs.addTab("AI Insights", createPlaceholderPanel(" AI Insights Module - To be integrated by AI Team"));
-
-        // Right-side (Chat + Participants)
-        rightPanel = createRightPanel();
-
-        mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerTabs, rightPanel);
-        mainSplitPane.setDividerLocation(900);
-        mainSplitPane.setResizeWeight(0.75);
-        add(mainSplitPane, BorderLayout.CENTER);
-
-        // ---------- FOOTER (Controls) ----------
-        add(createMeetingControlsPanel(), BorderLayout.SOUTH);
+        // Bottom controls
+        controlsBar = buildControlsBar();
+        add(controlsBar, BorderLayout.SOUTH);
     }
 
-    /** Creates a labeled placeholder panel for unimplemented modules */
+    // ---------------- Header ----------------
+    private SoftCardPanel buildHeader() {
+        SoftCardPanel p = new SoftCardPanel(14);
+        p.setLayout(new BorderLayout(10, 0));
+
+        // Left: title + role
+        JPanel left = new JPanel();
+        left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("Live Meeting");
+        title.setFont(FontUtil.getJetBrainsMono(22f, Font.BOLD));
+        roleLabel = new JLabel("Role: Guest");
+        roleLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        left.add(title);
+        left.add(Box.createVerticalStrut(4));
+        left.add(roleLabel);
+
+        // Middle: badges
+        JPanel mid = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        mid.setOpaque(false);
+        meetingIdBadge = new FrostedBadgeLabel("Meeting: --");
+        FrostedBadgeLabel ipBadge = new FrostedBadgeLabel("IP: " + Utils.getSelfIP());
+        liveClockLabel = new JLabel("Live: --:--");
+        liveClockLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        mid.add(meetingIdBadge);
+        mid.add(ipBadge);
+        mid.add(liveClockLabel);
+
+        // Right: actions (ThemeToggle, Copy Link, Participants, Hide Panels)
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        right.setOpaque(false);
+
+        right.add(new ThemeToggleButton());
+
+        btnCopyLink = new FrostedToolbarButton("Copy Link");
+        btnCopyLink.addActionListener(e -> copyMeetingId());
+        right.add(btnCopyLink);
+
+        // Participants button (selects and opens sidebar on Participants tab)
+        btnParticipants = new FrostedToolbarButton("Participants");
+        btnParticipants.addActionListener(e -> openSidebarToTab("Participants"));
+        right.add(btnParticipants);
+
+        // Hide panels
+        btnHidePanels = new FrostedToolbarButton("Hide Panels");
+        btnHidePanels.addActionListener(e -> toggleSidebarVisibility());
+        right.add(btnHidePanels);
+
+        p.add(left, BorderLayout.WEST);
+        p.add(mid, BorderLayout.CENTER);
+        p.add(right, BorderLayout.EAST);
+
+        return p;
+    }
+
+    // ---------------- Stage ----------------
+    private SoftCardPanel buildStageCard() {
+        SoftCardPanel card = new SoftCardPanel(20);
+        card.setLayout(new BorderLayout(12, 12));
+        card.setCornerRadius(20);
+
+        // Stage tabs
+        stageTabs = new JTabbedPane();
+        stageTabs.setOpaque(false);
+        stageTabs.setUI(new ModernTabbedPaneUI());
+
+        // content components (assume these exist in your project)
+        ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
+        CanvasViewModel canvasVM = new CanvasViewModel(new CanvasState());
+        CanvasPage canvasPage = new CanvasPage(canvasVM);
+
+        stageTabs.addTab("  Screen + Video  ", wrap(screenNVideo));
+        stageTabs.addTab("  Canvas  ", wrap(canvasPage));
+        stageTabs.addTab("  AI Insights  ", wrap(createPlaceholderPanel("AI Insights coming soon")));
+
+        card.add(stageTabs, BorderLayout.CENTER);
+        return card;
+    }
+
+    private JPanel wrap(JPanel p) {
+        JPanel w = new JPanel(new BorderLayout());
+        w.setOpaque(false);
+        w.add(p, BorderLayout.CENTER);
+        return w;
+    }
+
     private JPanel createPlaceholderPanel(String text) {
-        JPanel panel = new JPanel(new BorderLayout());
-        JLabel label = new JLabel(text, JLabel.CENTER);
-        label.setFont(new Font("Segoe UI", Font.ITALIC, 16));
-        panel.add(label, BorderLayout.CENTER);
-        panel.setBackground(new Color(245, 247, 250));
-        panel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1, true));
+        JPanel p = new JPanel(new BorderLayout());
+        p.setOpaque(false);
+        JLabel l = new JLabel(text, SwingConstants.CENTER);
+        l.setFont(FontUtil.getJetBrainsMono(14f, Font.ITALIC));
+        p.add(l, BorderLayout.CENTER);
+        return p;
+    }
+
+    // ---------------- Sidebar ----------------
+    private SoftCardPanel buildSidebarCard() {
+        SoftCardPanel sb = new SoftCardPanel(12);
+        sb.setLayout(new BorderLayout(8, 8));
+        sb.setPreferredSize(new Dimension(360, 0));
+        sb.setVisible(false); // start hidden
+
+        // Internal tabs: Chat | Participants
+        sidebarTabs = new JTabbedPane(SwingConstants.TOP);
+        sidebarTabs.setOpaque(false);
+        sidebarTabs.setUI(new ModernTabbedPaneUI());
+
+        chatPanel = createChatPanel();
+        participantsPanel = createParticipantsPanel();
+
+        sidebarTabs.addTab("Chat", chatPanel);
+        sidebarTabs.addTab("Participants", participantsPanel);
+
+        sb.add(sidebarTabs, BorderLayout.CENTER);
+        return sb;
+    }
+
+    private JPanel createChatPanel() {
+        SoftCardPanel panel = new SoftCardPanel(12);
+        panel.setLayout(new BorderLayout());
+        JLabel l = new JLabel("<html><center>Chat module<br>Coming soon</center></html>", SwingConstants.CENTER);
+        l.setFont(FontUtil.getJetBrainsMono(14f, Font.PLAIN));
+        panel.add(l, BorderLayout.CENTER);
         return panel;
     }
 
-    /** 
-     * Creates the right panel with chat and participants sections.
-     * These are placeholders that will be replaced by the respective teams.
-     */
-    private JPanel createRightPanel() {
-        JPanel sidebar = new JPanel(new BorderLayout(8, 8));
-
-        // Chat Panel (To be implemented by Chat Team)
-        chatPanel = createTeamPlaceholderPanel("Chat Module", "To be implemented by Chat Team");
-        chatPanel.setBorder(BorderFactory.createTitledBorder("Chat"));
-        
-        // Participants Panel - Using ParticipantsViewModel
-        ParticipantsViewModel participantsViewModel = new ParticipantsViewModel(meetingViewModel);
-        ParticipantsView participantsView = new ParticipantsView(participantsViewModel);
-        participantsPanel = participantsView;
-        participantsPanel.setBorder(BorderFactory.createTitledBorder("Participants"));
-
-        // Split vertically
-        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chatPanel, participantsPanel);
-        split.setDividerLocation(300);
-        split.setResizeWeight(0.6);
-
-        sidebar.add(split, BorderLayout.CENTER);
-        return sidebar;
-    }
-    
-    /**
-     * Creates a placeholder panel for team-specific implementations
-     */
-    private JPanel createTeamPlaceholderPanel(String title, String description) {
-        JPanel panel = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("<html><center><h2>" + title + "</h2>" + description + "</center></html>", 
-            SwingConstants.CENTER);
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        panel.add(label, BorderLayout.CENTER);
-        panel.setBackground(new Color(245, 247, 250));
+    private JPanel createParticipantsPanel() {
+        SoftCardPanel panel = new SoftCardPanel(12);
+        panel.setLayout(new BorderLayout());
+        ParticipantsViewModel pvm = new ParticipantsViewModel(meetingViewModel);
+        panel.add(new ParticipantsView(pvm), BorderLayout.CENTER);
         return panel;
     }
 
-    /** Meeting Controls Bar (bottom of the page) */
-    private JPanel createMeetingControlsPanel() {
-        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
-
-        controlsPanel.add(new CustomButton(" Mute", false));
-        cameraButton = new CustomButton(" Camera", false);
-        cameraButton.addActionListener(e -> {
-            meetingViewModel.toggleVideo();
-        });
-        controlsPanel.add(cameraButton);
-
-        screenShareButton = new CustomButton(" Share", false);
-        screenShareButton.addActionListener(e -> {
-            meetingViewModel.toggleScreenSharing();
-        });
-        controlsPanel.add(screenShareButton);
-
-        JButton leaveButton = new CustomButton(" Leave", true);
-        leaveButton.addActionListener(e -> meetingViewModel.endMeeting());
-        controlsPanel.add(leaveButton);
-
-        return controlsPanel;
-    }
-
-    private void toggleRightPanel(JButton toggleButton) {
-        if (rightPanelVisible) {
-            mainSplitPane.setRightComponent(new JPanel());
-            toggleButton.setText("Show Sidebar");
-        } else {
-            mainSplitPane.setRightComponent(rightPanel);
-            toggleButton.setText("Hide Sidebar");
+    private void openSidebarToTab(String tabName) {
+        // Ensure sidebar visible then select the tab
+        if (!sidebarCard.isVisible()) {
+            sidebarCard.setVisible(true);
+            sidebarVisible = true;
         }
-        rightPanelVisible = !rightPanelVisible;
+        // select tab if exists
+        for (int i = 0; i < sidebarTabs.getTabCount(); i++) {
+            String title = sidebarTabs.getTitleAt(i);
+            if (title != null && title.equalsIgnoreCase(tabName)) {
+                sidebarTabs.setSelectedIndex(i);
+                break;
+            }
+        }
+        // visual state for header/bottom toggles
+        btnParticipants.setCustomFill(tabName.equalsIgnoreCase("Participants") ? new Color(90, 160, 255, 160) : null);
+        btnChat.setCustomFill(tabName.equalsIgnoreCase("Chat") ? new Color(90, 160, 255, 160) : null);
+    }
+
+    private void toggleSidebarVisibility() {
+        if (sidebarCard.isVisible()) {
+            sidebarCard.setVisible(false);
+            sidebarVisible = false;
+            btnParticipants.setCustomFill(null);
+            btnChat.setCustomFill(null);
+            btnHidePanels.setText("Show Panels");
+        } else {
+            sidebarCard.setVisible(true);
+            sidebarVisible = true;
+            btnHidePanels.setText("Hide Panels");
+        }
         revalidate();
         repaint();
     }
 
-    /** 
-     * Setup bindings between ViewModel and UI components.
-     * These bindings will be used by the respective team implementations.
-     */
-    private void setupBindings() {
-        // These bindings are now the responsibility of the respective teams
-        // Chat team should implement their bindings in their module
-        // Controller team should implement participants bindings in their module
-        
-        // Example structure (commented out as these will be implemented by the respective teams):
-        /*
-        // Chat team should implement:
-        meetingViewModel.messages.addListener(PropertyListeners.onListChanged((List<String> msgs) ->
-            SwingUtilities.invokeLater(() -> {
-                // Chat team's implementation
-            })
-        ));
-        
-        // Controller team should implement:
-        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<UserProfile> users) ->
-            SwingUtilities.invokeLater(() -> {
-                // Controller team's implementation
-            })
-        ));
-        */
+    // ---------------- Controls Bar ----------------
+    private SoftCardPanel buildControlsBar() {
+        SoftCardPanel bar = new SoftCardPanel(14);
+        bar.setLayout(new FlowLayout(FlowLayout.RIGHT, 12, 8)); // chat at bottom-right
 
-        meetingViewModel.isVideoEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
-            SwingUtilities.invokeLater(() -> {
-                cameraButton.setPrimary(val);
-            });
-        }));
-
-        meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
-            SwingUtilities.invokeLater(() -> {
-                screenShareButton.setPrimary(val);
-            });
-        }));
-
-        // Bind meeting ID to update the label
-        meetingViewModel.meetingId.addListener(evt -> {
-            SwingUtilities.invokeLater(() -> {
-                String meetingId = meetingViewModel.meetingId.get();
-                if (meetingId != null && !meetingId.trim().isEmpty()) {
-                    meetingIdLabel.setText("- ID: " + meetingId);
-                } else {
-                    meetingIdLabel.setText("");
-                }
-            });
+        btnChat = new FrostedToolbarButton("Chat");
+        btnChat.addActionListener(evt -> {
+            openSidebarToTab("Chat");
+            sidebarCard.setVisible(true);
+            sidebarVisible = true;
+            btnHidePanels.setText("Hide Panels");
         });
 
+        btnMute = new FrostedToolbarButton("Mute");
+
+        btnCamera = new FrostedToolbarButton("Camera");
+        btnCamera.addActionListener(evt -> {
+            meetingViewModel.toggleVideo();
+            boolean v = Boolean.TRUE.equals(meetingViewModel.isVideoEnabled.get());
+            btnCamera.setCustomFill(v ? new Color(90, 160, 255, 160) : null);
+        });
+
+        btnShare = new FrostedToolbarButton("Share");
+        btnShare.addActionListener(evt -> {
+            meetingViewModel.toggleScreenSharing();
+            boolean v = Boolean.TRUE.equals(meetingViewModel.isScreenShareEnabled.get());
+            btnShare.setCustomFill(v ? new Color(120, 200, 255, 160) : null);
+        });
+
+        btnRaiseHand = new FrostedToolbarButton("Raise Hand");
+
+        btnLeave = new FrostedToolbarButton("Leave");
+        btnLeave.setCustomFill(new Color(229, 57, 53, 180));
+        btnLeave.addActionListener(e -> {
+            meetingViewModel.endMeeting();
+            com.swe.ux.App.getInstance(null).showView(App.MAIN_VIEW);
+        });
+
+
+        // order: (others) ... Chat (right-most)
+        bar.add(btnMute);
+        bar.add(btnCamera);
+        bar.add(btnShare);
+        bar.add(btnRaiseHand);
+        bar.add(btnLeave);
+        bar.add(btnChat);
+
+        return bar;
     }
 
+    // ---------------- Bindings & Theme ----------------
+    private void setupBindings() {
+        // update camera/share active states from viewmodel
+        meetingViewModel.isVideoEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
+                SwingUtilities.invokeLater(() -> btnCamera.setCustomFill(v ? new Color(90, 160, 255, 160) : null))
+        ));
 
-    /**
-     * Sends a message in the chat.
-     * This method will be called by the chat team's implementation.
-     */
-    private void sendMessage() {
-        // This method will be implemented by the chat team
-        // meetingViewModel.sendMessage();
+        meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
+                SwingUtilities.invokeLater(() -> btnShare.setCustomFill(v ? new Color(120, 200, 255, 160) : null))
+        ));
+
+        meetingViewModel.meetingId.addListener(evt ->
+                SwingUtilities.invokeLater(() -> meetingIdBadge.setText(
+                        meetingViewModel.meetingId.get() == null || meetingViewModel.meetingId.get().isEmpty()
+                                ? "Meeting: --" : "Meeting: " + meetingViewModel.meetingId.get()))
+        );
+
+        meetingViewModel.role.addListener(evt ->
+                SwingUtilities.invokeLater(() -> roleLabel.setText(
+                        "Role: " + (meetingViewModel.role.get() == null || meetingViewModel.role.get().isEmpty() ? "Guest"
+                                : meetingViewModel.role.get())))
+        );
     }
 
-    /**
-     * Copies the meeting ID to the system clipboard.
-     */
-    private void copyMeetingIdToClipboard() {
-        String meetingId = meetingViewModel.meetingId.get();
-        if (meetingId != null && !meetingId.trim().isEmpty()) {
-            StringSelection stringSelection = new StringSelection(meetingId);
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            clipboard.setContents(stringSelection, null);
-            
-            // Optionally show a confirmation message
-            JOptionPane.showMessageDialog(this, 
-                "Meeting ID copied to clipboard!", 
-                "Copied", 
-                JOptionPane.INFORMATION_MESSAGE);
+    private void registerThemeListener() {
+        try {
+            ThemeManager tm = ThemeManager.getInstance();
+            if (tm != null) {
+                tm.addThemeChangeListener(() -> SwingUtilities.invokeLater(() -> {
+                    try {
+                        // reapply custom tabbed UI to stage and sidebar
+                        if (stageTabs != null) {
+                            stageTabs.setUI(new ModernTabbedPaneUI());
+                            stageTabs.revalidate();
+                            stageTabs.repaint();
+                        }
+                        if (sidebarTabs != null) {
+                            sidebarTabs.setUI(new ModernTabbedPaneUI());
+                            sidebarTabs.revalidate();
+                            sidebarTabs.repaint();
+                        }
+                        // also reapply for the sidebar card (to update colors etc.)
+                        applyTheme();
+                    } catch (Throwable ignored) {
+                    }
+                }));
+            }
+        } catch (Throwable ignored) {
+            // no-op if ThemeManager lacks listener API
+        }
+    }
+
+    private void startLiveClock() {
+        if (liveTimer != null) liveTimer.stop();
+        liveTimer = new Timer(1000, e ->
+                liveClockLabel.setText("Live: " + new SimpleDateFormat("hh:mm:ss a").format(new Date()))
+        );
+        liveTimer.setInitialDelay(0);
+        liveTimer.start();
+    }
+
+    private void copyMeetingId() {
+        String id = meetingViewModel.meetingId.get();
+        if (id != null && !id.isEmpty()) {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(id), null);
         }
     }
 
     private void applyTheme() {
-        ThemeManager.getInstance().applyTheme(this);
+        try {
+            if (ThemeManager.getInstance() != null) {
+                var theme = ThemeManager.getInstance().getCurrentTheme();
+                if (theme != null) {
+                    setBackground(theme.getBackgroundColor());
+                    ThemeManager.getInstance().applyThemeRecursively(headerCard);
+                    ThemeManager.getInstance().applyThemeRecursively(stageCard);
+                    ThemeManager.getInstance().applyThemeRecursively(sidebarCard);
+                    ThemeManager.getInstance().applyThemeRecursively(controlsBar);
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        // When Swing updates UI, also reapply our custom tab UI (extra safety)
+        SwingUtilities.invokeLater(() -> {
+            try {
+                if (stageTabs != null) {
+                    stageTabs.setUI(new ModernTabbedPaneUI());
+                    stageTabs.revalidate();
+                    stageTabs.repaint();
+                }
+                if (sidebarTabs != null) {
+                    sidebarTabs.setUI(new ModernTabbedPaneUI());
+                    sidebarTabs.revalidate();
+                    sidebarTabs.repaint();
+                }
+                applyTheme();
+            } catch (Throwable ignored) {}
+        });
     }
 }
