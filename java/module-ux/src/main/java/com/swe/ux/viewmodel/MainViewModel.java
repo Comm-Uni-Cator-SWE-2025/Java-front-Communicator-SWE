@@ -49,12 +49,6 @@ public class MainViewModel extends BaseViewModel {
         } catch (Exception e) {
             System.err.println("MainViewModel: createMeeting RPC failed - " + e.getMessage());
         }
-
-        MeetingSession fallbackSession = createLocalMeetingSession();
-        if (fallbackSession != null) {
-            meetingCode.set(fallbackSession.getMeetingId());
-            return fallbackSession.getMeetingId();
-        }
         return null;
     }
 

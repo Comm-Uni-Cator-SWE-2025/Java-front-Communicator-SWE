@@ -385,6 +385,18 @@ public class MeetingPage extends FrostedBackgroundPanel {
         String id = meetingViewModel.meetingId.get();
         if (id != null && !id.isEmpty()) {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(id), null);
+            
+            // Show "Copied!" feedback
+            btnCopyLink.setText("Copied!");
+            btnCopyLink.setEnabled(false);
+            
+            // Reset after 3 seconds
+            Timer resetTimer = new Timer(3000, e -> {
+                btnCopyLink.setText("Copy Link");
+                btnCopyLink.setEnabled(true);
+            });
+            resetTimer.setRepeats(false);
+            resetTimer.start();
         }
     }
 
