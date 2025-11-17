@@ -1,6 +1,7 @@
 package com.swe.ux.viewmodel;
 
 import com.swe.controller.Meeting.MeetingSession;
+import com.swe.controller.Meeting.SessionMode;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
@@ -35,16 +36,26 @@ public class MainViewModel extends BaseViewModel {
     }
 
     public String startMeeting() {
-        startMeetingRequested.set(true);
         try {
             byte[] response = rpc.call("core/createMeeting", new byte[0]).get();
-            MeetingSession meetingSession = DataSerializer.deserialize(response, MeetingSession.class);
-            meetingCode.set(meetingSession.getMeetingId());
-            return meetingSession.getMeetingId();
+            if (response != null && response.length > 0) {
+                MeetingSession meetingSession = DataSerializer.deserialize(response, MeetingSession.class);
+                if (meetingSession != null && meetingSession.getMeetingId() != null) {
+                    meetingCode.set(meetingSession.getMeetingId());
+                    return meetingSession.getMeetingId();
+                }
+            }
+            System.err.println("MainViewModel: createMeeting RPC returned empty payload, falling back to local session");
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            System.err.println("MainViewModel: createMeeting RPC failed - " + e.getMessage());
         }
+
+        MeetingSession fallbackSession = createLocalMeetingSession();
+        if (fallbackSession != null) {
+            meetingCode.set(fallbackSession.getMeetingId());
+            return fallbackSession.getMeetingId();
+        }
+        return null;
     }
 
     public void joinMeeting(String meetingCode_) {
@@ -62,5 +73,15 @@ public class MainViewModel extends BaseViewModel {
     public void logout() {
         // TODO USE RPC TO LOGOUT
         logoutRequested.set(true);
+    }
+
+    private MeetingSession createLocalMeetingSession() {
+        UserProfile host = currentUser.get();
+        String createdBy = host != null && host.getEmail() != null ? host.getEmail() : "demo-user@example.com";
+        MeetingSession session = new MeetingSession(createdBy, SessionMode.CLASS);
+        if (host != null) {
+            session.addParticipant(host);
+        }
+        return session;
     }
 }

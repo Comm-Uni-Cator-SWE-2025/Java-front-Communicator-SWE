@@ -69,7 +69,7 @@ public class CanvasPage extends JPanel {
     }
 
     private void applyTheme() {
-        ThemeManager.getInstance().applyTheme(this);
+        ThemeManager.getInstance().applyThemeRecursively(this);
     }
 
     public CanvasViewModel getViewModel() {

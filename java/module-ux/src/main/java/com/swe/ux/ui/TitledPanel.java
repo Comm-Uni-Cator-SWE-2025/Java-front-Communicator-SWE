@@ -24,7 +24,7 @@ public class TitledPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
-        Theme theme = ThemeManager.getInstance().getTheme();
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setColor(theme.getForeground());
         g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
