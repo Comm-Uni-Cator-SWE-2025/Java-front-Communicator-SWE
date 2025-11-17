@@ -217,6 +217,6 @@ public class ScreenNVideo extends JPanel {
     }
 
     private void applyTheme() {
-        ThemeManager.getInstance().applyTheme(this);
+        ThemeManager.getInstance().applyThemeRecursively(this);
     }
 }

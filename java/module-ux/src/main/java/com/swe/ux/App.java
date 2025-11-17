@@ -98,7 +98,7 @@ public class App extends JFrame {
      */
     public void refreshTheme() {
         ThemeManager themeManager = ThemeManager.getInstance();
-        themeManager.applyTheme(mainPanel);
+        themeManager.applyThemeRecursively(mainPanel);
         SwingUtilities.updateComponentTreeUI(this);
         revalidate();
         repaint();

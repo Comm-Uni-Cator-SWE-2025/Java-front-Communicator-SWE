@@ -2,90 +2,204 @@ package com.swe.ux.view;
 
 import com.swe.ux.theme.Theme;
 import com.swe.ux.theme.ThemeManager;
-import com.swe.ux.ui.CustomButton;
+import com.swe.ux.ui.FrostedBackgroundPanel;
+import com.swe.ux.ui.FrostedBadgeLabel;
+import com.swe.ux.ui.SoftCardPanel;
+import com.swe.ux.ui.FrostedToolbarButton;
+import com.swe.ux.ui.ThemeToggleButton;
+import com.swe.ux.ui.FontUtil;
 import com.swe.ux.viewmodel.LoginViewModel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.border.EmptyBorder;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
- * Login view that displays a Google login button.
+ * Login view reimagined with a floating frosted-glass card inspired by macOS.
  */
-public class LoginPage extends JPanel {
-    private final LoginViewModel viewModel;
-    private JLabel titleLabel;
-    private JPanel formPanel;
-    private JButton googleLoginButton;
+public class LoginPage extends FrostedBackgroundPanel {
+    private boolean uiInitialized = false;
 
-    /**
-     * Creates a new LoginPage with the specified ViewModel.
-     * @param viewModel The ViewModel to use for this view
-     */
+    private final LoginViewModel viewModel;
+    private SoftCardPanel glassCard;
+    private JLabel titleLabel;
+    private JLabel subtitleLabel;
+    private JLabel helperLabel;
+    private JLabel dateLabel;
+    private JPanel badgesPanel;
+    private FrostedToolbarButton googleLoginButton;
+    private Timer clockTimer;
+
     public LoginPage(LoginViewModel viewModel) {
         this.viewModel = viewModel;
         initializeUI();
+        uiInitialized = true;
+        applyTheme();
+
         setupBindings();
+        startClock();
         applyTheme();
     }
 
     private void initializeUI() {
-        setLayout(new BorderLayout(0, 20));
-        setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
+        setLayout(new GridBagLayout());
+        setBorder(BorderFactory.createEmptyBorder(32, 32, 32, 32));
 
-        // Title
-        titleLabel = new JLabel("Welcome Back", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        add(titleLabel, BorderLayout.NORTH);
+        glassCard = new SoftCardPanel();
+        glassCard.setPreferredSize(new Dimension(560, 520));
+        glassCard.setLayout(new BorderLayout());
+        glassCard.setOpaque(false);
 
-        // Form Panel
-        formPanel = new JPanel();
-        formPanel.setLayout(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
-        
+        JPanel content = new JPanel();
+        content.setOpaque(false);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBorder(new EmptyBorder(20, 28, 28, 28));
+
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setOpaque(false);
+        dateLabel = new JLabel(formatDate(new Date()));
+        dateLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        headerRow.add(dateLabel, BorderLayout.WEST);
+        headerRow.add(new ThemeToggleButton(), BorderLayout.EAST);
+        content.add(headerRow);
+
+        content.add(Box.createVerticalStrut(18));
+
+        titleLabel = new JLabel("Comm-Uni-Cate", SwingConstants.LEFT);
+        titleLabel.setFont(FontUtil.getJetBrainsMono(32f, Font.BOLD));
+        titleLabel.setAlignmentX(LEFT_ALIGNMENT);
+        content.add(titleLabel);
+
+        subtitleLabel = new JLabel("Where every campus conversation feels right at home.");
+        subtitleLabel.setFont(FontUtil.getJetBrainsMono(14f, Font.PLAIN));
+        subtitleLabel.setBorder(new EmptyBorder(8, 0, 18, 0));
+        subtitleLabel.setAlignmentX(LEFT_ALIGNMENT);
+        content.add(subtitleLabel);
+
+        badgesPanel = new JPanel();
+        badgesPanel.setOpaque(false);
+        badgesPanel.setLayout(new GridBagLayout());
+        GridBagConstraints badgeGbc = new GridBagConstraints();
+        badgeGbc.gridx = 0;
+        badgeGbc.gridy = 0;
+        badgeGbc.insets = new Insets(0, 0, 8, 10);
+        badgeGbc.anchor = GridBagConstraints.WEST;
+        List<String> badges = Arrays.asList("IIT PKD", "Secure Google Auth", "HD Ready");
+        for (String badge : badges) {
+            FrostedBadgeLabel badgeLabel = createBadgeLabel(badge);
+            badgesPanel.add(badgeLabel, badgeGbc);
+            badgeGbc.gridx++;
+        }
+        content.add(badgesPanel);
+
+        content.add(Box.createVerticalStrut(22));
+
+        googleLoginButton = new FrostedToolbarButton("Continue with Google");
+        googleLoginButton.setPreferredSize(new Dimension(360, 52));
+        googleLoginButton.setFont(FontUtil.getJetBrainsMono(15f, Font.BOLD));
+        googleLoginButton.addActionListener(e -> viewModel.loginWithGoogle());
+        JPanel buttonWrapper = new JPanel(new BorderLayout());
+        buttonWrapper.setOpaque(false);
+        buttonWrapper.setBorder(new EmptyBorder(6, 0, 6, 0));
+        buttonWrapper.add(googleLoginButton, BorderLayout.WEST);
+        content.add(buttonWrapper);
+
+        content.add(Box.createVerticalStrut(22));
+
+        helperLabel = new JLabel("Use your institute Google account to sign in.");
+        helperLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        helperLabel.setBorder(new EmptyBorder(10, 0, 0, 0));
+        content.add(helperLabel);
+
+        glassCard.add(content, BorderLayout.CENTER);
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(20, 8, 20, 8);
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.weightx = 1.0;
-
-        // Google Login Button
         gbc.gridx = 0;
         gbc.gridy = 0;
-        googleLoginButton = new CustomButton("Login with Google", true);
-        googleLoginButton.setPreferredSize(new Dimension(250, 50));
-        googleLoginButton.addActionListener(e -> {
-            // Bypass login and go directly to main view
-            viewModel.loginWithGoogle();
-        });
-        formPanel.add(googleLoginButton, gbc);
-
-        add(formPanel, BorderLayout.CENTER);
+        gbc.anchor = GridBagConstraints.CENTER;
+        add(glassCard, gbc);
     }
 
     private void setupBindings() {
-        // No bindings needed for Google login bypass
+        // No data binding required at present
+    }
+
+    private FrostedBadgeLabel createBadgeLabel(String text) {
+        FrostedBadgeLabel badge = new FrostedBadgeLabel(text);
+        badge.setPreferredSize(new Dimension(badge.getPreferredSize().width + 20, 32));
+        return badge;
+    }
+
+    private void startClock() {
+        if (clockTimer != null) {
+            clockTimer.stop();
+        }
+        clockTimer = new Timer(30_000, e -> dateLabel.setText(formatDate(new Date())));
+        clockTimer.setInitialDelay(0);
+        clockTimer.start();
+    }
+
+    private String formatDate(Date date) {
+        return new SimpleDateFormat("EEE, MMM d • hh:mm a").format(date);
     }
 
     private void applyTheme() {
-        // Apply theme colors
         ThemeManager themeManager = ThemeManager.getInstance();
+        if (themeManager == null) return;
         Theme theme = themeManager.getCurrentTheme();
-        themeManager.applyTheme(this);
-        
-        Color bg = theme.getBackgroundColor();
-        Color fg = themeManager.getCurrentTheme().getTextColor();
-        
-        setBackground(bg);
-        formPanel.setBackground(bg);
-        titleLabel.setForeground(fg);
+        if (theme == null) return;
+
+        setBackground(theme.getBackgroundColor());
+        titleLabel.setForeground(theme.getTextColor());
+        subtitleLabel.setForeground(theme.getTextColor().darker());
+        helperLabel.setForeground(theme.getTextColor().darker());
+        dateLabel.setForeground(theme.getTextColor());
+
+        SwingUtilities.invokeLater(() -> {
+            if (badgesPanel != null) {
+                badgesPanel.revalidate();
+                badgesPanel.repaint();
+            }
+            if (glassCard != null) {
+                glassCard.repaint();
+            }
+        });
     }
 
     @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (visible) {
-            // Reset form when made visible
             viewModel.reset();
+            applyTheme();
+            startClock();
+        } else if (clockTimer != null) {
+            clockTimer.stop();
         }
     }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if (uiInitialized) {
+            applyTheme();
+        }
+    }
+
 }

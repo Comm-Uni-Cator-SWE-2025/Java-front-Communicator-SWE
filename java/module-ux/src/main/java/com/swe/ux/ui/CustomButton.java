@@ -52,7 +52,7 @@ public class CustomButton extends JButton {
     }
 
     private void applyTheme() {
-        Theme theme = ThemeManager.getInstance().getTheme();
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
         if (primary) {
             setBackground(theme.getPrimary());
             setForeground(Color.WHITE);
