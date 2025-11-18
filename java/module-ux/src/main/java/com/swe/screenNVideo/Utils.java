@@ -35,6 +35,10 @@ public class Utils {
      */
     public static final String SUBSCRIBE_AS_VIEWER = "subscribeAsViewer";
     /**
+     * Key constant for unSubscribe_as_viewer.
+     */
+    public static final String UNSUBSCRIBE_AS_VIEWER = "unSubscribeAsViewer";
+    /**
      * Key constant for start_audio_capture.
      */
     public static final String START_AUDIO_CAPTURE = "startAudioCapture";
