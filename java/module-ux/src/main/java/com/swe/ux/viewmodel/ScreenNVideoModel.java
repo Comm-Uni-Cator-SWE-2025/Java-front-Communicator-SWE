@@ -5,6 +5,7 @@ package com.swe.ux.viewmodel;
 
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.RImage;
+import com.swe.screenNVideo.SubscriberPacket;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.UIImage;
@@ -41,11 +42,35 @@ public class ScreenNVideoModel extends BaseViewModel {
         this.onImageReceived = onImageReceived;
     }
 
+    public void requestUncompressedData(final String ip) {
+        SubscriberPacket subscriberPacket = new SubscriberPacket(ip, false);
+        rpc.call(Utils.SUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+    }
+
+    public void requestCompressedData(final String ip) {
+        SubscriberPacket subscriberPacket = new SubscriberPacket(ip, true);
+        rpc.call(Utils.SUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+    }
+
     /**
      * Updates the list of currently visible participants.
      * Called by the View when layout or scroll changes.
      */
     public void updateVisibleParticipants(Set<String> visibleIps) {
+        // get new ips
+        for (String ip : visibleIps) {
+            if (!visibleParticipants.get().contains(ip)) {
+                SubscriberPacket subscriberPacket = new SubscriberPacket(ip, true);
+                rpc.call(Utils.SUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+            }
+        }
+        // get ips to remove
+        for (String ip : visibleParticipants.get()) {
+            if (!visibleIps.contains(ip)) {
+                SubscriberPacket subscriberPacket = new SubscriberPacket(ip, true);
+                rpc.call(Utils.UNSUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+            }
+        }
         visibleParticipants.set(visibleIps);
     }
 

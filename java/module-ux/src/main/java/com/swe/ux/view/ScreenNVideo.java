@@ -241,8 +241,6 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         }
 
         ScreenNVideoModel.getInstance(meetingViewModel.rpc).updateVisibleParticipants(visibleIps);
-
-        System.out.println(visibleIps);
     }
 
     /**
@@ -429,10 +427,13 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
     @Override
     public void onZoomToggle(String ip) {
         if (zoomedParticipantIp == null) {
+            ScreenNVideoModel.getInstance(meetingViewModel.rpc).requestUncompressedData(ip);
             zoomIn(ip);
         } else if (zoomedParticipantIp.equals(ip)) {
+            ScreenNVideoModel.getInstance(meetingViewModel.rpc).requestCompressedData(ip);
             zoomOut();
         } else {
+            ScreenNVideoModel.getInstance(meetingViewModel.rpc).requestUncompressedData(ip);
             swapZoom(ip);
         }
     }
