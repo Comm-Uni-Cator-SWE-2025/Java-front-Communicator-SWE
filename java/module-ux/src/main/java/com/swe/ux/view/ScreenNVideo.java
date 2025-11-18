@@ -426,6 +426,9 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
     @Override
     public void onZoomToggle(String ip) {
+        if (meetingViewModel.participants.get().size() == 1) {
+            return;
+        }
         if (zoomedParticipantIp == null) {
             ScreenNVideoModel.getInstance(meetingViewModel.rpc).requestUncompressedData(ip);
             zoomIn(ip);

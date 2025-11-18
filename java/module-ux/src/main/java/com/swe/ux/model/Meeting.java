@@ -41,7 +41,8 @@ public class Meeting {
 
     // Methods
     public void addParticipant(UserProfile user) {
-        if (!participants.contains(user)) {
+        boolean userPresent = participants.stream().map(UserProfile::getEmail).toList().contains(user.getEmail());
+        if (!userPresent) {
             participants.add(user);
         }
     }
