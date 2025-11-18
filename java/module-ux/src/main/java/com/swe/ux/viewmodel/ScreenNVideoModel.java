@@ -6,19 +6,24 @@ package com.swe.ux.viewmodel;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.RImage;
 import com.swe.screenNVideo.Utils;
+import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.UIImage;
 
 import java.awt.image.BufferedImage;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ScreenNVideoModel extends BaseViewModel {
-    
+
     private Consumer<UIImage> onImageReceived;
 
     private AbstractRPC rpc;
 
     private static ScreenNVideoModel INSTANCE;
 
+    // Property to track visible participants (IPs)
+    public final BindableProperty<Set<String>> visibleParticipants = new BindableProperty<>(new HashSet<>(), "visibleParticipants");
     public static ScreenNVideoModel getInstance(AbstractRPC rpc) {
         if (INSTANCE == null) {
             INSTANCE = new ScreenNVideoModel(rpc);
@@ -35,7 +40,15 @@ public class ScreenNVideoModel extends BaseViewModel {
     public void setOnImageReceived(Consumer<UIImage> onImageReceived) {
         this.onImageReceived = onImageReceived;
     }
-    
+
+    /**
+     * Updates the list of currently visible participants.
+     * Called by the View when layout or scroll changes.
+     */
+    public void updateVisibleParticipants(Set<String> visibleIps) {
+        visibleParticipants.set(visibleIps);
+    }
+
     private void initComponents() {
         rpc.subscribe(Utils.UPDATE_UI, (args) -> {
             final RImage rImage = RImage.deserialize(args);
