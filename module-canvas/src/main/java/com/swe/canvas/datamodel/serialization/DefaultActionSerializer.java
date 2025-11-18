@@ -1,48 +1,39 @@
 package com.swe.canvas.datamodel.serialization;
 
-import com.swe.canvas.datamodel.action.Action;
+import java.nio.charset.StandardCharsets;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import com.swe.canvas.datamodel.action.Action;
 
 /**
  * Default implementation of {@link ActionSerializer}.
  *
- * <p>This implementation uses Java's built-in {@link ObjectOutputStream}
- * to serialize {@link Action} objects, which must all implement
- * {@link java.io.Serializable}.
+ * <p>This implementation now uses manual JSON serialization via
+ * {@link ManualJsonConverter}, replacing the need for Java's
+ * built-in binary serialization.
  * </p>
- *
- * <p><b>Thread Safety:</b> This class is stateless and thread-safe.
- * New streams are created for each operation.
- * </p>
- *
- * @author Gajjala Bhavani Shankar
- 
- 
  */
 public class DefaultActionSerializer implements ActionSerializer {
 
     /**
-     * Serializes an action using Java's object serialization.
+     * Serializes an action using manual JSON construction.
      *
      * @param action The action object to serialize.
      * @return A DTO containing the serialized byte array.
-     * @throws SerializationException if an {@link IOException} occurs.
+     * @throws SerializationException if serialization fails.
      */
     @Override
     public SerializedAction serialize(final Action action) throws SerializationException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+        try {
+            // Call the manual JSON serializer
+            final String json = NetActionSerializer.serializeAction(action);
 
-            oos.writeObject(action);
-            oos.flush();
-            final byte[] data = bos.toByteArray();
+            // Convert the JSON string to a UTF-8 byte array
+            final byte[] data = json.getBytes(StandardCharsets.UTF_8);
+
             return new SerializedAction(data);
 
-        } catch (IOException e) {
-            throw new SerializationException("Failed to serialize action: " + action.getActionId(), e);
+        } catch (Exception e) {
+            throw new SerializationException("Failed to manually serialize action object.", e);
         }
     }
 }

@@ -1,11 +1,5 @@
 package com.swe.canvas.datamodel.canvas;
 
-import com.swe.canvas.datamodel.shape.Shape;
-import com.swe.canvas.datamodel.shape.ShapeId;
-
-// import com.swe.canvas.datamodel.action.Action;
-// import com.swe.canvas.datamodel.manager.ActionManager;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -13,42 +7,53 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import com.swe.canvas.datamodel.shape.Shape;
+import com.swe.canvas.datamodel.shape.ShapeId;
+
 /**
  * Manages the complete, concurrent state of the canvas.
- *
- * <p>This class is the single source of truth for the current state of all shapes
- * on the canvas. It uses a {@link ConcurrentHashMap} to store
- * {@link ShapeState} objects, keyed by their {@link ShapeId}.
- * </p>
- *
- * <p>All operations that read or write to the canvas state must go through this
- * class to ensure thread safety. The {@link ActionManager}
- * uses this class for action validation and application.
- * </p>
- *
- * <p><b>Thread Safety:</b> This class is thread-safe.
- * It uses {@link ConcurrentMap} for atomic, thread-safe operations
- * on the underlying state map.
- * </p>
+ * (NOW INCLUDES A CALLBACK TO NOTIFY THE UI OF UPDATES)
  *
  * @author Darla Manohar
- 
- 
  */
 public class CanvasState {
 
     /**
      * The core data structure holding the state of all shapes.
-     * Key: ShapeId
-     * Value: The complete state (Shape object + metadata) for that ID.
      */
     private final ConcurrentMap<ShapeId, ShapeState> state;
+
+    /**
+     * A callback to notify the UI that it needs to redraw.
+     * This is set by the ActionManager.
+     */
+    private Runnable onUpdateCallback = () -> {};
 
     /**
      * Constructs a new, empty CanvasState.
      */
     public CanvasState() {
         this.state = new ConcurrentHashMap<>();
+    }
+    
+    /**
+     * Sets the callback function to be triggered when the state changes.
+     * This is set by the ActionManager.
+     */
+    public void setOnUpdate(Runnable onUpdate) {
+        if (onUpdate != null) {
+            this.onUpdateCallback = onUpdate;
+        } else {
+            this.onUpdateCallback = () -> {};
+        }
+    }
+    
+    /**
+     * Notifies the listener (the UI) that a redraw is needed.
+     * This is the method that was missing.
+     */
+    public void notifyUpdate() {
+        this.onUpdateCallback.run();
     }
 
     /**
@@ -65,11 +70,6 @@ public class CanvasState {
     /**
      * Applies a new state for a shape.
      *
-     * <p>This method is used by the ActionManager to commit the `newState`
-     * of a validated {@link Action}. It will
-     * atomically insert or replace the state associated with the shape ID.
-     * </p>
-     *
      * @param shapeId    The ID of the shape to update.
      * @param newState   The new state to apply.
      */
@@ -81,10 +81,6 @@ public class CanvasState {
 
     /**
      * Gets a collection of all *visible* (not deleted) shapes.
-     *
-     * <p>This method is intended for use by the Rendering team. It provides
-     * a snapshot of all shapes that should currently be drawn on the canvas.
-     * </p>
      *
      * @return An immutable collection of {@link Shape} objects.
      */

@@ -1,72 +1,51 @@
 package com.swe.canvas.datamodel.manager;
 
-import com.swe.canvas.datamodel.action.Action;
-
-// import com.swe.canvas.datamodel.action.ActionFactory;
-import com.swe.canvas.datamodel.serialization.SerializedAction;
+import com.swe.canvas.datamodel.action.ActionFactory;
+import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.collaboration.NetworkMessage;
+import com.swe.canvas.datamodel.shape.Shape;
 
 /**
- * Interface defining the core operations for managing action processing.
- *
- * <p>This interface serves as the <b>Strategy</b> pattern. The application
- * will use one of two concrete implementations:
- * <ul>
- * <li>{@link HostActionManager}: For the user who is the authoritative host.</li>
- * <li>{@link ParticipantActionManager}: For all other users.</li>
- * </ul>
- * </p>
- *
- * <p><b>Design Pattern:</b> Strategy</p>
- *
- * @author Gajjala Bhavani Shankar
- 
- 
+ * Interface defining the core operations for managing actions.
+ * This will be implemented by ClientActionManager, HostActionManager,
+ * and the existing StandaloneActionManager.
  */
 public interface ActionManager {
 
     /**
-     * Processes an incoming {@link SerializedAction} from the network.
-     *
-     * <p>This is the main entry point for actions received from other users
-     * (for a Participant) or from participants (for a Host).
-     * </p>
-     *
-     * @param serializedAction The action data from the network queue.
+     * Gets the central ActionFactory.
      */
-    void processIncomingAction(SerializedAction serializedAction);
+    ActionFactory getActionFactory();
 
     /**
-     * Initiates a local action requested by the user's UI.
-     *
-     * <p>For a Participant, this serializes and sends the action to the Host.
-     * For a Host, this validates and applies the action locally, then broadcasts it.
-     * </p>
-     *
-     * @param action The new action created by the {@link ActionFactory}.
+     * Gets the local CanvasState (mirror for client, authority for host).
      */
-    void requestLocalAction(Action action);
+    CanvasState getCanvasState();
+    
+    /**
+     * Gets the local UndoRedoManager.
+     */
+    UndoRedoManager getUndoRedoManager();
 
     /**
-     * Performs a local "undo" operation.
-     *
-     * <p>This will pop the last action from the undo stack, create its
-     * inverse, and submit that inverse action via {@link #requestLocalAction(Action)}.
-     * </p>
+     * Sets the callback to trigger a UI redraw.
      */
-    void performUndo();
+    void setOnUpdate(Runnable callback);
+
+    // --- Local User Action Requests ---
+
+    void requestCreate(Shape newShape);
+    void requestModify(ShapeState prevState, Shape modifiedShape);
+    void requestDelete(ShapeState shapeToDelete);
+    void requestUndo();
+    void requestRedo();
+
+    // --- Network-facing Method ---
 
     /**
-     * Performs a local "redo" operation.
-     *
-     * <p>This will pop the last action from the redo stack and resubmit it
-     * via {@link #requestLocalAction(Action)}.
-     * </p>
+     * Processes an incoming message from the network.
+     * This is the ProcessIncomingMessage() function you requested.
      */
-    void performRedo();
-
-    /**
-     * @summary Retrieves the user's local undo/redo stack manager.
-     * @return A reference to the user's local undo/redo stack manager.
-     */
-    UndoRedoStack getUndoRedoStack();
+    void processIncomingMessage(NetworkMessage message);
 }

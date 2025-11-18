@@ -2,21 +2,24 @@ package com.swe.canvas.mvvm;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Consumer;
 
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeFactory;
 import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.datamodel.shape.ShapeType;
-import com.swe.canvas.services.AiService;
 import com.swe.canvas.ui.util.ColorConverter;
 import com.swe.canvas.ui.util.GeometryUtils;
 
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -24,16 +27,18 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
 
 /**
- * View model for the canvas
- * @author Bhogaraju Shanmukha Sri Krishna
+ * View model for the canvas.
+ * This class is now a "thin client" as per the prompt.
+ * It does not modify its own state.
+ * It sends requests to the IActionManager and displays a "ghost shape" (transientShape).
  */
 public class CanvasViewModel {
 
-    private final CanvasState canvasState;
-    private final StandaloneActionManager actionManager;
+    private final ActionManager actionManager;
+    private final CanvasState canvasState; // This is now a local mirror
     private final ActionFactory actionFactory;
     private final ShapeFactory shapeFactory;
-    private final String userId = "local-user";
+    private final String userId; // This VM's user ID
 
     public final ObjectProperty<ToolType> activeTool = new SimpleObjectProperty<>(ToolType.FREEHAND);
     public final ObjectProperty<Color> activeColor = new SimpleObjectProperty<>(Color.BLACK);
@@ -41,35 +46,44 @@ public class CanvasViewModel {
     public final ObjectProperty<ShapeId> selectedShapeId = new SimpleObjectProperty<>(null);
 
     private final List<Point> currentPoints = new ArrayList<>();
-    private Shape ghostShape = null;
+    
+    // "Ghost Shape" for 2-second timeout
+    private Shape transientShape = null; 
+    private Timer ghostTimer = new Timer(true); // Daemon timer
 
     private double lastDragX;
     private double lastDragY;
-    // Exposed so Renderer knows if we are currently moving something
     public boolean isDraggingSelection = false;
+    private ShapeState originalShapeForDrag = null; // Store the original state for drag
 
-    public CanvasViewModel(final CanvasState state) {
-        this.canvasState = state;
-        this.actionFactory = new ActionFactory();
+    /**
+     * This ViewModel is created by the Main app and injected with the
+     * appropriate action manager (Host or Client).
+     */
+    public CanvasViewModel(String userId, ActionManager actionManager) {
+        this.userId = userId;
+        this.actionManager = actionManager;
+        this.canvasState = actionManager.getCanvasState(); // Get state from manager
+        this.actionFactory = actionManager.getActionFactory();
         this.shapeFactory = new ShapeFactory();
-        this.actionManager = new StandaloneActionManager(canvasState, actionFactory, userId);
-        
-        // this.networkManager = NetworkFront.getNetworkFront();
     }
 
     public CanvasState getCanvasState() {
         return canvasState;
     }
 
-    public Shape getGhostShape() {
-        return ghostShape;
+    /**
+     * Returns the "ghost shape" for rendering.
+     */
+    public Shape getTransientShape() {
+        return transientShape;
     }
 
     public void setOnCanvasUpdate(final Runnable r) {
         actionManager.setOnUpdate(r);
     }
 
-    // --- Property Updates ---
+    // --- Property Updates (Now send requests) ---
     public void updateSelectedShapeColor(final Color newFxColor) {
         updateShapeProperty(s -> s.setColor(ColorConverter.toAwt(newFxColor)));
     }
@@ -85,46 +99,40 @@ public class CanvasViewModel {
             if (currentState != null && !currentState.isDeleted()) {
                 final Shape modifiedShape = currentState.getShape().copy();
                 modifier.accept(modifiedShape);
-                final Action action = actionFactory.createModifyAction(canvasState, id, modifiedShape, userId);
-                actionManager.requestLocalAction(action);
+                
+                // Send MODIFY request
+                actionManager.requestModify(currentState, modifiedShape);
+                
+                // Show ghost shape
+                showGhostShape(modifiedShape);
             }
         }
     }
 
-    // --- Input Handling ---
+    // --- Input Handling (Client Logic) ---
 
-    /**
-     * Handles mouse press event.
-     * @param x x coordinate
-     * @param y y coordinate
-     */
     public void onMousePressed(final double x, final double y) {
         lastDragX = x;
         lastDragY = y;
+        transientShape = null; // Clear any previous ghost
 
         if (activeTool.get() == ToolType.SELECT) {
-            // 1. Find what we clicked on
             final ShapeId hitShapeId = findHitShape(x, y);
-
-            // 2. Update selection
             selectedShapeId.set(hitShapeId);
 
-            // 3. If we clicked a shape, prepare for immediate dragging
             if (hitShapeId != null) {
-                final com.swe.canvas.datamodel.canvas.ShapeState ss = canvasState.getShapeState(hitShapeId);
+                final ShapeState ss = canvasState.getShapeState(hitShapeId);
                 if (ss != null && !ss.isDeleted() && ss.getShape() != null) {
                     isDraggingSelection = true;
-                    // Create the ghost shape immediately so we can see it move
-                    ghostShape = ss.getShape().copy();
+                    originalShapeForDrag = ss; // Store original state
+                    transientShape = ss.getShape().copy(); // Start ghosting
                 } else {
-                    // Shape no longer exists (race) — treat as no hit
                     isDraggingSelection = false;
-                    ghostShape = null;
-                    selectedShapeId.set(null);
+                    originalShapeForDrag = null;
                 }
             } else {
                 isDraggingSelection = false;
-                ghostShape = null;
+                originalShapeForDrag = null;
             }
         } else {
             // Drawing mode
@@ -136,17 +144,14 @@ public class CanvasViewModel {
         }
     }
 
-    /**
-     * Handles mouse drag event.
-     * @param x x coordinate
-     * @param y y coordinate
-     */
     public void onMouseDragged(final double x, final double y) {
         if (activeTool.get() == ToolType.SELECT) {
-            if (isDraggingSelection && ghostShape != null) {
+            if (isDraggingSelection && transientShape != null && originalShapeForDrag != null) {
+                // Apply delta to the ghost shape
                 final double dx = x - lastDragX;
                 final double dy = y - lastDragY;
-                ghostShape.translate(dx, dy);
+                transientShape.translate(dx, dy);
+                
                 lastDragX = x;
                 lastDragY = y;
             }
@@ -159,43 +164,51 @@ public class CanvasViewModel {
             updateGhostShape();
         }
     }
-    
-    /**
-     * Handles mouse release events
-     * @param x x coordinate
-     * @param y y coordinate
-     */
+
     public void onMouseReleased(final double x, final double y) {
         if (activeTool.get() == ToolType.SELECT) {
-            // If we were dragging, commit the move now
-            if (isDraggingSelection && ghostShape != null && selectedShapeId.get() != null) {
-                final Action modifyAction = actionFactory.createModifyAction(
-                        canvasState, selectedShapeId.get(), ghostShape, userId);
-                actionManager.requestLocalAction(modifyAction);
+            // Commit the drag/move
+            if (isDraggingSelection && transientShape != null && originalShapeForDrag != null) {
+                // We must send the *original* state as prevState
+                actionManager.requestModify(originalShapeForDrag, transientShape);
+                // transientShape is already set, just start the timer
+                startGhostTimer();
             }
             isDraggingSelection = false;
-        } else if (ghostShape != null) {
+            originalShapeForDrag = null;
             
-            // LOG THE SERIALIZED SHAPE HERE
-            // try {
-            //     final String shapeJson = ShapeSerializer.testSerializeShapeOnly(ghostShape);
-            //     System.out.println("--- NEW SHAPE SERIALIZED TO JSON ---");
-            //     System.out.println(shapeJson);
-            //     System.out.println("------------------------------------");
-            // } catch (Exception e) {
-            //     System.err.println("Error during shape serialization logging: " + e.getMessage());
-            // }
-
-            // Commit newly drawn shape
-            final Action createAction = actionFactory.createCreateAction(ghostShape, userId);
-            actionManager.requestLocalAction(createAction);
+        } else if (transientShape != null) {
+            // Commit the new drawing
+            actionManager.requestCreate(transientShape);
+            startGhostTimer(); // Show ghost until confirmed
         }
-        ghostShape = null;
+        
         currentPoints.clear();
     }
-
-    private void sendNetworkMessage() {
-        // TODO: Implement network message sending logic
+    
+    // --- Ghost Shape Logic ---
+    
+    private void showGhostShape(Shape shape) {
+        transientShape = shape;
+        startGhostTimer();
+    }
+    
+    private void startGhostTimer() {
+        ghostTimer.cancel(); // Cancel any existing timer
+        ghostTimer = new Timer(true);
+        ghostTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                transientShape = null;
+                // We must redraw on the UI thread
+                Platform.runLater(() -> {
+                    if (actionManager != null) {
+                        // This forces a redraw by notifying the manager
+                        actionManager.getCanvasState().notifyUpdate();
+                    }
+                });
+            }
+        }, 2000); // 2 second timeout
     }
 
     private ShapeId findHitShape(final double x, final double y) {
@@ -212,27 +225,16 @@ public class CanvasViewModel {
     private void updateGhostShape() {
         final ShapeType type;
         switch (activeTool.get()) {
-            case RECTANGLE:
-                type = ShapeType.RECTANGLE;
-                break;
-            case ELLIPSE:
-                type = ShapeType.ELLIPSE;
-                break;
-            case TRIANGLE:
-                type = ShapeType.TRIANGLE;
-                break;
-            case LINE:
-                type = ShapeType.LINE;
-                break;
-            case FREEHAND:
-                type = ShapeType.FREEHAND;
-                break;
-            default:
-                type = ShapeType.FREEHAND;
-                break;
+            case RECTANGLE: type = ShapeType.RECTANGLE; break;
+            case ELLIPSE: type = ShapeType.ELLIPSE; break;
+            case TRIANGLE: type = ShapeType.TRIANGLE; break;
+            case LINE: type = ShapeType.LINE; break;
+            case FREEHAND: type = ShapeType.FREEHAND; break;
+            default: type = ShapeType.FREEHAND; break;
         }
-
-        ghostShape = shapeFactory.createShape(
+        
+        // Create the shape with the client's user ID
+        transientShape = shapeFactory.createShape(
                 type, ShapeId.randomId(), new ArrayList<>(currentPoints),
                 activeStrokeWidth.get(), ColorConverter.toAwt(activeColor.get()), userId);
     }
@@ -240,53 +242,23 @@ public class CanvasViewModel {
     public void deleteSelectedShape() {
         final ShapeId id = selectedShapeId.get();
         if (id != null) {
-            final Action deleteAction = actionFactory.createDeleteAction(canvasState, id, userId);
-            actionManager.requestLocalAction(deleteAction);
-            selectedShapeId.set(null); // Clear selection after delete
+            final ShapeState stateToDelete = canvasState.getShapeState(id);
+            if (stateToDelete != null && !stateToDelete.isDeleted()) {
+                actionManager.requestDelete(stateToDelete);
+                
+                // Show deleted shape as a ghost
+                Shape ghost = stateToDelete.getShape().copy();
+                showGhostShape(ghost); // Show ghost
+                selectedShapeId.set(null);
+            }
         }
-    }
-
-    /**
-     * Regularize the currently selected shape (only applies to FREEHAND shapes).
-     *
-     * This method is intentionally lightweight: it delegates geometry work to
-     * {@link GeometryUtils#regularizeFreehandPoints(List, int)} which is
-     * provided as a stub. Implement that helper to compute the N-sided
-     * polygon points. If the helper returns an empty list, no action is taken.
-     *
-     * @param sides number of polygon sides (>=3)
-     */
-    public void regularizeSelectedShape() {
-        // Regularize only the currently selected FREEHAND shape.
-        final ShapeId id = selectedShapeId.get();
-        if (id == null) {
-            return; // nothing selected
-        }
-
-        final ShapeState current = canvasState.getShapeState(id);
-        if (current == null || current.isDeleted() || current.getShape() == null) {
-            return;
-        }
-
-        final Shape original = current.getShape();
-        if (original.getShapeType() != ShapeType.FREEHAND) {
-            return; // only applies to freehand
-        }
-
-        final Shape modified = AiService.regularizeFreehandShape(original);
-        if (modified == null || modified.getPoints() == null || modified.getPoints().isEmpty()) {
-            return;
-        }
-
-        final Action modifyAction = actionFactory.createModifyAction(canvasState, id, modified, userId);
-        actionManager.requestLocalAction(modifyAction);
     }
 
     public void undo() {
-        actionManager.performUndo();
+        actionManager.requestUndo();
     }
 
     public void redo() {
-        actionManager.performRedo();
+        actionManager.requestRedo();
     }
 }

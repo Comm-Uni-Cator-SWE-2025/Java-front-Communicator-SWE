@@ -31,55 +31,42 @@ public class CanvasRenderer {
         this.gc = canvas.getGraphicsContext2D();
     }
 
-    // Updated render method signature to accept dragging state
-
     /**
      * Main Rendering logic
      * @param state current state
-     * @param ghostShape ghost shape
+     * @param transientShape The "ghost" shape awaiting network confirmation
      * @param selectedShapeId id of the shape selected
-     * @param isDraggingSelection dragging or not
+     * @param isDraggingSelection dragging or not (Note: isDragging is now part of transientShape logic)
      */
-    public void render(final CanvasState state, final Shape ghostShape, final ShapeId selectedShapeId, final boolean isDraggingSelection) {
+    public void render(final CanvasState state, final Shape transientShape, final ShapeId selectedShapeId, final boolean isDraggingSelection) {
+        // We must use the canvas's fixed width/height, not the container's
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
         // 1. Draw all committed shapes
         for (Shape shape : state.getVisibleShapes()) {
-            // If we are currently dragging THIS shape, don't draw the original.
-            // We will draw the moved 'ghost' version later.
-            if (isDraggingSelection && shape.getShapeId().equals(selectedShapeId)) {
+            // If we are ghosting this shape (e.g., dragging it), don't draw the original.
+            if (transientShape != null && shape.getShapeId().equals(transientShape.getShapeId())) {
                 continue;
             }
             drawShape(shape, 1.0); // Draw fully opaque
         }
 
-        // 2. Draw ghost shape (either new drawing OR the shape being moved)
-        if (ghostShape != null) {
-            // If dragging, draw opaque so it looks like the real shape moving.
-            // If creating new, draw semi-transparent.
-            double alpha_ = 0;
-            if (isDraggingSelection) {
-                alpha_ = 1.0;
-            }
-            else {
-                alpha_ = 0.5;
-            }
-            drawShape(ghostShape, alpha_);
+        // 2. Draw ghost shape (either new drawing OR shape being moved)
+        if (transientShape != null) {
+            // Draw ghost with 50% opacity
+            drawShape(transientShape, 0.5);
         }
 
-        // 3. Draw selection box LAST so it's always on top
+        // 3. Draw selection box
         if (selectedShapeId != null) {
-            if (isDraggingSelection && ghostShape != null) {
-                // If dragging, draw box around the moving ghost
-                drawBoundingBox(ghostShape);
-            } else {
-                // Otherwise draw around the original shape. Guard against missing ShapeState.
-                final ShapeState selectedState = state.getShapeState(selectedShapeId);
-                if (selectedState != null) {
-                    final Shape selected = selectedState.getShape();
-                    if (selected != null && !selectedState.isDeleted()) {
-                        drawBoundingBox(selected);
-                    }
+            ShapeState selectedState = state.getShapeState(selectedShapeId);
+            if (selectedState != null && !selectedState.isDeleted()) {
+                // If we are dragging the selected shape, draw box around the ghost
+                if (transientShape != null && transientShape.getShapeId().equals(selectedShapeId)) {
+                     drawBoundingBox(transientShape);
+                } else {
+                     // Otherwise draw around the shape in the main state
+                     drawBoundingBox(selectedState.getShape());
                 }
             }
         }

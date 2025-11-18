@@ -1,50 +1,62 @@
 package com.swe.canvas.ui;
 
+import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.canvas.datamodel.collaboration.NetworkSimulator;
+import com.swe.canvas.datamodel.manager.ActionManager;
+import com.swe.canvas.datamodel.manager.ClientActionManager;
+import com.swe.canvas.datamodel.manager.HostActionManager;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-
 /**
- * Main running class in the app
- * @author Bhogaraju Shanmukha Sri Krishna
+ * Main application entry point.
+ * Sets up the Host/Client simulation and launches two windows.
+ *
+ * THIS IS THE NEW MAIN CLASS TO RUN.
  */
 public class CanvasApp extends Application {
 
     @Override
-    public void start(Stage primaryStage) throws IOException {
-        final FXMLLoader loader = new FXMLLoader(CanvasApp.class.getResource("../fxml/canvas-view.fxml"));
-        final Parent root = loader.load();
-        final CanvasController controller = loader.getController();
+    public void start(Stage primaryStage) throws Exception {
+        // 1. Create the core components
+        NetworkSimulator network = new NetworkSimulator();
+        CanvasState hostCanvasState = new CanvasState(); // The single source of truth
 
-        final Scene scene = new Scene(root);
+        // 2. Create the Host
+        ActionManager hostManager = new HostActionManager("HOST-USER", hostCanvasState, network);
 
-        // Setup Accelerators
-        // Ctrl+Z -> Undo
-        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.Z, KeyCombination.SHORTCUT_DOWN),
-                () -> controller.getViewModel().undo());
-        // Ctrl+Y -> Redo
-        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.Y, KeyCombination.SHORTCUT_DOWN),
-                () -> controller.getViewModel().redo());
-        // Ctrl+X -> Undo (per specific request)
-        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.X, KeyCombination.SHORTCUT_DOWN),
-                () -> {
-                    System.out.println("Ctrl+X (Custom Undo) triggered");
-                    controller.getViewModel().undo();
-                });
+        // 3. Create a Client
+        ActionManager clientManager = new ClientActionManager("CLIENT-USER-1", new CanvasState(), network);
 
-        primaryStage.setTitle("JavaFX Canvas (FXML)");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        // 4. Launch Host Window
+        launchWindow("Host View (Authoritative)", hostManager);
+        
+        // 5. Launch Client Window
+        launchWindow("Client View (Mirror)", clientManager);
     }
 
-    public static void main(final String[] args) {
+    /**
+     * Helper to launch a new canvas window with its own ActionManager.
+     */
+    private void launchWindow(String title, ActionManager actionManager) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("../fxml/canvas-view.fxml"));
+        Parent root = loader.load();
+
+        // Get the controller and inject the ActionManager
+        CanvasController controller = loader.getController();
+        controller.initModel(actionManager);
+        
+        Stage stage = new Stage();
+        stage.setTitle(title);
+        stage.setScene(new Scene(root, 1000, 700));
+        stage.show();
+    }
+
+    public static void main(String[] args) {
         launch(args);
     }
 }
