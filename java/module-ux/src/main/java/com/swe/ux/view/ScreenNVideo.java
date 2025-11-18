@@ -3,12 +3,11 @@
  */
 package com.swe.ux.view;
 
-import com.swe.screenNVideo.AbstractRPC;
-import com.swe.screenNVideo.DummyRPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.model.UIImage;
-import com.swe.ux.model.User;
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.ParticipantPanel;
 import com.swe.ux.viewmodel.MeetingViewModel;
@@ -241,7 +240,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
             }
         }
 
-        ScreenNVideoModel.getInstance().updateVisibleParticipants(visibleIps);
+        ScreenNVideoModel.getInstance(meetingViewModel.rpc).updateVisibleParticipants(visibleIps);
 
         System.out.println(visibleIps);
     }
@@ -306,13 +305,13 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
     private void setupBindings() {
 
         // Bind participant added event
-        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<User> participants) -> {
+        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<UserProfile> participants) -> {
             System.out.println("Participants updated");
 
             // Handle participant removal
             java.util.Set<String> currentIps = new java.util.HashSet<>();
-            for (User p : participants) {
-                currentIps.add(p.getId());
+            for (UserProfile p : participants) {
+                currentIps.add(p.getEmail());
             }
             java.util.Set<String> panelsToRemove = new java.util.HashSet<>(participantPanels.keySet());
             panelsToRemove.removeAll(currentIps);
@@ -326,15 +325,15 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
             // Handle participant addition
             participants.forEach(participant -> {
-                System.out.println("Adding participant: " + participant.getUsername() + " with IP: " + participant.getId());
-                addParticipant(participant.getUsername(), participant.getId());
+                System.out.println("Adding participant: " + participant.getDisplayName() + " with email: " + participant.getEmail());
+                addParticipant(participant.getDisplayName(), participant.getEmail());
             });
         }));
 
-        ScreenNVideoModel.getInstance().setOnImageReceived(ScreenNVideo::displayFrame);
+        ScreenNVideoModel.getInstance(this.meetingViewModel.rpc).setOnImageReceived(ScreenNVideo::displayFrame);
 
-        AbstractRPC rpc = DummyRPC.getInstance();
-        rpc.subscribe(Utils.STOP_SHARE, (args) -> {
+        // AbstractRPC rpc = DummyRPC.getInstance();
+        this.meetingViewModel.rpc.subscribe(Utils.STOP_SHARE, (args) -> {
             String ip = new String(args);
             nullifyImage(ip);
             return new byte[0];

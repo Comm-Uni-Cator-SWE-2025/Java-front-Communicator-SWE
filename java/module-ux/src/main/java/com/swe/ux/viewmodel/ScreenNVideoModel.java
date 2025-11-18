@@ -3,8 +3,7 @@
  */
 package com.swe.ux.viewmodel;
 
-import com.swe.screenNVideo.AbstractRPC;
-import com.swe.screenNVideo.DummyRPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.RImage;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
@@ -25,17 +24,16 @@ public class ScreenNVideoModel extends BaseViewModel {
 
     // Property to track visible participants (IPs)
     public final BindableProperty<Set<String>> visibleParticipants = new BindableProperty<>(new HashSet<>(), "visibleParticipants");
-
-    public static ScreenNVideoModel getInstance() {
+    public static ScreenNVideoModel getInstance(AbstractRPC rpc) {
         if (INSTANCE == null) {
-            INSTANCE = new ScreenNVideoModel();
+            INSTANCE = new ScreenNVideoModel(rpc);
         }
         return INSTANCE;
     }
-
-    private ScreenNVideoModel() {
-        this.rpc = DummyRPC.getInstance();
-
+    
+    private ScreenNVideoModel(AbstractRPC rpc) {
+        this.rpc = rpc;
+        
         initComponents();
     }
 

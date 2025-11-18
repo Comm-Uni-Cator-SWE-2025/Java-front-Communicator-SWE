@@ -1,4 +1,4 @@
-package com.swe.core.Meeting;
+package com.swe.controller.Meeting;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +24,7 @@ public class MeetingSession {
     /** Time the meeting was created. */
     @JsonProperty("createdAt")
     private final long createdAt;
-    
+
     /** Session mode: TEST or CLASS. */
     @JsonProperty("SessionMode")
     private final SessionMode sessionMode;
@@ -50,7 +50,7 @@ public class MeetingSession {
             @JsonProperty("createdBy") String createdBy,
             @JsonProperty("createdAt") long createdAt,
             @JsonProperty("sessionMode") SessionMode sessionMode,
-            @JsonProperty("participants") Map<String, UserProfile> participants){
+            @JsonProperty("participants") Map<String, UserProfile> participants) {
         this.meetingId = meetingId;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
@@ -73,7 +73,9 @@ public class MeetingSession {
         return this.sessionMode;
     }
 
-    public UserProfile getParticipant(String emailId) { return this.participants.get(emailId); }
+    public UserProfile getParticipant(String emailId) {
+        return this.participants.get(emailId);
+    }
 
     public Map<String, UserProfile> getParticipants() {
         return this.participants;
@@ -81,6 +83,7 @@ public class MeetingSession {
 
     /**
      * Adds a participant to this session's in-memory list.
+     * 
      * @param p The participant to add.
      */
     public void addParticipant(UserProfile p) {
