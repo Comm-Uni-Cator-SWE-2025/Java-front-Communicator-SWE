@@ -1,6 +1,6 @@
 package com.swe.ux.view;
 
-import com.swe.ux.model.User;
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.theme.Theme;
 import com.swe.ux.ui.CustomButton;
@@ -87,7 +87,7 @@ public class MainPage extends JPanel {
     }
     
     private void updateUserInfo() {
-        User user = viewModel.currentUser.get();
+        UserProfile user = viewModel.currentUser.get();
         if (user != null) {
             welcomeLabel.setText("Welcome, " + user.getDisplayName() + "!");
         } else {

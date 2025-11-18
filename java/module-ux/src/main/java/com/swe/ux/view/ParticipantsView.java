@@ -1,7 +1,7 @@
 package com.swe.ux.view;
 
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.binding.PropertyListeners;
-import com.swe.ux.model.User;
 import com.swe.ux.theme.Theme;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.viewmodel.ParticipantsViewModel;
@@ -72,7 +72,7 @@ public class ParticipantsView extends JPanel {
         });
         
         // Listen to participant list changes
-        viewModel.participants.addListener(PropertyListeners.onListChanged((List<User> participants) -> {
+        viewModel.participants.addListener(PropertyListeners.onListChanged((List<UserProfile> participants) -> {
             SwingUtilities.invokeLater(() -> {
                 updateParticipantsList(participants);
             });
@@ -90,7 +90,7 @@ public class ParticipantsView extends JPanel {
      * Updates the participants list display.
      * @param participants The list of participants to display
      */
-    private void updateParticipantsList(List<User> participants) {
+    private void updateParticipantsList(List<UserProfile> participants) {
         participantsListPanel.removeAll();
         
         if (participants == null || participants.isEmpty()) {
@@ -99,7 +99,7 @@ public class ParticipantsView extends JPanel {
             emptyLabel.setForeground(Color.GRAY);
             participantsListPanel.add(emptyLabel);
         } else {
-            for (User participant : participants) {
+            for (UserProfile participant : participants) {
                 JPanel participantItem = createParticipantItem(participant);
                 participantsListPanel.add(participantItem);
                 participantsListPanel.add(Box.createVerticalStrut(8));
@@ -115,14 +115,14 @@ public class ParticipantsView extends JPanel {
      * @param participant The participant user
      * @return A JPanel displaying the participant information
      */
-    private JPanel createParticipantItem(User participant) {
+    private JPanel createParticipantItem(UserProfile participant) {
         JPanel itemPanel = new JPanel(new BorderLayout(10, 5));
         itemPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
         itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         
         // Participant name
         String displayName = participant.getDisplayName();
-        String name = displayName != null && !displayName.isEmpty() ? displayName : participant.getUsername();
+        String name = displayName != null && !displayName.isEmpty() ? displayName : participant.getEmail();
         JLabel nameLabel = new JLabel(name);
         nameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         itemPanel.add(nameLabel, BorderLayout.WEST);
