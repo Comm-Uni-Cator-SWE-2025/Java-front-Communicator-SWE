@@ -19,8 +19,12 @@ public class ThemeToggleButton extends JComponent {
     private boolean hovered = false;
 
     public ThemeToggleButton() {
-        setPreferredSize(new Dimension(56, 28));
+        setPreferredSize(new Dimension(44, 24));
+        setMinimumSize(new Dimension(44, 24));
+        setMaximumSize(new Dimension(44, 24));
         setToolTipText("Toggle theme");
+        // Add some internal padding/margin to prevent clipping
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
         addMouseListener(new MouseAdapter() {
             @Override public void mouseEntered(MouseEvent e) { hovered = true; repaint(); }
             @Override public void mouseExited(MouseEvent e) { hovered = false; repaint(); }
@@ -35,17 +39,26 @@ public class ThemeToggleButton extends JComponent {
 
         boolean dark = ThemeManager.getInstance().getCurrentTheme().isDark();
         int w = getWidth(), h = getHeight();
-        int arc = h;
+        
+        // Account for border padding - draw slightly inset to prevent clipping
+        int inset = 1; // Small inset to ensure nothing gets clipped
+        int drawX = inset;
+        int drawY = inset;
+        int drawW = w - (inset * 2);
+        int drawH = h - (inset * 2);
+        
+        // Background: solid enough to be seen, but translucent
+        g2.setColor(dark ? new java.awt.Color(255, 255, 255, 30) : new java.awt.Color(0, 0, 0, 20));
+        g2.fillRoundRect(drawX, drawY, drawW, drawH, drawH, drawH);
 
-        // background
-        g2.setColor(dark ? new java.awt.Color(255,255,255,14) : new java.awt.Color(0,0,0,10));
-        g2.fillRoundRect(0, 0, w, h, arc, arc);
-
-        // knob
-        int knobSize = h - 8;
-        int x = dark ? w - knobSize - 4 : 4;
-        int y = 4;
-        g2.setColor(dark ? new java.awt.Color(255,255,255,200) : new java.awt.Color(255,255,255,220));
+        // Knob with proper padding from edges
+        int padding = 3;
+        int knobSize = drawH - (padding * 2);
+        int x = dark ? (drawX + drawW - knobSize - padding) : (drawX + padding);
+        int y = drawY + padding;
+        
+        // Knob color - solid white for visibility
+        g2.setColor(dark ? new java.awt.Color(255, 255, 255, 240) : java.awt.Color.WHITE);
         g2.fillOval(x, y, knobSize, knobSize);
 
         g2.dispose();
