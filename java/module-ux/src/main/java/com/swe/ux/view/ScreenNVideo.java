@@ -340,7 +340,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
     }
 
     private void applyTheme() {
-        ThemeManager.getInstance().applyTheme(this);
+        ThemeManager.getInstance().applyThemeRecursively(this);
     }
 
     private void zoomIn(String ip) {

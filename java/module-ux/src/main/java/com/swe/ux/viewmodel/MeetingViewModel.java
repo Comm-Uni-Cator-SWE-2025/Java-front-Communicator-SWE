@@ -14,7 +14,7 @@ import com.swe.ux.model.Meeting;
  */
 public class MeetingViewModel extends BaseViewModel {
     private final UserProfile currentUser;
-    private Meeting currentMeeting;
+    private Meeting currentMeeting = new Meeting("Meeting");
     public AbstractRPC rpc;
     
     // Bindable properties
@@ -42,25 +42,38 @@ public class MeetingViewModel extends BaseViewModel {
     }
 
     /**
+     * Sets the meeting ID for this meeting.
+     * This should be called before startMeeting() to use an existing meeting ID.
+     * @param id The meeting ID to set
+     */
+    public void setMeetingId(String id) {
+        if (id != null && !id.trim().isEmpty()) {
+            meetingId.set(id);
+        }
+    }
+
+    /**
      * Start a new meeting with the current user as a participant.
-     * Creates a new meeting with a unique meeting ID and sets role as Instructor.
+     * The meeting ID must be set via setMeetingId() before calling this method.
+     * The meeting ID comes from either RPC (when creating) or user input (when joining).
      */
     public void startMeeting() {
-        // Generate a new unique meeting ID
-        String newMeetingId = java.util.UUID.randomUUID().toString();
-        meetingId.set(newMeetingId);
+        // Get the meeting ID that was set via setMeetingId()
+        String newMeetingId = meetingId.get();
         
-        // Ensure role is set to Instructor when starting a meeting
-        if (!"Instructor".equals(role.get())) {
-            role.set("Instructor");
+        // Meeting ID must be provided before starting the meeting
+        if (newMeetingId == null || newMeetingId.trim().isEmpty()) {
+            System.err.println("Error: Meeting ID must be set before starting a meeting");
+            return;
         }
         
-        // Create the meeting with the generated ID
+        // Create the meeting with the provided ID
         String title = meetingTitle.get();
         if (title == null || title.trim().isEmpty()) {
-            title = "Meeting " + newMeetingId.substring(0, 8);
+            String displaySegment = newMeetingId.length() > 8 ? newMeetingId.substring(0, 8) : newMeetingId;
+            title = "Meeting " + displaySegment;
         }
-        currentMeeting = new Meeting(title);
+        currentMeeting.setMeetingTitle(title);
         currentMeeting.addParticipant(currentUser);
         
         isMeetingActive.set(true);
@@ -102,6 +115,12 @@ public class MeetingViewModel extends BaseViewModel {
             currentMeeting.addParticipant(user);
             updateParticipants();
             addSystemMessage(user.getDisplayName() + " joined the meeting");
+        } else {
+            System.out.println("MeetingViewModel: currentMeeting is null, saving user to list");
+            // Create a new list to trigger property change notification
+            List<UserProfile> updatedParticipants = new ArrayList<>(participants.get());
+            updatedParticipants.add(user);
+            participants.set(updatedParticipants);
         }
     }
 
