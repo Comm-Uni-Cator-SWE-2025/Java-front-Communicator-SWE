@@ -56,22 +56,26 @@ public class ScreenNVideoModel extends BaseViewModel {
      * Updates the list of currently visible participants.
      * Called by the View when layout or scroll changes.
      */
-    public void updateVisibleParticipants(Set<String> visibleIps) {
+    public void updateVisibleParticipants(Set<String> visibleEmails) {
         // get new ips
-        for (String ip : visibleIps) {
-            if (!visibleParticipants.get().contains(ip)) {
-                SubscriberPacket subscriberPacket = new SubscriberPacket(ip, true);
-                rpc.call(Utils.SUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+        for (String emails : visibleEmails) {
+            if (!visibleParticipants.get().contains(emails)) {
+                SubscriberPacket subscriberPacket = new SubscriberPacket(emails, true);
+                try {
+                    rpc.call(Utils.SUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+                } catch (NumberFormatException ignored) {}
             }
         }
         // get ips to remove
         for (String ip : visibleParticipants.get()) {
-            if (!visibleIps.contains(ip)) {
+            if (!visibleEmails.contains(ip)) {
                 SubscriberPacket subscriberPacket = new SubscriberPacket(ip, true);
-                rpc.call(Utils.UNSUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+                try {
+                    rpc.call(Utils.UNSUBSCRIBE_AS_VIEWER, subscriberPacket.serialize());
+                } catch (NumberFormatException ignored) {}
             }
         }
-        visibleParticipants.set(visibleIps);
+        visibleParticipants.set(visibleEmails);
     }
 
     private void initComponents() {

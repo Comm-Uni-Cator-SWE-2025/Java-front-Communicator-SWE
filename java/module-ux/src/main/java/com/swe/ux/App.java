@@ -203,9 +203,12 @@ public class App extends JFrame {
                 newMeetingViewModel.setMeetingId(meetingId);
                 System.out.println("App: Passing meeting ID from MainViewModel to MeetingViewModel: " + meetingId);
 
+                // Create a new MeetingPage with the new view model
+                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
+
                 // Try to start the meeting
                 newMeetingViewModel.startMeeting();
-                
+
                 // Only change view if meeting was successfully started
                 if (!newMeetingViewModel.isMeetingActive.get()) {
                     System.err.println("App: Failed to start meeting - meeting not active");
@@ -222,8 +225,7 @@ public class App extends JFrame {
                     }
                 }));
 
-                // Create a new MeetingPage with the new view model
-                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
+
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
                 showView(MEETING_VIEW);
 
@@ -257,6 +259,9 @@ public class App extends JFrame {
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingCode);
                 System.out.println("App: Passing meeting code from MainViewModel to MeetingViewModel: " + meetingCode);
+
+                // Create a new MeetingPage with the new view model
+                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 
                 // Try to start the meeting with the provided meeting ID
                 newMeetingViewModel.startMeeting();
@@ -279,8 +284,6 @@ public class App extends JFrame {
                     }
                 }));
 
-                // Create a new MeetingPage with the new view model
-                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
                 showView(MEETING_VIEW);
 

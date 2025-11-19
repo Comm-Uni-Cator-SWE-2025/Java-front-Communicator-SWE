@@ -136,6 +136,10 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
             newCols = Math.min(newCols, participantPanels.size());
 
+            if (newCols == 0) {
+                return;
+            }
+
             if (newCols != currentGalleryCols) {
                 currentGalleryCols = newCols;
                 // Set a GridLayout with 0 rows (as many as needed) and newCols columns
