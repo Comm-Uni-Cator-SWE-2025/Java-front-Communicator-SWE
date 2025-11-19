@@ -24,6 +24,7 @@ public class MeetingViewModel extends BaseViewModel {
     public final BindableProperty<List<String>> messages = new BindableProperty<>(new ArrayList<>(), "messages");
     public final BindableProperty<Boolean> isMeetingActive = new BindableProperty<>(false, "isMeetingActive");
     public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
+    public final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
     public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
     public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
     public final BindableProperty<String> role = new BindableProperty<>("", "role");
@@ -148,6 +149,23 @@ public class MeetingViewModel extends BaseViewModel {
             }
             currentMeeting.setVideoEnabled(newState);
             addSystemMessage("Video " + (newState ? "enabled" : "disabled"));
+        }
+    }
+
+    /**
+     * Toggle audio state for the current meeting.
+     */
+    public void toggleAudio() {
+        if (currentMeeting != null) {
+            boolean newState = !isAudioEnabled.get();
+            isAudioEnabled.set(newState);
+            if (newState) {
+                rpc.call(Utils.START_AUDIO_CAPTURE, new byte[0]);
+            } else {
+                rpc.call(Utils.STOP_AUDIO_CAPTURE, new byte[0]);
+            }
+            currentMeeting.setAudioEnabled(newState);
+            addSystemMessage("Audio " + (newState ? "enabled" : "disabled"));
         }
     }
 

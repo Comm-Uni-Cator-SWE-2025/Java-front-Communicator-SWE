@@ -19,6 +19,7 @@ public class Meeting {
     private final List<ChatMessage> messages;
     private boolean videoEnabled;
     private boolean screenSharingEnabled;
+    private boolean audioEnabled;
 
     public Meeting(String title) {
         this.id = UUID.randomUUID().toString();
@@ -40,9 +41,18 @@ public class Meeting {
 
     // Methods
     public void addParticipant(UserProfile user) {
-        if (!participants.contains(user)) {
+        boolean userPresent = participants.stream().map(UserProfile::getEmail).toList().contains(user.getEmail());
+        if (!userPresent) {
             participants.add(user);
         }
+    }
+
+    public boolean isAudioEnabled() {
+        return audioEnabled;
+    }
+
+    public void setAudioEnabled(boolean audioEnabled) {
+        this.audioEnabled = audioEnabled;
     }
 
     public void setVideoEnabled(boolean enabled) {
