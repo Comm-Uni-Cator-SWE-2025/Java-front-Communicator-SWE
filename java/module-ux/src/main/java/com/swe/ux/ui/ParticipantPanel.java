@@ -95,7 +95,7 @@ public class ParticipantPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        Theme theme = ThemeManager.getInstance().getTheme();
+        Theme theme = ThemeManager.getInstance().getCurrentTheme();
 
         if (displayImage != null) {
             g2d.drawImage(displayImage, 0, 0, getWidth(), getHeight(), null);
