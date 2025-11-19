@@ -35,6 +35,18 @@ public class Utils {
      */
     public static final String SUBSCRIBE_AS_VIEWER = "subscribeAsViewer";
     /**
+     * Key constant for unSubscribe_as_viewer.
+     */
+    public static final String UNSUBSCRIBE_AS_VIEWER = "unSubscribeAsViewer";
+    /**
+     * Key constant for start_audio_capture.
+     */
+    public static final String START_AUDIO_CAPTURE = "startAudioCapture";
+    /**
+     * Key constant for stop_audio_capture.
+     */
+    public static final String STOP_AUDIO_CAPTURE = "stopAudioCapture";
+    /**
      * Key constant for Updating UI.
      */
     public static final String UPDATE_UI = "updateUI";
@@ -91,6 +103,8 @@ public class Utils {
      * INT mask to get the third 8 bits.
      */
     public static final int INT_MASK_8 = 8;
+
+
     
     /**
      * Seconds in milliseconds.
