@@ -35,11 +35,11 @@ public final class SerializedAction implements Serializable {
     /**
      * Constructs a new SerializedAction.
      *
-     * @param data The raw byte data.
+     * @param data_ The raw byte data.
      */
-    public SerializedAction(final byte[] data) {
+    public SerializedAction(final byte[] data_) {
         // Defensive copy for immutability
-        this.data = data.clone();
+        this.data = data_.clone();
     }
 
     /**
@@ -64,7 +64,7 @@ public final class SerializedAction implements Serializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        SerializedAction that = (SerializedAction) o;
+        final SerializedAction that = (SerializedAction) o;
         return Arrays.equals(data, that.data);
     }
 

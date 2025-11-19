@@ -1,12 +1,10 @@
 package com.swe.canvas.datamodel.canvas;
 
-import com.swe.canvas.datamodel.shape.Shape;
-import com.swe.canvas.datamodel.shape.ShapeId;
-
-// import com.swe.canvas.datamodel.action.Action;
-
 import java.io.Serializable;
 import java.util.Objects;
+
+import com.swe.canvas.datamodel.shape.Shape;
+import com.swe.canvas.datamodel.shape.ShapeId;
 
 /**
  * Represents the complete state of a single shape at a specific moment.
@@ -57,19 +55,19 @@ public final class ShapeState implements Serializable {
     /**
      * Constructs a new ShapeState.
      *
-     * @param shape        The shape snapshot. A deep copy MUST be provided.
-     * @param isDeleted    The deletion status.
-     * @param lastModified The modification timestamp.
+     * @param shape_        The shape snapshot. A deep copy MUST be provided.
+     * @param isDeleted_    The deletion status.
+     * @param lastModified_ The modification timestamp.
      */
-    public ShapeState(final Shape shape, final boolean isDeleted, final long lastModified) {
+    public ShapeState(final Shape shape_, final boolean isDeleted_, final long lastModified_) {
         // We trust the shape is a deep copy, which Shape.copy() ensures.
-        this.shape = shape;
-        this.isDeleted = isDeleted;
-        this.lastModified = lastModified;
+        this.shape = shape_;
+        this.isDeleted = isDeleted_;
+        this.lastModified = lastModified_;
     }
 
     /**
-     * @summary Retrieves the shape snapshot.
+     * Retrieves the shape snapshot.
      * @return The shape snapshot.
      */
     public Shape getShape() {
@@ -77,7 +75,7 @@ public final class ShapeState implements Serializable {
     }
 
     /**
-     * @summary Retrieves the shape's ID.
+     * Retrieves the shape's ID.
      * @return The shape's ID.
      */
     public ShapeId getShapeId() {

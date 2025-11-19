@@ -91,25 +91,25 @@ public class ParticipantActionManager implements ActionManager {
     /**
      * Constructs a new ParticipantActionManager.
      *
-     * @param canvasState     The local canvas state.
-     * @param undoRedoStack   The local undo/redo stack.
-     * @param actionFactory   Factory for creating inverse actions.
-     * @param serializer      For sending actions.
-     * @param deserializer    For receiving actions.
-     * @param sendToHostQueue The message queue to send actions *to* the Host.
-     * @param participantUserId The user ID of this participant.
+     * @param canvasState_     The local canvas state.
+     * @param undoRedoStack_   The local undo/redo stack.
+     * @param actionFactory_   Factory for creating inverse actions.
+     * @param serializer_      For sending actions.
+     * @param deserializer_    For receiving actions.
+     * @param sendToHostQueue_ The message queue to send actions *to* the Host.
+     * @param participantUserId_ The user ID of this participant.
      */
-    public ParticipantActionManager(final CanvasState canvasState, final UndoRedoStack undoRedoStack,
-                                    final ActionFactory actionFactory, final ActionSerializer serializer,
-                                    final ActionDeserializer deserializer, final MessageQueue sendToHostQueue,
-                                    final String participantUserId) {
-        this.canvasState = canvasState;
-        this.undoRedoStack = undoRedoStack;
-        this.actionFactory = actionFactory;
-        this.serializer = serializer;
-        this.deserializer = deserializer;
-        this.sendToHostQueue = sendToHostQueue;
-        this.participantUserId = participantUserId;
+    public ParticipantActionManager(final CanvasState canvasState_, final UndoRedoStack undoRedoStack_,
+                                    final ActionFactory actionFactory_, final ActionSerializer serializer_,
+                                    final ActionDeserializer deserializer_, final MessageQueue sendToHostQueue_,
+                                    final String participantUserId_) {
+        this.canvasState = canvasState_;
+        this.undoRedoStack = undoRedoStack_;
+        this.actionFactory = actionFactory_;
+        this.serializer = serializer_;
+        this.deserializer = deserializer_;
+        this.sendToHostQueue = sendToHostQueue_;
+        this.participantUserId = participantUserId_;
         this.pendingActions = new ConcurrentHashMap<>();
     }
 
@@ -125,7 +125,7 @@ public class ParticipantActionManager implements ActionManager {
             apply(action);
 
             // 2. Check if it was one of our pending actions
-            Action pending = pendingActions.remove(action.getActionId());
+            final Action pending = pendingActions.remove(action.getActionId());
 
             if (pending != null) {
                 // Yes, this is our action, confirmed by the host.

@@ -27,6 +27,20 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
      */
     private AbstractRPC moduleRPC = null;
 
+
+    private static NetworkFront instance = null;
+    
+    private NetworkFront(){
+        listeners = new HashMap<>();    
+    }
+
+    public static NetworkFront getInstance(){
+        if(instance == null){
+            instance = new NetworkFront();
+        }
+        return instance;
+    }
+
     @Override
     public void sendData(final byte[] data, final ClientNode[] dest, final int module, final int priority) {
         final int dataLength = data.length;

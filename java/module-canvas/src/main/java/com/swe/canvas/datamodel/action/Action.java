@@ -1,13 +1,11 @@
 package com.swe.canvas.datamodel.action;
 
 
-import com.swe.canvas.datamodel.canvas.ShapeState;
-import com.swe.canvas.datamodel.shape.ShapeId;
-
-// import com.swe.canvas.datamodel.canvas.CanvasState;
-
 import java.io.Serializable;
 import java.util.Objects;
+
+import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.shape.ShapeId;
 
 /**
  * Abstract base class for all operations (Commands) on the canvas.
@@ -54,6 +52,7 @@ public abstract class Action implements Serializable {
 
     /**
      * The timestamp of when the action was created by the client.
+     * TO BE REMOVED
      */
     private final long timestamp;
 
@@ -64,6 +63,7 @@ public abstract class Action implements Serializable {
 
     /**
      * The ID of the shape this action targets.
+     * TO BE REMOVED
      */
     private final ShapeId shapeId;
 
@@ -78,33 +78,42 @@ public abstract class Action implements Serializable {
      */
     private final ShapeState newState;
 
+
+    /**
+     * Action ID
+     * prevState
+     * newState
+     * actionType
+     * required for serialization/deserialization
+     */
+
     /**
      * Constructs a new Action.
      *
-     * @param actionId   A unique ID for this action.
-     * @param userId     The user performing the action.
-     * @param timestamp  The time of action creation.
-     * @param actionType The type of action.
-     * @param shapeId    The target shape's ID.
-     * @param prevState  The state before the action (null for CREATE).
-     * @param newState   The state after the action.
+     * @param actionId_   A unique ID for this action.
+     * @param userId_     The user performing the action.
+     * @param timestamp_  The time of action creation.
+     * @param actionType_ The type of action.
+     * @param shapeId_    The target shape's ID.
+     * @param prevState_  The state before the action (null for CREATE).
+     * @param newState_   The state after the action.
      */
-    protected Action(final String actionId, final String userId, final long timestamp, final ActionType actionType,
-                     final ShapeId shapeId, final ShapeState prevState, final ShapeState newState) {
-        this.actionId = Objects.requireNonNull(actionId, "actionId cannot be null");
-        this.userId = Objects.requireNonNull(userId, "userId cannot be null");
-        this.timestamp = timestamp;
-        this.actionType = Objects.requireNonNull(actionType, "actionType cannot be null");
-        this.shapeId = Objects.requireNonNull(shapeId, "shapeId cannot be null");
+    protected Action(final String actionId_, final String userId_, final long timestamp_, final ActionType actionType_,
+                     final ShapeId shapeId_, final ShapeState prevState_, final ShapeState newState_) {
+        this.actionId = Objects.requireNonNull(actionId_, "actionId cannot be null");
+        this.userId = Objects.requireNonNull(userId_, "userId cannot be null");
+        this.timestamp = timestamp_;
+        this.actionType = Objects.requireNonNull(actionType_, "actionType cannot be null");
+        this.shapeId = Objects.requireNonNull(shapeId_, "shapeId cannot be null");
         // prevState can be null (for CREATE), but newState cannot
-        this.prevState = prevState;
-        this.newState = Objects.requireNonNull(newState, "newState cannot be null");
+        this.prevState = prevState_;
+        this.newState = Objects.requireNonNull(newState_, "newState cannot be null");
     }
 
     // --- Getters ---
 
     /**
-     * @summary Gets the unique action ID.
+     * Gets the unique action ID.
      * @return The unique action ID.
      */
     public String getActionId() {
@@ -112,7 +121,7 @@ public abstract class Action implements Serializable {
     }
 
     /**
-     * @summary Gets the ID of the user who initiated the action.
+     * Gets the ID of the user who initiated the action.
      * @return The ID of the user who initiated the action.
      */
     public String getUserId() {
@@ -120,7 +129,7 @@ public abstract class Action implements Serializable {
     }
 
     /**
-     * @summary Gets the creation timestamp.
+     * Gets the creation timestamp.
      * @return The creation timestamp.
      */
     public long getTimestamp() {
@@ -128,7 +137,7 @@ public abstract class Action implements Serializable {
     }
 
     /**
-     * @summary Gets the {@link ActionType}.
+     * Gets the {@link ActionType}.
      * @return The {@link ActionType}.
      */
     public ActionType getActionType() {
@@ -136,7 +145,7 @@ public abstract class Action implements Serializable {
     }
 
     /**
-     * @summary Gets the {@link ShapeId} of the target shape.
+     * Gets the {@link ShapeId} of the target shape.
      * @return The {@link ShapeId} of the target shape.
      */
     public ShapeId getShapeId() {
@@ -144,7 +153,7 @@ public abstract class Action implements Serializable {
     }
 
     /**
-     * @summary Gets the {@link ShapeState} before the action.
+     * Gets the {@link ShapeState} before the action.
      * @return The {@link ShapeState} before the action (the "prevState" Memento).
      */
     public ShapeState getPrevState() {
@@ -152,20 +161,22 @@ public abstract class Action implements Serializable {
     }
 
     /**
-     * @summary Gets the {@link ShapeState} after the action.
+     * Gets the {@link ShapeState} after the action.
      * @return The {@link ShapeState} after the action (the "newState" Memento).
      */
     public ShapeState getNewState() {
         return newState;
     }
 
+    private static final int SUBSTRING_LENGTH = 8;
+
     @Override
     public String toString() {
         return String.format("%s[actionId=%s..., user=%s, shapeId=%s...]",
                 actionType,
-                actionId.substring(0, 8),
+                actionId.substring(0, SUBSTRING_LENGTH),
                 userId,
-                shapeId.getValue().substring(0, 8)
+                shapeId.getValue().substring(0, SUBSTRING_LENGTH)
         );
     }
 

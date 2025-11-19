@@ -1,5 +1,7 @@
 package com.swe.ux.view;
 
+import com.swe.networking.NetworkFront;
+import com.swe.ux.service.CanvasController;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.viewmodel.CanvasViewModel;
 
@@ -8,51 +10,76 @@ import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * Canvas Page - Directly embeds canvas from module-canvas FXML
+ * Canvas Page - FXML + Swing Wrapper, now identical behavior to CanvasApp.java
  */
 public class CanvasPage extends JPanel {
 
-    private final CanvasViewModel viewModel;
+    private CanvasViewModel viewModel;
     private JFXPanel fxPanel;
 
     public CanvasPage(CanvasViewModel viewModel) {
         this.viewModel = viewModel;
+
         setLayout(new BorderLayout());
         setBackground(new java.awt.Color(245, 247, 250));
-        
-        // Create JFXPanel
+
         fxPanel = new JFXPanel();
         add(fxPanel, BorderLayout.CENTER);
-        
-        // Initialize JavaFX content
+
         Platform.setImplicitExit(false);
         Platform.runLater(this::initFX);
-        
+
         applyTheme();
     }
 
     private void initFX() {
         try {
-            // Load the original canvas FXML directly
             FXMLLoader loader = new FXMLLoader(
-                getClass().getClassLoader().getResource("com/swe/canvas/fxml/canvas-view.fxml")
+                getClass().getClassLoader().getResource("fxml/canvas-view.fxml")
             );
+
+
+            // --- IMPORTANT: Retrieve the controller (same as CanvasApp)
+            CanvasController controller = loader.getController();
+            controller.setNetwork(NetworkFront.getInstance());
+            loader.setController(controller);
+
+
             Parent root = loader.load();
 
-            // Create scene with the loaded FXML
+
+            // If your controller exposes a viewModel setter, sync it here:
+            // controller.setViewModel(this.viewModel);
+
             Scene scene = new Scene(root);
 
-            // Load CSS
+            // --- Add accelerators (same as CanvasApp)
+            scene.getAccelerators().put(
+                    new KeyCodeCombination(KeyCode.Z, KeyCombination.SHORTCUT_DOWN),
+                    () -> controller.getViewModel().undo()
+            );
+            scene.getAccelerators().put(
+                    new KeyCodeCombination(KeyCode.Y, KeyCombination.SHORTCUT_DOWN),
+                    () -> controller.getViewModel().redo()
+            );
+            scene.getAccelerators().put(
+                    new KeyCodeCombination(KeyCode.X, KeyCombination.SHORTCUT_DOWN),
+                    () -> controller.getViewModel().undo()
+            );
+
+            // CSS
             String cssUrl = getClass().getClassLoader()
-                .getResource("com/swe/canvas/fxml/canvas-view.css").toExternalForm();
+                    .getResource("com/swe/canvas/fxml/canvas-view.css").toExternalForm();
             scene.getStylesheets().add(cssUrl);
 
-            // Set the scene
             fxPanel.setScene(scene);
 
         } catch (Exception e) {

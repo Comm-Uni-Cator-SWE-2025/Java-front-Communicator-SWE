@@ -1,11 +1,15 @@
 package com.swe.canvas.ui;
 
+import java.util.List;
+
 import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.ui.util.ColorConverter;
 import com.swe.canvas.ui.util.GeometryUtils;
+
 import javafx.geometry.Bounds;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -13,20 +17,30 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
 
-import java.util.List;
-
 public class CanvasRenderer {
 
     private final Canvas canvas;
     private final GraphicsContext gc;
 
-    public CanvasRenderer(Canvas canvas) {
-        this.canvas = canvas;
+    /**
+     * Constructor for renderer
+     * @param canvas_: Instance of the canvas
+     */
+    public CanvasRenderer(final Canvas canvas_) {
+        this.canvas = canvas_;
         this.gc = canvas.getGraphicsContext2D();
     }
 
     // Updated render method signature to accept dragging state
-    public void render(CanvasState state, Shape ghostShape, ShapeId selectedShapeId, boolean isDraggingSelection) {
+
+    /**
+     * Main Rendering logic
+     * @param state current state
+     * @param ghostShape ghost shape
+     * @param selectedShapeId id of the shape selected
+     * @param isDraggingSelection dragging or not
+     */
+    public void render(final CanvasState state, final Shape ghostShape, final ShapeId selectedShapeId, final boolean isDraggingSelection) {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
         // 1. Draw all committed shapes
@@ -43,8 +57,14 @@ public class CanvasRenderer {
         if (ghostShape != null) {
             // If dragging, draw opaque so it looks like the real shape moving.
             // If creating new, draw semi-transparent.
-            double alpha = isDraggingSelection ? 1.0 : 0.5;
-            drawShape(ghostShape, alpha);
+            double alpha_ = 0;
+            if (isDraggingSelection) {
+                alpha_ = 1.0;
+            }
+            else {
+                alpha_ = 0.5;
+            }
+            drawShape(ghostShape, alpha_);
         }
 
         // 3. Draw selection box LAST so it's always on top
@@ -53,23 +73,26 @@ public class CanvasRenderer {
                 // If dragging, draw box around the moving ghost
                 drawBoundingBox(ghostShape);
             } else {
-                // Otherwise draw around the original shape
-                Shape selected = state.getShapeState(selectedShapeId).getShape();
-                if (selected != null && !state.getShapeState(selectedShapeId).isDeleted()) {
-                    drawBoundingBox(selected);
+                // Otherwise draw around the original shape. Guard against missing ShapeState.
+                final ShapeState selectedState = state.getShapeState(selectedShapeId);
+                if (selectedState != null) {
+                    final Shape selected = selectedState.getShape();
+                    if (selected != null && !selectedState.isDeleted()) {
+                        drawBoundingBox(selected);
+                    }
                 }
             }
         }
     }
 
-    private void drawShape(Shape shape, double alpha) {
+    private void drawShape(final Shape shape, final double alpha) {
         gc.setStroke(ColorConverter.toFx(shape.getColor()));
         gc.setLineWidth(shape.getThickness());
         gc.setLineCap(StrokeLineCap.ROUND);
         gc.setLineJoin(StrokeLineJoin.ROUND);
         gc.setGlobalAlpha(alpha);
 
-        List<Point> p = shape.getPoints();
+        final List<Point> p = shape.getPoints();
         if (p.isEmpty())
             return;
 
@@ -83,27 +106,31 @@ public class CanvasRenderer {
                 gc.stroke();
                 break;
             case LINE:
-                if (p.size() >= 2)
+                if (p.size() >= 2) {
                     gc.strokeLine(p.get(0).getX(), p.get(0).getY(), p.get(1).getX(), p.get(1).getY());
+                }
                 break;
             case RECTANGLE:
-                if (p.size() >= 2)
+                if (p.size() >= 2) {
                     drawRect(p.get(0), p.get(1));
+                }
                 break;
             case ELLIPSE:
-                if (p.size() >= 2)
+                if (p.size() >= 2) {
                     drawEllipse(p.get(0), p.get(1));
+                }
                 break;
             case TRIANGLE:
-                if (p.size() >= 2)
+                if (p.size() >= 2) {
                     drawTriangle(p.get(0), p.get(1));
+                }
                 break;
         }
         gc.setGlobalAlpha(1.0); // Reset alpha
     }
 
-    private void drawBoundingBox(Shape shape) {
-        Bounds b = GeometryUtils.getBounds(shape);
+    private void drawBoundingBox(final Shape shape) {
+        final Bounds b = GeometryUtils.getBounds(shape);
         gc.setStroke(Color.CORNFLOWERBLUE);
         gc.setLineWidth(1);
         gc.setLineDashes(5);
@@ -112,21 +139,21 @@ public class CanvasRenderer {
         gc.setLineDashes((double[]) null);
     }
 
-    private void drawRect(Point p1, Point p2) {
+    private void drawRect(final Point p1, final Point p2) {
         gc.strokeRect(Math.min(p1.getX(), p2.getX()), Math.min(p1.getY(), p2.getY()),
                 Math.abs(p1.getX() - p2.getX()), Math.abs(p1.getY() - p2.getY()));
     }
 
-    private void drawEllipse(Point p1, Point p2) {
+    private void drawEllipse(final Point p1, final Point p2) {
         gc.strokeOval(Math.min(p1.getX(), p2.getX()), Math.min(p1.getY(), p2.getY()),
                 Math.abs(p1.getX() - p2.getX()), Math.abs(p1.getY() - p2.getY()));
     }
 
-    private void drawTriangle(Point p1, Point p2) {
-        double minX = Math.min(p1.getX(), p2.getX());
-        double minY = Math.min(p1.getY(), p2.getY());
-        double maxX = Math.max(p1.getX(), p2.getX());
-        double maxY = Math.max(p1.getY(), p2.getY());
+    private void drawTriangle(final Point p1, final Point p2) {
+        final double minX = Math.min(p1.getX(), p2.getX());
+        final double minY = Math.min(p1.getY(), p2.getY());
+        final double maxX = Math.max(p1.getX(), p2.getX());
+        final double maxY = Math.max(p1.getY(), p2.getY());
         gc.strokePolygon(new double[] { minX + (maxX - minX) / 2.0, minX, maxX },
                 new double[] { minY, maxY, maxY }, 3);
     }

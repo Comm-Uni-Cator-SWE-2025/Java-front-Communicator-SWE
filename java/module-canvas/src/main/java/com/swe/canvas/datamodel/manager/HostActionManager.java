@@ -78,25 +78,25 @@ public class HostActionManager implements ActionManager {
     /**
      * Constructs a new HostActionManager.
      *
-     * @param canvasState    The single, authoritative canvas state.
-     * @param undoRedoStack  The host's local undo/redo stack.
-     * @param actionFactory  Factory for creating inverse actions.
-     * @param serializer     For broadcasting actions.
-     * @param deserializer   For receiving actions.
-     * @param broadcastQueue The message queue to send actions to all participants.
-     * @param hostUserId     The user ID of the host.
+     * @param canvasState_    The single, authoritative canvas state.
+     * @param undoRedoStack_  The host's local undo/redo stack.
+     * @param actionFactory_  Factory for creating inverse actions.
+     * @param serializer_     For broadcasting actions.
+     * @param deserializer_   For receiving actions.
+     * @param broadcastQueue_ The message queue to send actions to all participants.
+     * @param hostUserId_     The user ID of the host.
      */
-    public HostActionManager(final CanvasState canvasState, final UndoRedoStack undoRedoStack,
-                             final ActionFactory actionFactory, final ActionSerializer serializer,
-                             final ActionDeserializer deserializer, final MessageQueue broadcastQueue,
-                             final String hostUserId) {
-        this.canvasState = canvasState;
-        this.undoRedoStack = undoRedoStack;
-        this.actionFactory = actionFactory;
-        this.serializer = serializer;
-        this.deserializer = deserializer;
-        this.broadcastQueue = broadcastQueue;
-        this.hostUserId = hostUserId;
+    public HostActionManager(final CanvasState canvasState_, final UndoRedoStack undoRedoStack_,
+                             final ActionFactory actionFactory_, final ActionSerializer serializer_,
+                             final ActionDeserializer deserializer_, final MessageQueue broadcastQueue_,
+                             final String hostUserId_) {
+        this.canvasState = canvasState_;
+        this.undoRedoStack = undoRedoStack_;
+        this.actionFactory = actionFactory_;
+        this.serializer = serializer_;
+        this.deserializer = deserializer_;
+        this.broadcastQueue = broadcastQueue_;
+        this.hostUserId = hostUserId_;
     }
 
     @Override

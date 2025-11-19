@@ -1,14 +1,20 @@
-package com.swe.canvas.ui;
+package com.swe.ux.service;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
-import com.swe.canvas.mvvm.CanvasViewModel;
-import com.swe.canvas.mvvm.ToolType;
+import com.swe.ux.viewmodel.CanvasViewModel;
+import com.swe.ux.viewmodel.ToolType;
+import com.swe.canvas.services.CanvasMessageListener;
+import com.swe.canvas.ui.CanvasRenderer;
 import com.swe.canvas.ui.util.ColorConverter;
+import com.swe.networking.AbstractNetworking;
+import com.swe.networking.NetworkFront;
+
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -21,27 +27,101 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.geometry.Pos;
 
+/**
+ * Controller for the fxml view
+ */
 public class CanvasController {
 
-    @FXML private ToggleButton selectBtn;
-    @FXML private ToggleButton freehandBtn;
-    @FXML private ToggleButton rectBtn;
+    /**
+     * The select button
+     */
+    @FXML
+    private ToggleButton selectBtn;
+
+    /**
+     * The freehand draw button
+     */
+    @FXML
+    private ToggleButton freehandBtn;
+
+    /**
+     * Rectangle button
+     */
+    @FXML
+    private ToggleButton rectBtn;
+
+    /**
+     * Ellipse button
+     */
     @FXML private ToggleButton ellipseBtn;
+
+    /**
+     * Line button
+     */
     @FXML private ToggleButton lineBtn;
+
+    /**
+     * Triangle button
+     */
     @FXML private ToggleButton triangleBtn;
+
+    /**
+     * Slider
+     */
     @FXML private Slider sizeSlider;
+
+    /**
+     * Current color
+     */
     @FXML private Rectangle currentColorRect;
+
+    /**
+     * Delete button
+     */
     @FXML private Button deleteBtn;
+
+    /**
+     * Canvas(Whiteboard) object
+     */
     @FXML private Canvas canvas;
+
+    /**
+     * Regularize button
+     */
+    @FXML private Button regularizeBtn;
+
+
+    /**
+     * Container for canvas
+     */
     @FXML private Pane canvasContainer;
+
+    private AbstractNetworking network;
 
     private CanvasViewModel viewModel;
     private CanvasRenderer renderer;
     private boolean isUpdatingUI = false;
     private final Label sizeValueLabel = new Label();
 
+
+    public void setNetwork(AbstractNetworking abstractNetwork) {
+        // this.network = abstractNetwork;
+
+        viewModel.setNetworking(abstractNetwork);
+        // If viewModel is ready you can subscribe now:
+        if (viewModel != null) {
+            this.network.subscribe(2, (data) -> {
+                Platform.runLater(() -> {
+                    viewModel.processIncomingData(data);
+                });
+            });
+        }
+    }
+
+    /**
+     * Initializes the view/GUI
+     */
     public void initialize() {
         viewModel = new CanvasViewModel(new CanvasState());
         renderer = new CanvasRenderer(canvas);
@@ -52,14 +132,20 @@ public class CanvasController {
 
         // --- Bindings & Listeners ---
         sizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (isUpdatingUI) return;
-            double thickness = newVal.doubleValue();
+            if (isUpdatingUI) {
+                return;
+            }
+
+            final double thickness = newVal.doubleValue();
             viewModel.activeStrokeWidth.set(thickness);
-            if (viewModel.selectedShapeId.get() != null) viewModel.updateSelectedShapeThickness(thickness);
+            if (viewModel.selectedShapeId.get() != null) {
+                viewModel.updateSelectedShapeThickness(thickness);
+            }
         });
 
         // Enable/Disable Delete button based on selection
-    deleteBtn.disableProperty().bind(viewModel.selectedShapeId.isNull());
+        deleteBtn.disableProperty().bind(viewModel.selectedShapeId.isNull());
+        regularizeBtn.disableProperty().bind(viewModel.selectedShapeId.isNull());
 
         viewModel.selectedShapeId.addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -94,12 +180,15 @@ public class CanvasController {
 
         viewModel.setOnCanvasUpdate(this::redraw);
 
-    freehandBtn.setUserData(ToolType.FREEHAND);
-    selectBtn.setUserData(ToolType.SELECT);
-    rectBtn.setUserData(ToolType.RECTANGLE);
-    ellipseBtn.setUserData(ToolType.ELLIPSE);
-    lineBtn.setUserData(ToolType.LINE);
-    triangleBtn.setUserData(ToolType.TRIANGLE);
+        freehandBtn.setUserData(ToolType.FREEHAND);
+        selectBtn.setUserData(ToolType.SELECT);
+        rectBtn.setUserData(ToolType.RECTANGLE);
+        ellipseBtn.setUserData(ToolType.ELLIPSE);
+        lineBtn.setUserData(ToolType.LINE);
+        triangleBtn.setUserData(ToolType.TRIANGLE);
+
+        AbstractNetworking network = NetworkFront.getInstance();
+        setNetwork(network);
     }
 
     public CanvasViewModel getViewModel() { return viewModel; }
@@ -118,7 +207,7 @@ public class CanvasController {
     }
 
     private void attachValueLabelToThumb() {
-        StackPane thumb = (StackPane) sizeSlider.lookup(".thumb");
+        final StackPane thumb = (StackPane) sizeSlider.lookup(".thumb");
         if (thumb != null && !thumb.getChildren().contains(sizeValueLabel)) {
             StackPane.setAlignment(sizeValueLabel, Pos.CENTER);
             thumb.getChildren().add(sizeValueLabel);
@@ -128,10 +217,10 @@ public class CanvasController {
     // --- FXML Event Handlers ---
 
     @FXML
-    private void onColorClick(ActionEvent event) {
-        Object data = ((Button) event.getSource()).getUserData();
+    private void onColorClick(final ActionEvent event) {
+        final Object data = ((Button) event.getSource()).getUserData();
         if (data instanceof String) {
-            Color selectedColor = Color.web((String) data);
+            final Color selectedColor = Color.web((String) data);
             currentColorRect.setFill(selectedColor);
             viewModel.activeColor.set(selectedColor);
             if (viewModel.selectedShapeId.get() != null) {
@@ -142,8 +231,8 @@ public class CanvasController {
     }
 
     @FXML
-    private void onToolSelected(ActionEvent event) {
-        ToggleButton source = (ToggleButton) event.getSource();
+    private void onToolSelected(final ActionEvent event) {
+        final ToggleButton source = (ToggleButton) event.getSource();
         if (source.getUserData() != null) {
             viewModel.activeTool.set((ToolType) source.getUserData());
             if (viewModel.activeTool.get() != ToolType.SELECT) {
@@ -164,9 +253,35 @@ public class CanvasController {
         }
     }
 
-    @FXML private void onCanvasMousePressed(MouseEvent e) { viewModel.onMousePressed(e.getX(), e.getY()); redraw(); }
-    @FXML private void onCanvasMouseDragged(MouseEvent e) { viewModel.onMouseDragged(e.getX(), e.getY()); redraw(); }
-    @FXML private void onCanvasMouseReleased(MouseEvent e) { viewModel.onMouseReleased(e.getX(), e.getY()); redraw(); }
-    @FXML private void onUndo() { viewModel.undo(); }
-    @FXML private void onRedo() { viewModel.redo(); }
+    @FXML private void onCanvasMousePressed(final MouseEvent e) {
+        viewModel.onMousePressed(e.getX(), e.getY()); redraw();
+    }
+
+    @FXML private void onCanvasMouseDragged(final MouseEvent e) {
+        viewModel.onMouseDragged(e.getX(), e.getY()); redraw();
+    }
+
+    @FXML private void onCanvasMouseReleased(final MouseEvent e) {
+        viewModel.onMouseReleased(e.getX(), e.getY()); redraw();
+    }
+
+    @FXML private void onUndo() {
+        viewModel.undo();
+    }
+
+    @FXML private void onRedo() {
+        viewModel.redo();
+    }
+
+    /**
+     * Regularize the currently selected freehand shape.
+     * <p>
+     * This handler uses a default of 6 sides. You can change the hard-coded
+     * value or show a dialog to ask the user for a value if desired.
+     * </p>
+     */
+    @FXML private void onRegularize() {
+        viewModel.regularizeSelectedShape();
+        redraw();
+    }
 }

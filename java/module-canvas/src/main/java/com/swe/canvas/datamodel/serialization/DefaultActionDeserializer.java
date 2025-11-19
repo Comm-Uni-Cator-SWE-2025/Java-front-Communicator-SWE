@@ -39,10 +39,9 @@ public class DefaultActionDeserializer implements ActionDeserializer {
 
             final Object obj = ois.readObject();
             String className = "";
-            if (obj != null){
+            if (obj != null) {
                 className = obj.getClass().getName();
-            }
-            else {
+            } else {
                 className = "null";
             }
 
