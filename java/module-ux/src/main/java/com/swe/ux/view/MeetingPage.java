@@ -56,7 +56,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
     // other controls
     private FrostedToolbarButton btnCamera;
-    private CustomButton audioButton;
     private FrostedToolbarButton btnShare;
     private FrostedToolbarButton btnLeave;
     private FrostedToolbarButton btnMute;
@@ -220,6 +219,14 @@ public class MeetingPage extends FrostedBackgroundPanel {
         return sb;
     }
 
+    private JPanel createParticipantsPanel() {
+        SoftCardPanel panel = new SoftCardPanel(12);
+        panel.setLayout(new BorderLayout());
+        ParticipantsViewModel pvm = new ParticipantsViewModel(meetingViewModel);
+        panel.add(new ParticipantsView(pvm), BorderLayout.CENTER);
+        return panel;
+    }
+
     private JPanel createChatPanel() {
         SoftCardPanel panel = new SoftCardPanel(12);
         panel.setLayout(new BorderLayout());
@@ -337,15 +344,11 @@ public class MeetingPage extends FrostedBackgroundPanel {
         ));
 
         meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
-            SwingUtilities.invokeLater(() -> {
-                audioButton.setPrimary(val);
-            });
+            SwingUtilities.invokeLater(() -> btnShare.setCustomFill(v ? new Color(90, 160, 255, 160) : null))
         ));
 
-        meetingViewModel.isAudioEnabled.addListener(PropertyListeners.onBooleanChanged(val -> {
-            SwingUtilities.invokeLater(() -> {
-                audioButton.setPrimary(val);
-            });
+        meetingViewModel.isAudioEnabled.addListener(PropertyListeners.onBooleanChanged(v -> {
+            SwingUtilities.invokeLater(() -> btnMute.setCustomFill(v ? new Color(90, 160, 255, 160) : null));
         }));
 
         meetingViewModel.meetingId.addListener(evt ->
