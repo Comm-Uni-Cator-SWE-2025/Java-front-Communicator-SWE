@@ -9,6 +9,7 @@ import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
+import com.swe.ux.view.LoadingPage;
 import com.swe.ux.view.LoginPage;
 import com.swe.ux.view.MainPage;
 import com.swe.ux.view.MeetingPage;
@@ -39,6 +40,7 @@ public class App extends JFrame {
     public static final String LOGIN_VIEW = "LOGIN";
     public static final String MAIN_VIEW = "MAIN";
     public static final String MEETING_VIEW = "MEETING";
+    public static final String LOADING_VIEW = "LOADING";
 
     // Current user
     private UserProfile currentUser;
@@ -125,11 +127,13 @@ public class App extends JFrame {
         LoginPage loginView = new LoginPage(loginViewModel);
         MainPage mainView = new MainPage(mainViewModel);
         MeetingPage meetingView = new MeetingPage(meetingViewModel);
+        LoadingPage loadingView = new LoadingPage();
 
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
         mainPanel.add(meetingView, MEETING_VIEW);
+        mainPanel.add(loadingView, LOADING_VIEW);
 
         meetingViewModel.startMeeting();
         // Set up navigation listeners
@@ -151,9 +155,12 @@ public class App extends JFrame {
 
         // Use an array to hold the meeting view reference for use in lambda
         MeetingPage[] meetingViewRef = new MeetingPage[] { meetingView };
-        
+
         // Use an array to hold the current active meeting view model reference
         MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { meetingViewModel };
+
+        // Use an array to hold the loading view reference for use in lambda
+        LoadingPage[] loadingViewRef = new LoadingPage[] { loadingView };
 
         // New participant
         // rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
@@ -203,11 +210,8 @@ public class App extends JFrame {
                 newMeetingViewModel.setMeetingId(meetingId);
                 System.out.println("App: Passing meeting ID from MainViewModel to MeetingViewModel: " + meetingId);
 
-                // Create a new MeetingPage with the new view model
-                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
-
-                // Try to start the meeting
-                newMeetingViewModel.startMeeting();
+                        // Try to start the meeting
+                        newMeetingViewModel.startMeeting();
 
                 // Only change view if meeting was successfully started
                 if (!newMeetingViewModel.isMeetingActive.get()) {
@@ -240,7 +244,6 @@ public class App extends JFrame {
                 // Get the meeting code from MainViewModel
                 String meetingCode = mainViewModel.meetingCode.get();
 
-                
                 // Only proceed if we have a valid meeting code
                 if (meetingCode == null || meetingCode.trim().isEmpty()) {
                     System.err.println("App: Failed to join meeting - no meeting code provided");
@@ -306,7 +309,7 @@ public class App extends JFrame {
 
     /**
      * Shows the specified view.
-     * 
+     *
      * @param viewName The name of the view to show
      */
     public void showView(String viewName) {
@@ -335,13 +338,13 @@ public class App extends JFrame {
     public static void main(String[] args) {
         int portNumber = 6942;
 
-        if (args.length > 0) { 
+        if (args.length > 0) {
             String port = args[0];
             portNumber = Integer.parseInt(port);
         }
 
         final AbstractRPC rpc = new RPC();
-        
+
         App app = App.getInstance(rpc);
 
         // Create and show the application window
@@ -379,7 +382,7 @@ public class App extends JFrame {
             throw new RuntimeException(e);
         }
     }
-    
+
     // Getters
     public UserProfile getCurrentUser() {
         return currentUser;
@@ -387,7 +390,7 @@ public class App extends JFrame {
 
     /**
      * Sets the current user and updates the UI accordingly.
-     * 
+     *
      * @param user The user to set as current, or null to log out
      */
     public void setCurrentUser(UserProfile user) {

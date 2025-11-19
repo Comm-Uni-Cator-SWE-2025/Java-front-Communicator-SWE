@@ -15,12 +15,12 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -39,7 +39,6 @@ public class LoginPage extends FrostedBackgroundPanel {
     private final LoginViewModel viewModel;
     private SoftCardPanel glassCard;
     private JLabel titleLabel;
-    private JLabel subtitleLabel;
     private JLabel helperLabel;
     private JLabel dateLabel;
     private JPanel badgesPanel;
@@ -76,21 +75,26 @@ public class LoginPage extends FrostedBackgroundPanel {
         dateLabel = new JLabel(formatDate(new Date()));
         dateLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
         headerRow.add(dateLabel, BorderLayout.WEST);
-        headerRow.add(new ThemeToggleButton(), BorderLayout.EAST);
+        
+        // Wrap theme toggle button in a panel with proper spacing
+        JPanel themeButtonWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        themeButtonWrapper.setOpaque(false);
+        themeButtonWrapper.setBorder(new EmptyBorder(0, 8, 0, 0)); // Add left padding to separate from edge
+        ThemeToggleButton themeButton = new ThemeToggleButton();
+        themeButtonWrapper.add(themeButton);
+        headerRow.add(themeButtonWrapper, BorderLayout.EAST);
+        
         content.add(headerRow);
 
         content.add(Box.createVerticalStrut(18));
 
-        titleLabel = new JLabel("Comm-Uni-Cate", SwingConstants.LEFT);
+        JPanel titleWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        titleWrapper.setOpaque(false);
+        titleLabel = new JLabel("Comm-Uni-Cate");
         titleLabel.setFont(FontUtil.getJetBrainsMono(32f, Font.BOLD));
-        titleLabel.setAlignmentX(LEFT_ALIGNMENT);
-        content.add(titleLabel);
-
-        subtitleLabel = new JLabel("Where every campus conversation feels right at home.");
-        subtitleLabel.setFont(FontUtil.getJetBrainsMono(14f, Font.PLAIN));
-        subtitleLabel.setBorder(new EmptyBorder(8, 0, 18, 0));
-        subtitleLabel.setAlignmentX(LEFT_ALIGNMENT);
-        content.add(subtitleLabel);
+        titleWrapper.add(titleLabel);
+        titleWrapper.setBorder(new EmptyBorder(0, 0, 10, 0));
+        content.add(titleWrapper);
 
         badgesPanel = new JPanel();
         badgesPanel.setOpaque(false);
@@ -117,7 +121,7 @@ public class LoginPage extends FrostedBackgroundPanel {
         JPanel buttonWrapper = new JPanel(new BorderLayout());
         buttonWrapper.setOpaque(false);
         buttonWrapper.setBorder(new EmptyBorder(6, 0, 6, 0));
-        buttonWrapper.add(googleLoginButton, BorderLayout.WEST);
+        buttonWrapper.add(googleLoginButton, BorderLayout.CENTER);
         content.add(buttonWrapper);
 
         content.add(Box.createVerticalStrut(22));
@@ -167,7 +171,6 @@ public class LoginPage extends FrostedBackgroundPanel {
 
         setBackground(theme.getBackgroundColor());
         titleLabel.setForeground(theme.getTextColor());
-        subtitleLabel.setForeground(theme.getTextColor().darker());
         helperLabel.setForeground(theme.getTextColor().darker());
         dateLabel.setForeground(theme.getTextColor());
 
