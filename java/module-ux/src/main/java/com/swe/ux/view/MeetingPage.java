@@ -172,10 +172,11 @@ public class MeetingPage extends FrostedBackgroundPanel {
         ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
         CanvasViewModel canvasVM = new CanvasViewModel(new CanvasState());
         CanvasPage canvasPage = new CanvasPage(canvasVM);
+        SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel();
 
         stageTabs.addTab("  Screen + Video  ", wrap(screenNVideo));
         stageTabs.addTab("  Canvas  ", wrap(canvasPage));
-        stageTabs.addTab("  AI Insights  ", wrap(createPlaceholderPanel("AI Insights coming soon")));
+        stageTabs.addTab("  AI Insights  ", wrap(sentimentInsightsPanel));
 
         card.add(stageTabs, BorderLayout.CENTER);
         return card;
@@ -186,15 +187,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
         w.setOpaque(false);
         w.add(p, BorderLayout.CENTER);
         return w;
-    }
-
-    private JPanel createPlaceholderPanel(String text) {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setOpaque(false);
-        JLabel l = new JLabel(text, SwingConstants.CENTER);
-        l.setFont(FontUtil.getJetBrainsMono(14f, Font.ITALIC));
-        p.add(l, BorderLayout.CENTER);
-        return p;
     }
 
     // ---------------- Sidebar ----------------
