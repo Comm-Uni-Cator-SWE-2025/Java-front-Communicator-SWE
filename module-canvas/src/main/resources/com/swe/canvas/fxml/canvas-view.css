@@ -1,0 +1,153 @@
+.tool-toggle {
+	min-width: 44;
+	-fx-min-width: 44;
+	-fx-pref-width: 44;
+	max-width: 44;
+	-fx-max-width: 44;
+	min-height: 36;
+	-fx-min-height: 36;
+	-fx-pref-height: 36;
+	max-height: 36;
+	-fx-max-height: 36;
+	padding: 0;
+	-fx-padding: 0;
+	-fx-background-radius: 10;
+	border-radius: 10;
+	-fx-border-radius: 10;
+	border-width: 1;
+	-fx-border-width: 1;
+	border-color: #CCCCCC;
+	-fx-border-color: #CCCCCC;
+	background-color: linear-gradient(#FFFFFF, #F5F7FB);
+	-fx-background-color: linear-gradient(#FFFFFF, #F5F7FB);
+	font-family: 'Segoe UI';
+	-fx-font-family: 'Segoe UI';
+	font-size: 20;
+	-fx-font-size: 20;
+	-fx-text-fill: #2F2F2F;
+	cursor: hand;
+	-fx-cursor: hand;
+}
+
+.tool-toggle-emoji {
+	font-family: 'Segoe UI Emoji';
+	-fx-font-family: 'Segoe UI Emoji';
+	font-size: 18;
+	-fx-font-size: 18;
+}
+
+.tool-toggle:selected {
+	background-color: linear-gradient(#D6EBFF, #AFCFFF);
+	-fx-background-color: linear-gradient(#D6EBFF, #AFCFFF);
+	border-color: #2A76D2;
+	-fx-border-color: #2A76D2;
+	border-width: 2;
+	-fx-border-width: 2;
+	-fx-effect: dropshadow(three-pass-box, rgba(42, 118, 210, 0.35), 6, 0.2, 0, 2);
+}
+
+.tool-toggle:hover:not(:selected) {
+	background-color: linear-gradient(#F7FBFF, #EAF2FF);
+	-fx-background-color: linear-gradient(#F7FBFF, #EAF2FF);
+	border-color: #B5C8E6;
+	-fx-border-color: #B5C8E6;
+}
+
+.slider .thumb {
+	-fx-pref-width: 30;
+	-fx-pref-height: 30;
+	-fx-background-radius: 20;
+	-fx-background-insets: 0;
+	-fx-background-color: linear-gradient(#2A76D2, #1F5EA8);
+	background-color: linear-gradient(#2A76D2, #1F5EA8);
+	-fx-border-color: rgba(0, 0, 0, 0.15);
+	border-color: rgba(0, 0, 0, 0.15);
+	-fx-border-width: 1;
+	border-width: 1;
+	-fx-border-radius: 20;
+	border-radius: 20;
+	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.25), 6, 0.2, 0, 2);
+}
+
+.slider-value-label {
+	-fx-text-fill: #FFFFFF;
+	color: #FFFFFF;
+	-fx-font-size: 11;
+	font-size: 11;
+	-fx-font-weight: bold;
+	font-weight: bold;
+	-fx-effect: dropshadow(two-pass-box, rgba(0, 0, 0, 0.35), 4, 0.2, 0, 0);
+}
+
+.delete-button {
+	-fx-font-size: 16;
+	font-size: 16;
+	-fx-background-color: linear-gradient(#FFE9E9, #FFD4D4);
+	background-color: linear-gradient(#FFE9E9, #FFD4D4);
+	-fx-background-radius: 10;
+	-fx-border-radius: 10;
+	border-radius: 10;
+	-fx-border-color: #D88989;
+	border-color: #D88989;
+	-fx-border-width: 1;
+	border-width: 1;
+	-fx-text-fill: #7A1F1F;
+	color: #7A1F1F;
+	-fx-padding: 6 10 6 10;
+	padding: 6 10 6 10;
+	-fx-font-family: 'Segoe UI Emoji';
+	font-family: 'Segoe UI Emoji';
+	-fx-cursor: hand;
+	cursor: hand;
+}
+
+.delete-button:hover {
+	-fx-background-color: linear-gradient(#FFDADA, #FFC1C1);
+	background-color: linear-gradient(#FFDADA, #FFC1C1);
+	-fx-border-color: #CF6A6A;
+	border-color: #CF6A6A;
+}
+
+.delete-button:pressed {
+	-fx-background-color: linear-gradient(#FFCBCB, #FFB2B2);
+	background-color: linear-gradient(#FFCBCB, #FFB2B2);
+	-fx-border-color: #C65757;
+	border-color: #C65757;
+}
+
+/* Regularize button: used to normalize/regularize selected shapes */
+.regularize-button {
+	-fx-font-size: 15;
+	font-size: 15;
+	-fx-background-color: linear-gradient(#FFF8E6, #FFEFB8);
+	background-color: linear-gradient(#FFF8E6, #FFEFB8);
+	-fx-background-radius: 10;
+	-fx-border-radius: 10;
+	border-radius: 10;
+	-fx-border-color: #D8B24D;
+	border-color: #D8B24D;
+	-fx-border-width: 1;
+	border-width: 1;
+	-fx-text-fill: #5A3E00;
+	color: #5A3E00;
+	-fx-padding: 6 10 6 10;
+	padding: 6 10 6 10;
+	-fx-font-family: 'Segoe UI';
+	font-family: 'Segoe UI';
+	-fx-cursor: hand;
+	cursor: hand;
+}
+
+.regularize-button:hover {
+	-fx-background-color: linear-gradient(#FFF1D1, #FFE6A3);
+	background-color: linear-gradient(#FFF1D1, #FFE6A3);
+	-fx-border-color: #C99F2F;
+	border-color: #C99F2F;
+}
+
+.regularize-button:pressed {
+	-fx-background-color: linear-gradient(#FFE8B2, #FFD87A);
+	background-color: linear-gradient(#FFE8B2, #FFD87A);
+	-fx-border-color: #B98111;
+	border-color: #B98111;
+}
