@@ -1,9 +1,7 @@
 package com.swe.ux.viewmodel;
 
 import com.swe.controller.Meeting.UserProfile;
-//import com.swe.controller.Auth.AuthService;
 import com.swe.ux.binding.BindableProperty;
-//import com.swe.ux.service.impl.InMemoryAuthService;
 import javax.swing.SwingUtilities;
 
 /**
