@@ -19,16 +19,8 @@
   <!-- Modules (subprojects) -->
   <!-- ===================================================== -->
   <modules>
-    <module>module-networking</module>
     <module>module-ux</module>
-    <module>module-chat</module>
     <module>module-canvas</module>
-    <module>module-screen-video</module>
-    <module>module-ai-insights</module>
-    <module>module-cloud</module>
-    <module>module-controller</module>
-    <module>module-app</module>
-    <module>module-integration-tests</module>
   </modules>
 
   <!-- ===================================================== -->
