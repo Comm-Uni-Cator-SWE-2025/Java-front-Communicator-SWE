@@ -9,6 +9,7 @@ import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
+
 import com.swe.ux.view.LoginPage;
 import com.swe.ux.view.MainPage;
 import com.swe.ux.view.MeetingPage;
@@ -39,6 +40,7 @@ public class App extends JFrame {
     public static final String LOGIN_VIEW = "LOGIN";
     public static final String MAIN_VIEW = "MAIN";
     public static final String MEETING_VIEW = "MEETING";
+
 
     // Current user
     private UserProfile currentUser;
@@ -126,10 +128,12 @@ public class App extends JFrame {
         MainPage mainView = new MainPage(mainViewModel);
         MeetingPage meetingView = new MeetingPage(meetingViewModel);
 
+
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
         mainPanel.add(meetingView, MEETING_VIEW);
+
 
         meetingViewModel.startMeeting();
         // Set up navigation listeners
@@ -151,9 +155,12 @@ public class App extends JFrame {
 
         // Use an array to hold the meeting view reference for use in lambda
         MeetingPage[] meetingViewRef = new MeetingPage[] { meetingView };
-        
+
         // Use an array to hold the current active meeting view model reference
         MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { meetingViewModel };
+
+
+
 
         // New participant
         // rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
@@ -192,7 +199,7 @@ public class App extends JFrame {
                     mainViewModel.startMeetingRequested.set(false);
                     return;
                 }
-                
+
                 // Create a new meeting view model for this meeting with Instructor role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
                 
@@ -205,7 +212,7 @@ public class App extends JFrame {
 
                 // Try to start the meeting
                 newMeetingViewModel.startMeeting();
-                
+
                 // Only change view if meeting was successfully started
                 if (!newMeetingViewModel.isMeetingActive.get()) {
                     System.err.println("App: Failed to start meeting - meeting not active");
@@ -245,7 +252,7 @@ public class App extends JFrame {
                     mainViewModel.joinMeetingRequested.set(false);
                     return;
                 }
-                
+
                 mainViewModel.joinMeeting(meetingCode);
                 
                 // Create a new meeting view model for joining meeting with Student role
@@ -253,14 +260,14 @@ public class App extends JFrame {
                 
                 // Update the active meeting view model reference
                 activeMeetingViewModelRef[0] = newMeetingViewModel;
-                
+
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingCode);
                 System.out.println("App: Passing meeting code from MainViewModel to MeetingViewModel: " + meetingCode);
                 
                 // Try to start the meeting with the provided meeting ID
                 newMeetingViewModel.startMeeting();
-                
+
                 // Only change view if meeting was successfully started
                 if (!newMeetingViewModel.isMeetingActive.get()) {
                     System.err.println("App: Failed to join meeting - meeting not active");
@@ -276,6 +283,7 @@ public class App extends JFrame {
                         // Reset the flag and meeting code so the button can be clicked again
                         mainViewModel.joinMeetingRequested.set(false);
                         mainViewModel.meetingCode.set("");
+
                     }
                 }));
 
@@ -338,7 +346,7 @@ public class App extends JFrame {
         }
 
         final AbstractRPC rpc = new RPC();
-        
+
         App app = App.getInstance(rpc);
 
         // Create and show the application window
@@ -376,7 +384,7 @@ public class App extends JFrame {
             throw new RuntimeException(e);
         }
     }
-    
+
     // Getters
     public UserProfile getCurrentUser() {
         return currentUser;
