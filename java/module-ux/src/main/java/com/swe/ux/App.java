@@ -110,6 +110,14 @@ public class App extends JFrame {
         repaint();
     }
 
+    private String getIPFromClientNodeString(String val) {
+        if (!val.startsWith("ClientNode")) {
+            return val;
+        }
+        final String ipVal = val.substring(val.indexOf("hostName=") + 9);
+        return ipVal.substring(0, ipVal.indexOf(",") );
+    }
+
     /**
      * Initializes all the views and adds them to the card layout.
      */
@@ -176,7 +184,8 @@ public class App extends JFrame {
                 System.out.println("App: ipToMailMap: " + ipToMailMap);
                 ipToMailMap.forEach((ip, mail) -> {
                     System.out.println("App: ip: " + ip + " mail: " + mail);
-                    UserProfile new_user = new UserProfile(ip, mail, mail, ParticipantRole.STUDENT);
+                    UserProfile new_user = new UserProfile(mail, mail, mail, ParticipantRole.STUDENT);
+                    new_user.setIp(getIPFromClientNodeString(ip));
                     // Use the currently active meeting view model
                     activeMeetingViewModelRef[0].addParticipant(new_user);
                     System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
