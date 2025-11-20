@@ -9,9 +9,8 @@ cd java
 
 
 ```
-mvn clean compile
+mvn clean compi
 ```
-
 
 ```
 cd module-ux
