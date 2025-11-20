@@ -282,7 +282,9 @@ public class CanvasViewModel {
             if (network != null) {
                 try {
                     final String actionJson = NetActionSerializer.serializeAction(createAction);
-                    network.sendData(actionJson.getBytes(), generateClientNodes(), 2, 0);
+                    byte[] actionBytes = actionJson.getBytes();
+                    
+                    network.broadcast(actionBytes, 2, 0);
                 } catch (Exception ignored) {
                 }
             }
