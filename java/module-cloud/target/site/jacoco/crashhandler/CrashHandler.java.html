@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CrashHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module-cloud</a> &gt; <a href="index.source.html" class="el_package">crashhandler</a> &gt; <span class="el_source">CrashHandler.java</span></div><h1>CrashHandler.java</h1><pre class="source lang-java linenums">package crashhandler;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import datastructures.Entity;
+import functionlibrary.CloudFunctionLibrary;
+import interfaces.ICrashHandler;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.time.Instant;
+
+/**
+ * Class which handles logging and storing call stack and other exception
+ * details in the application.
+ */
+<span class="fc" id="L17">public class CrashHandler implements ICrashHandler {</span>
+
+    /** Variable to prevent redundant usage of setDefaultUncaughtExceptionHandler. */
+<span class="fc" id="L20">    private static boolean isCreated = false;</span>
+
+    /** Collection to which the logs get stored. */
+    private static final String COLLECTION = &quot;Exception&quot;;
+
+    /** Return value. */
+<span class="fc" id="L26">    private int retVal = 0;</span>
+
+    /** New test return value. */
+    private static final int NEW_RET_VAL = 3;
+
+    /**
+     * Function which starts the exception handler and handles the logging logic.
+     */
+    public synchronized void startCrashHandler() {
+        // Exit if already set to prevent multiple usage.
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (isCreated) {</span>
+<span class="fc" id="L37">            return;</span>
+        }
+
+<span class="fc" id="L40">        isCreated = true;</span>
+
+<span class="fc" id="L42">        final CloudFunctionLibrary cloudFunctionLibrary = new CloudFunctionLibrary();</span>
+
+        try {
+<span class="fc" id="L45">            cloudFunctionLibrary.cloudCreate(new Entity(null, &quot;ExceptionLogs&quot;, null, null, -1, null, null));</span>
+<span class="nc" id="L46">        } catch (Exception e) {</span>
+<span class="nc" id="L47">            retVal = NEW_RET_VAL;</span>
+<span class="fc" id="L48">        }</span>
+
+<span class="fc" id="L50">        Thread.setDefaultUncaughtExceptionHandler((thread, exception) -&gt; {</span>
+<span class="nc" id="L51">            final String exceptionName = exception.getClass().getName();</span>
+<span class="nc" id="L52">            final String timestamp = Instant.now().toString();</span>
+<span class="nc" id="L53">            final String exceptionMessage = exception.getMessage();</span>
+<span class="nc" id="L54">            final String exceptionString = exceptionToString(exception);</span>
+<span class="nc" id="L55">            final String stackJoined = stackToSingleString(exception.getStackTrace());</span>
+
+<span class="nc" id="L57">            final JsonNode exceptionJsonNode = toJsonNode(exceptionName, timestamp, exceptionMessage, exceptionString, stackJoined);</span>
+
+<span class="nc" id="L59">            final Entity exceptionEntity = new Entity(</span>
+                    null,
+                    &quot;ExceptionLogs&quot;,
+                    null,
+                    null,
+                    -1,
+                    null,
+                    exceptionJsonNode
+            );
+
+            try {
+<span class="nc" id="L70">                cloudFunctionLibrary.cloudPost(exceptionEntity);</span>
+<span class="nc" id="L71">            } catch (Exception e) {</span>
+<span class="nc" id="L72">                retVal = NEW_RET_VAL;</span>
+<span class="nc" id="L73">            }</span>
+<span class="nc" id="L74">        });</span>
+<span class="fc" id="L75">    }</span>
+
+    private static String exceptionToString(final Throwable ex) {
+<span class="nc" id="L78">        final StringWriter sw = new StringWriter();</span>
+<span class="nc" id="L79">        ex.printStackTrace(new PrintWriter(sw));</span>
+<span class="nc" id="L80">        return sw.toString();</span>
+    }
+
+    private static String stackToSingleString(final StackTraceElement[] elements) {
+<span class="nc" id="L84">        final StringBuilder sb = new StringBuilder();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        for (StackTraceElement e : elements) {</span>
+<span class="nc" id="L86">            sb.append(e).append(&quot;\n&quot;);</span>
+        }
+<span class="nc" id="L88">        return sb.toString();</span>
+    }
+
+    private JsonNode toJsonNode(final String eName, final String timeStamp, final String eMsg, final String eDetails, final String eTrace) {
+<span class="nc" id="L92">        final ObjectMapper mapper = new ObjectMapper();</span>
+<span class="nc" id="L93">        final JsonNode jsonNode = mapper.createObjectNode()</span>
+<span class="nc" id="L94">                .put(&quot;ExceptionName&quot;, eName)</span>
+<span class="nc" id="L95">                .put(&quot;TimeStampUtc&quot;, timeStamp)</span>
+<span class="nc" id="L96">                .put(&quot;ExceptionMessage&quot;, eMsg)</span>
+<span class="nc" id="L97">                .put(&quot;ExceptionDetails&quot;, eDetails)</span>
+<span class="nc" id="L98">                .put(&quot;StackTrace&quot;, eTrace);</span>
+
+<span class="nc" id="L100">        return jsonNode;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
