@@ -19,16 +19,8 @@
   <!-- Modules (subprojects) -->
   <!-- ===================================================== -->
   <modules>
-    <module>module-networking</module>
     <module>module-ux</module>
-    <module>module-chat</module>
     <module>module-canvas</module>
-    <module>module-screen-video</module>
-    <module>module-ai-insights</module>
-    <module>module-cloud</module>
-    <module>module-controller</module>
-    <module>module-app</module>
-    <module>module-integration-tests</module>
   </modules>
 
   <!-- ===================================================== -->
@@ -177,8 +169,8 @@
   <!-- Properties -->
   <!-- ===================================================== -->
   <properties>
-    <maven.compiler.source>16</maven.compiler.source>
-    <maven.compiler.target>16</maven.compiler.target>
+    <maven.compiler.source>24</maven.compiler.source>
+    <maven.compiler.target>24</maven.compiler.target>
     <encoding>UTF-8</encoding>
     <checkstyle.version>3.3.1</checkstyle.version>
   </properties>
