@@ -36,13 +36,23 @@ public class SoftCardPanel extends JPanel {
     private void updateThemeColors() {
         Theme theme = ThemeManager.getInstance().getCurrentTheme();
 
-        if (theme.isDark()) {
-            fillColor = new Color(255, 255, 255, 25);   // subtle translucent white
-            outlineColor = new Color(255, 255, 255, 40);
-        } else {
-            fillColor = new Color(255, 255, 255, 210);  // nice macOS card white
-            outlineColor = new Color(0, 0, 0, 30);
+        if (theme == null) {
+            fillColor = new Color(36, 42, 56);
+            outlineColor = new Color(255, 255, 255, 26);
+            return;
         }
+
+        Color panelBase = theme.getPanelBackground();
+        int alpha = theme.isDark() ? 245 : 255;
+        fillColor = new Color(panelBase.getRed(), panelBase.getGreen(), panelBase.getBlue(), alpha);
+
+        Color borderSource = theme.getPanelBorder();
+        outlineColor = new Color(
+            borderSource.getRed(),
+            borderSource.getGreen(),
+            borderSource.getBlue(),
+            theme.isDark() ? 110 : 140
+        );
     }
 
     @Override
@@ -60,9 +70,10 @@ public class SoftCardPanel extends JPanel {
         g2.setColor(fillColor);
         g2.fill(shape);
 
-        g2.setColor(outlineColor);
-        g2.setStroke(new BasicStroke(1.4f));
-        g2.draw(shape);
+        if (outlineColor != null) {
+            g2.setColor(outlineColor);
+            g2.draw(shape);
+        }
 
         g2.dispose();
         super.paintComponent(g);
