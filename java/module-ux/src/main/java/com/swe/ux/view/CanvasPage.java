@@ -43,17 +43,17 @@ public class CanvasPage extends JPanel {
     private void initFX() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                getClass().getClassLoader().getResource("fxml/canvas-view.fxml")
+                getClass().getResource("/fxml/canvas-view.fxml")
             );
 
+            Parent root = loader.load();
 
             // --- IMPORTANT: Retrieve the controller (same as CanvasApp)
             CanvasController controller = loader.getController();
-            controller.setNetwork(NetworkFront.getInstance());
-            loader.setController(controller);
 
-
-            Parent root = loader.load();
+            if (NetworkFront.getInstance().isReady()) {
+                controller.setNetwork(NetworkFront.getInstance());
+            }
 
 
             // If your controller exposes a viewModel setter, sync it here:
@@ -77,7 +77,7 @@ public class CanvasPage extends JPanel {
 
             // CSS
             String cssUrl = getClass().getClassLoader()
-                    .getResource("com/swe/canvas/fxml/canvas-view.css").toExternalForm();
+                    .getResource("/fxml/canvas-view.css").toExternalForm();
             scene.getStylesheets().add(cssUrl);
 
             fxPanel.setScene(scene);

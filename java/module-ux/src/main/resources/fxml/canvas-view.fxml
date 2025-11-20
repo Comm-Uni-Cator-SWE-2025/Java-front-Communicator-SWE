@@ -17,7 +17,7 @@
 <?import javafx.scene.shape.Rectangle?>
 <?import java.lang.String?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.swe.canvas.ui.CanvasController">
+<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.swe.ux.service.CanvasController">
     <!-- Define non-Node objects here -->
     <fx:define>
         <ToggleGroup fx:id="toolGroup"/>

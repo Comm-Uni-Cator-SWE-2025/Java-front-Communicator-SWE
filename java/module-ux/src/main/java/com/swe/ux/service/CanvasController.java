@@ -4,7 +4,7 @@ import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.ux.viewmodel.CanvasViewModel;
 import com.swe.ux.viewmodel.ToolType;
-import com.swe.canvas.services.CanvasMessageListener;
+
 import com.swe.canvas.ui.CanvasRenderer;
 import com.swe.canvas.ui.util.ColorConverter;
 import com.swe.networking.AbstractNetworking;
@@ -106,7 +106,11 @@ public class CanvasController {
 
 
     public void setNetwork(AbstractNetworking abstractNetwork) {
-        // this.network = abstractNetwork;
+
+        if (network instanceof NetworkFront nf && !nf.isReady()) return;
+
+
+        this.network = abstractNetwork;
 
         viewModel.setNetworking(abstractNetwork);
         // If viewModel is ready you can subscribe now:
@@ -187,8 +191,6 @@ public class CanvasController {
         lineBtn.setUserData(ToolType.LINE);
         triangleBtn.setUserData(ToolType.TRIANGLE);
 
-        AbstractNetworking network = NetworkFront.getInstance();
-        setNetwork(network);
     }
 
     public CanvasViewModel getViewModel() { return viewModel; }
