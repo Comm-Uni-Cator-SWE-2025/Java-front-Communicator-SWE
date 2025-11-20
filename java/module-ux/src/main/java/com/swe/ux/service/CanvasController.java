@@ -107,9 +107,6 @@ public class CanvasController {
 
     public void setNetwork(AbstractNetworking abstractNetwork) {
 
-        if (network instanceof NetworkFront nf && !nf.isReady()) return;
-
-
         this.network = abstractNetwork;
 
         viewModel.setNetworking(abstractNetwork);

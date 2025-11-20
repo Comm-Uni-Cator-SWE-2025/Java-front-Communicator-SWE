@@ -41,9 +41,6 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
         return instance;
     }
 
-    public boolean isReady() {
-        return moduleRPC != null;
-    }
 
     @Override
     public void sendData(final byte[] data, final ClientNode[] dest, final int module, final int priority) {

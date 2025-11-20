@@ -21,6 +21,7 @@
   <modules>
     <module>module-ux</module>
     <module>module-canvas</module>
+    <module>module-networking</module>
   </modules>
 
   <!-- ===================================================== -->

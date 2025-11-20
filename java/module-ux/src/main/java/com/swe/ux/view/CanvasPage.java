@@ -50,10 +50,8 @@ public class CanvasPage extends JPanel {
 
             // --- IMPORTANT: Retrieve the controller (same as CanvasApp)
             CanvasController controller = loader.getController();
-
-            if (NetworkFront.getInstance().isReady()) {
-                controller.setNetwork(NetworkFront.getInstance());
-            }
+            controller.setNetwork(NetworkFront.getInstance());
+            
 
 
             // If your controller exposes a viewModel setter, sync it here:
