@@ -226,21 +226,6 @@ public class App extends JFrame {
                         showView(MAIN_VIEW);
                         // Reset the flag so the button can be clicked again
                         mainViewModel.startMeetingRequested.set(false);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                     }
                 }));
 
@@ -251,35 +236,6 @@ public class App extends JFrame {
 
                 // Reset the flag
                 mainViewModel.startMeetingRequested.set(false);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             }
         }));
 
