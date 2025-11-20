@@ -46,7 +46,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
     /** Panel to hold the main zoomed-in video. */
     private JPanel zoomedPanel;
-    /** Tracks the IP of the currently zoomed participant, or null if in gallery view. */
+    /** Tracks the ip of the currently zoomed participant, or null if in gallery view. */
     private String zoomedParticipantIp = null;
 
     private static final Dimension FILMSTRIP_PANEL_SIZE = new Dimension(180, 120);
@@ -70,22 +70,13 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         applyTheme();
     }
 
-    private String getIPFromClientNodeString(String val) {
-        if (!val.startsWith("ClientNode")) {
-            return val;
-        }
-        final String ipVal = val.substring(val.indexOf("hostname=") + 9);
-        return ipVal.substring(0, ipVal.indexOf(",") );
-    }
-
     /**
      * Adds a participant panel to the grid.
      * Prevents duplicates and updates the grid layout.
      * @param name The participant's display name.
-     * @param ipUnConsumable The participant's ip.
+     * @param ip The participant's ip.
      */
-    private void addParticipant(String name, String ipUnConsumable) {
-        final String ip = getIPFromClientNodeString(ipUnConsumable);
+    private void addParticipant(String name, String ip) {
         if (participantPanels.containsKey(ip)) {
             return;
         }
@@ -353,15 +344,15 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
             SwingUtilities.invokeLater(() -> {
                 for (String ipToRemove : panelsToRemove) {
-                    System.out.println("Removing participant with IP: " + ipToRemove);
+                    System.out.println("Removing participant with ip: " + ipToRemove);
                     removeParticipant(ipToRemove);
                 }
             });
 
             // Handle participant addition
             participants.forEach(participant -> {
-                System.out.println("Adding participant: " + participant.getDisplayName() + " with email: " + participant.getEmail());
-                addParticipant(participant.getDisplayName(), participant.getEmail());
+                System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + participant.getEmail());
+                addParticipant(participant.getDisplayName(), participant.getIp());
             });
         }));
 
