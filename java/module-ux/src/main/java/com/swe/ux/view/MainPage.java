@@ -53,6 +53,35 @@ public class MainPage extends FrostedBackgroundPanel {
         startClock();
         applyTheme();
     }
+    /**
+ * Enables or disables the Start Meeting button and related UI controls.
+ */
+/**
+ * Enables or disables the Start Meeting button and related UI controls.
+ */
+public void setStartControlsEnabled(boolean enabled) {
+    try {
+        if (this.createMeetingButton != null) {
+            this.createMeetingButton.setEnabled(enabled);
+        }
+    } catch (Exception ignored) {}
+}
+
+/**
+ * Enables or disables the Join Meeting button and related UI controls.
+ */
+public void setJoinControlsEnabled(boolean enabled) {
+    try {
+        if (this.joinMeetingButton != null) {
+            this.joinMeetingButton.setEnabled(enabled);
+        }
+        if (this.meetingCodeField != null) {
+            this.meetingCodeField.setEnabled(enabled);
+        }
+    } catch (Exception ignored) {}
+}
+
+
 
     private void initializeUI() {
 
