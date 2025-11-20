@@ -3,6 +3,7 @@ package com.swe.ux.viewmodel;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
+import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
 
 /**
@@ -27,7 +28,7 @@ public class LoginViewModel extends BaseViewModel {
         try {
             byte[] data = rpc.call("core/register", new byte[0]).get();
             UserProfile user = DataSerializer.deserialize(data, UserProfile.class);
-            user.setIp(user.getEmail());
+            user.setIp(Utils.getSelfIP());
             currentUser.set(user);
         } catch (Exception e) {
             authErrorMessage.set("Authentication failed: " + e.getMessage());
