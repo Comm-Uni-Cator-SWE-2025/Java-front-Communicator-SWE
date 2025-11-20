@@ -11,6 +11,7 @@ import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.UIImage;
 
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -57,6 +58,7 @@ public class ScreenNVideoModel extends BaseViewModel {
      * Called by the View when layout or scroll changes.
      */
     public void updateVisibleParticipants(Set<String> visibleEmails) {
+        System.out.println("Participants " + Arrays.toString(visibleEmails.toArray()));
         // get new ips
         for (String emails : visibleEmails) {
             if (!visibleParticipants.get().contains(emails)) {
