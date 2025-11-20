@@ -39,7 +39,7 @@ public class UserProfile {
     private String logoUrl;
 
     @JsonIgnore
-    private String ip;
+    private String ip = "";
 
     /**
      * Default constructor.
