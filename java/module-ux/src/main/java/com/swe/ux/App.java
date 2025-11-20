@@ -135,7 +135,6 @@ public class App extends JFrame {
         mainPanel.add(meetingView, MEETING_VIEW);
         mainPanel.add(loadingView, LOADING_VIEW);
 
-        meetingViewModel.startMeeting();
         // Set up navigation listeners
         loginViewModel.currentUser.addListener(PropertyListeners.onUserProfileChanged(user -> {
             if (user != null) {
@@ -155,10 +154,10 @@ public class App extends JFrame {
 
         // Use an array to hold the meeting view reference for use in lambda
         MeetingPage[] meetingViewRef = new MeetingPage[] { meetingView };
-
+        
         // Use an array to hold the current active meeting view model reference
         MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { meetingViewModel };
-
+        
         // Use an array to hold the loading view reference for use in lambda
         LoadingPage[] loadingViewRef = new LoadingPage[] { loadingView };
 
@@ -172,14 +171,25 @@ public class App extends JFrame {
 
         rpc.subscribe("core/setIpToMailMap", (data) -> {
             try {
-                Map<String, String> ipToMailMap = DataSerializer.deserialize(data, new TypeReference<Map<String, String>>() {});
-                System.out.println("App: ipToMailMap: " + ipToMailMap);
-                ipToMailMap.forEach((ip, mail) -> {
-                    System.out.println("App: ip: " + ip + " mail: " + mail);
-                    UserProfile new_user = new UserProfile(ip, mail, mail, ParticipantRole.STUDENT);
-                    // Use the currently active meeting view model
-                    activeMeetingViewModelRef[0].addParticipant(new_user);
-                    System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
+                Map<String, String> ipToMailMap = DataSerializer.deserialize(
+                    data, new TypeReference<Map<String, String>>() {});
+                if (ipToMailMap == null || ipToMailMap.isEmpty()) {
+                    return new byte[0];
+                }
+
+                SwingUtilities.invokeLater(() -> {
+                    MeetingViewModel activeViewModel = activeMeetingViewModelRef[0];
+                    if (activeViewModel == null) {
+                        System.err.println("App: Received ipToMail map but no active meeting is available.");
+                        return;
+                    }
+
+                    ipToMailMap.forEach((ip, mail) -> {
+                        System.out.println("App: ip: " + ip + " mail: " + mail);
+                        UserProfile newUser = new UserProfile(ip, mail, mail, ParticipantRole.STUDENT);
+                        activeViewModel.addParticipant(newUser);
+                        System.out.println("App: participants: " + activeViewModel.participants.get());
+                    });
                 });
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
@@ -190,51 +200,80 @@ public class App extends JFrame {
         // Handle meeting navigation - Start Meeting (Instructor role)
         mainViewModel.startMeetingRequested.addListener(PropertyListeners.onBooleanChanged(startMeeting -> {
             if (startMeeting && currentUser != null) {
-                // First, get the meeting ID from MainViewModel by creating the meeting
-                String meetingId = mainViewModel.startMeeting();
+                // Show loading screen immediately
+                loadingViewRef[0].setStatus("Creating meeting...");
+                showView(LOADING_VIEW);
                 
-                // Only proceed if we successfully got a meeting ID
-                if (meetingId == null || meetingId.trim().isEmpty()) {
-                    System.err.println("App: Failed to create meeting - no meeting ID received from RPC");
-                    mainViewModel.startMeetingRequested.set(false);
-                    return;
-                }
+                // Reset the flag immediately to allow button to be clicked again if needed
+                mainViewModel.startMeetingRequested.set(false);
                 
-                // Create a new meeting view model for this meeting with Instructor role
-                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
-                
-                // Update the active meeting view model reference
-                activeMeetingViewModelRef[0] = newMeetingViewModel;
-                
-                // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
-                newMeetingViewModel.setMeetingId(meetingId);
-                System.out.println("App: Passing meeting ID from MainViewModel to MeetingViewModel: " + meetingId);
+                // Do the work asynchronously
+                SwingWorker<MeetingViewModel, Void> worker = new SwingWorker<MeetingViewModel, Void>() {
+                    @Override
+                    protected MeetingViewModel doInBackground() throws Exception {
+                        // First, get the meeting ID from MainViewModel by creating the meeting
+                        String meetingId = mainViewModel.startMeeting();
+                        
+                        // Only proceed if we successfully got a meeting ID
+                        if (meetingId == null || meetingId.trim().isEmpty()) {
+                            throw new Exception("Failed to create meeting - no meeting ID received from RPC");
+                        }
+                        
+                        // Create a new meeting view model for this meeting with Instructor role
+                        MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
+                        
+                        // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
+                        newMeetingViewModel.setMeetingId(meetingId);
+                        System.out.println("App: Passing meeting ID from MainViewModel to MeetingViewModel: " + meetingId);
 
                         // Try to start the meeting
                         newMeetingViewModel.startMeeting();
-
-                // Only change view if meeting was successfully started
-                if (!newMeetingViewModel.isMeetingActive.get()) {
-                    System.err.println("App: Failed to start meeting - meeting not active");
-                    mainViewModel.startMeetingRequested.set(false);
-                    return;
-                }
-
-                // Set up listener for when meeting ends - navigate back to main view
-                newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
-                    if (!isActive) {
-                        showView(MAIN_VIEW);
-                        // Reset the flag so the button can be clicked again
-                        mainViewModel.startMeetingRequested.set(false);
+                        
+                        // Only proceed if meeting was successfully started
+                        if (!newMeetingViewModel.isMeetingActive.get()) {
+                            throw new Exception("Failed to start meeting - meeting not active");
+                        }
+                        
+                        return newMeetingViewModel;
                     }
-                }));
+                    
+                    @Override
+                    protected void done() {
+                        try {
+                            MeetingViewModel newMeetingViewModel = get();
+                            
+                            // Update the active meeting view model reference
+                            activeMeetingViewModelRef[0] = newMeetingViewModel;
+                            
+                            // Set up listener for when meeting ends - navigate back to main view
+                            newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
+                                if (!isActive) {
+                                    showView(MAIN_VIEW);
+                                    // Reset the flag so the button can be clicked again
+                                    mainViewModel.startMeetingRequested.set(false);
+                                }
+                            }));
 
-
-                mainPanel.add(meetingViewRef[0], MEETING_VIEW);
-                showView(MEETING_VIEW);
-
-                // Reset the flag
-                mainViewModel.startMeetingRequested.set(false);
+                            // Create a new MeetingPage with the new view model
+                            meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
+                            mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                            showView(MEETING_VIEW);
+                        } catch (Exception e) {
+                            System.err.println("App: Error creating meeting - " + e.getMessage());
+                            e.printStackTrace();
+                            // Show error and go back to main view
+                            JOptionPane.showMessageDialog(
+                                App.this,
+                                "Failed to create meeting: " + e.getMessage(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE
+                            );
+                            showView(MAIN_VIEW);
+                        }
+                    }
+                };
+                
+                worker.execute();
             }
         }));
 
@@ -251,48 +290,80 @@ public class App extends JFrame {
                     return;
                 }
                 
-                mainViewModel.joinMeeting(meetingCode);
+                // Show loading screen immediately
+                loadingViewRef[0].setStatus("Joining meeting...");
+                showView(LOADING_VIEW);
                 
-                // Create a new meeting view model for joining meeting with Student role
-                MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
-                
-                // Update the active meeting view model reference
-                activeMeetingViewModelRef[0] = newMeetingViewModel;
-                
-                // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
-                newMeetingViewModel.setMeetingId(meetingCode);
-                System.out.println("App: Passing meeting code from MainViewModel to MeetingViewModel: " + meetingCode);
-
-                // Create a new MeetingPage with the new view model
-                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
-                
-                // Try to start the meeting with the provided meeting ID
-                newMeetingViewModel.startMeeting();
-                
-                // Only change view if meeting was successfully started
-                if (!newMeetingViewModel.isMeetingActive.get()) {
-                    System.err.println("App: Failed to join meeting - meeting not active");
-                    mainViewModel.joinMeetingRequested.set(false);
-                    mainViewModel.meetingCode.set("");
-                    return;
-                }
-
-                // Set up listener for when meeting ends - navigate back to main view
-                newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
-                    if (!isActive) {
-                        showView(MAIN_VIEW);
-                        // Reset the flag and meeting code so the button can be clicked again
-                        mainViewModel.joinMeetingRequested.set(false);
-                        mainViewModel.meetingCode.set("");
-                    }
-                }));
-
-                mainPanel.add(meetingViewRef[0], MEETING_VIEW);
-                showView(MEETING_VIEW);
-
-                // Reset the flag and meeting code
+                // Reset the flag immediately to allow button to be clicked again if needed
                 mainViewModel.joinMeetingRequested.set(false);
-                mainViewModel.meetingCode.set("");
+                
+                // Do the work asynchronously
+                SwingWorker<MeetingViewModel, Void> worker = new SwingWorker<MeetingViewModel, Void>() {
+                    @Override
+                    protected MeetingViewModel doInBackground() throws Exception {
+                        // Join the meeting via RPC
+                        mainViewModel.joinMeeting(meetingCode);
+                        
+                        // Create a new meeting view model for joining meeting with Student role
+                        MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
+                        
+                        // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
+                        newMeetingViewModel.setMeetingId(meetingCode);
+                        System.out.println("App: Passing meeting code from MainViewModel to MeetingViewModel: " + meetingCode);
+                        
+                        // Try to start the meeting with the provided meeting ID
+                        newMeetingViewModel.startMeeting();
+                        
+                        // Only proceed if meeting was successfully started
+                        if (!newMeetingViewModel.isMeetingActive.get()) {
+                            throw new Exception("Failed to join meeting - meeting not active");
+                        }
+                        
+                        return newMeetingViewModel;
+                    }
+                    
+                    @Override
+                    protected void done() {
+                        try {
+                            MeetingViewModel newMeetingViewModel = get();
+                            
+                            // Update the active meeting view model reference
+                            activeMeetingViewModelRef[0] = newMeetingViewModel;
+                            
+                            // Set up listener for when meeting ends - navigate back to main view
+                            newMeetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
+                                if (!isActive) {
+                                    showView(MAIN_VIEW);
+                                    // Reset the flag and meeting code so the button can be clicked again
+                                    mainViewModel.joinMeetingRequested.set(false);
+                                    mainViewModel.meetingCode.set("");
+                                }
+                            }));
+
+                            // Create a new MeetingPage with the new view model
+                            meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
+                            mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                            showView(MEETING_VIEW);
+                            
+                            // Reset the meeting code
+                            mainViewModel.meetingCode.set("");
+                        } catch (Exception e) {
+                            System.err.println("App: Error joining meeting - " + e.getMessage());
+                            e.printStackTrace();
+                            // Show error and go back to main view
+                            JOptionPane.showMessageDialog(
+                                App.this,
+                                "Failed to join meeting: " + e.getMessage(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE
+                            );
+                            showView(MAIN_VIEW);
+                            mainViewModel.meetingCode.set("");
+                        }
+                    }
+                };
+                
+                worker.execute();
             }
         }));
 
@@ -309,7 +380,7 @@ public class App extends JFrame {
 
     /**
      * Shows the specified view.
-     *
+     * 
      * @param viewName The name of the view to show
      */
     public void showView(String viewName) {
@@ -338,13 +409,13 @@ public class App extends JFrame {
     public static void main(String[] args) {
         int portNumber = 6942;
 
-        if (args.length > 0) {
+        if (args.length > 0) { 
             String port = args[0];
             portNumber = Integer.parseInt(port);
         }
 
         final AbstractRPC rpc = new RPC();
-
+        
         App app = App.getInstance(rpc);
 
         // Create and show the application window
@@ -382,7 +453,7 @@ public class App extends JFrame {
             throw new RuntimeException(e);
         }
     }
-
+    
     // Getters
     public UserProfile getCurrentUser() {
         return currentUser;
@@ -390,7 +461,7 @@ public class App extends JFrame {
 
     /**
      * Sets the current user and updates the UI accordingly.
-     *
+     * 
      * @param user The user to set as current, or null to log out
      */
     public void setCurrentUser(UserProfile user) {

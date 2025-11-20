@@ -174,9 +174,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
         CanvasPage canvasPage = new CanvasPage(canvasVM);
         SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel();
 
-        stageTabs.addTab("  Screen + Video  ", wrap(screenNVideo));
+        stageTabs.addTab("  Screen & Video  ", wrap(screenNVideo));
         stageTabs.addTab("  Canvas  ", wrap(canvasPage));
-        stageTabs.addTab("  AI Insights  ", wrap(sentimentInsightsPanel));
+        stageTabs.addTab("  Analytics  ", wrap(sentimentInsightsPanel));
 
         card.add(stageTabs, BorderLayout.CENTER);
         return card;
