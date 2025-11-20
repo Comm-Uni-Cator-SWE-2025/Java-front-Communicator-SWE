@@ -342,12 +342,10 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
             java.util.Set<String> panelsToRemove = new java.util.HashSet<>(participantPanels.keySet());
             panelsToRemove.removeAll(currentIps);
 
-            SwingUtilities.invokeLater(() -> {
-                for (String ipToRemove : panelsToRemove) {
-                    System.out.println("Removing participant with ip: " + ipToRemove);
-                    removeParticipant(ipToRemove);
-                }
-            });
+            for (String ipToRemove : panelsToRemove) {
+                System.out.println("Removing participant with ip: " + ipToRemove);
+                removeParticipant(ipToRemove);
+            }
 
             // Handle participant addition
             participants.forEach(participant -> {
