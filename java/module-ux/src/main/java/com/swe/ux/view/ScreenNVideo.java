@@ -1,5 +1,5 @@
 /**
- *  Contributed by Priyanshu Pandey.
+ *  Contributed by Sandeep Kumar.
  */
 package com.swe.ux.view;
 
@@ -46,7 +46,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
     /** Panel to hold the main zoomed-in video. */
     private JPanel zoomedPanel;
-    /** Tracks the IP of the currently zoomed participant, or null if in gallery view. */
+    /** Tracks the ip of the currently zoomed participant, or null if in gallery view. */
     private String zoomedParticipantIp = null;
 
     private static final Dimension FILMSTRIP_PANEL_SIZE = new Dimension(180, 120);
@@ -342,17 +342,15 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
             java.util.Set<String> panelsToRemove = new java.util.HashSet<>(participantPanels.keySet());
             panelsToRemove.removeAll(currentIps);
 
-            SwingUtilities.invokeLater(() -> {
-                for (String ipToRemove : panelsToRemove) {
-                    System.out.println("Removing participant with IP: " + ipToRemove);
-                    removeParticipant(ipToRemove);
-                }
-            });
+            for (String ipToRemove : panelsToRemove) {
+                System.out.println("Removing participant with ip: " + ipToRemove);
+                removeParticipant(ipToRemove);
+            }
 
             // Handle participant addition
             participants.forEach(participant -> {
-                System.out.println("Adding participant: " + participant.getDisplayName() + " with email: " + participant.getEmail());
-                addParticipant(participant.getDisplayName(), participant.getEmail());
+                System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + participant.getIp());
+                addParticipant(participant.getDisplayName(), participant.getIp());
             });
         }));
 
