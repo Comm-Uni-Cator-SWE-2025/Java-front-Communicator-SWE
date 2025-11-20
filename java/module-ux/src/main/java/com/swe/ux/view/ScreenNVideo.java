@@ -118,7 +118,8 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         if (zoomedParticipantIp == null) {
 
             int width = scrollPane.getViewport().getWidth();
-            if (width == 0) {
+            int height = scrollPane.getViewport().getHeight();
+            if (width == 0 || height == 0) {
                 return;
             }
 
@@ -146,8 +147,31 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
                 videoGrid.setLayout(new GridLayout(0, newCols, hgap, vgap));
             }
 
-            int newPanelWidth = (width - (hgap * (newCols - 1))) / newCols;
-            int newPanelHeight = (int) (newPanelWidth * (9.0 / 16.0));
+            // Calculate number of rows needed
+            int participantCount = participantPanels.size();
+            int newRows = (int) Math.ceil((double) participantCount / newCols);
+            newRows = Math.max(1, newRows);
+
+            // Calculate panel dimensions based on both width and height constraints
+            int availableWidth = width - (hgap * (newCols - 1));
+            int availableHeight = height - (vgap * (newRows - 1));
+            
+            int newPanelWidth = availableWidth / newCols;
+            int newPanelHeightFromWidth = (int) (newPanelWidth * (9.0 / 16.0));
+            int newPanelHeightFromHeight = availableHeight / newRows;
+            
+            // Use the constraint that allows panels to be as large as possible
+            // while maintaining 16:9 aspect ratio and fitting within available space
+            int newPanelHeight;
+            if (newPanelHeightFromWidth <= newPanelHeightFromHeight) {
+                // Width is the limiting factor
+                newPanelHeight = newPanelHeightFromWidth;
+            } else {
+                // Height is the limiting factor
+                newPanelHeight = newPanelHeightFromHeight;
+                newPanelWidth = (int) (newPanelHeight * (16.0 / 9.0));
+            }
+            
             Dimension newSize = new Dimension(newPanelWidth, newPanelHeight);
 
             updateGalleryPanelSizes(newSize);

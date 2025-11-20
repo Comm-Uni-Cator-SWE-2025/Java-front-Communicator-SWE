@@ -25,13 +25,10 @@ import com.swe.ux.theme.ThemeManager;
 public class ModernTabbedPaneUI extends BasicTabbedPaneUI {
     private static final int PILL_ARC = 14;
     private static final int TAB_MIN_HEIGHT = 40;
-    private static final int TAB_EXTRA_H = 8;
 
-    private Color stripBg;
     private Color tabSelected;
     private Color tabUnselectedFill;
     private Color tabText;
-    private Color tabOutline;
     private Font jbFont;
 
     @Override
@@ -46,26 +43,20 @@ public class ModernTabbedPaneUI extends BasicTabbedPaneUI {
     private void updateColors() {
         var tm = ThemeManager.getInstance();
         if (tm == null || tm.getCurrentTheme() == null) {
-            stripBg = new Color(245, 245, 247);
             tabSelected = new Color(255, 255, 255);
             tabUnselectedFill = new Color(0, 0, 0, 18);
             tabText = new Color(36, 36, 36);
-            tabOutline = new Color(0, 0, 0, 24);
             return;
         }
         boolean dark = tm.getCurrentTheme().isDark();
         if (dark) {
-            stripBg = new Color(36, 38, 44, 220);
             tabSelected = new Color(72, 84, 104, 230);
             tabUnselectedFill = new Color(255, 255, 255, 8);
             tabText = tm.getCurrentTheme().getTextColor();
-            tabOutline = new Color(255, 255, 255, 28);
         } else {
-            stripBg = new Color(248, 248, 250);
             tabSelected = new Color(255, 255, 255, 250);
             tabUnselectedFill = new Color(0, 0, 0, 12);
             tabText = tm.getCurrentTheme().getTextColor();
-            tabOutline = new Color(0, 0, 0, 28);
         }
     }
 
@@ -84,13 +75,20 @@ public class ModernTabbedPaneUI extends BasicTabbedPaneUI {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int areaW = tabPane.getWidth();
-        int areaH = TAB_MIN_HEIGHT + TAB_EXTRA_H;
-        // paint background strip
-        g2.setColor(stripBg);
-        g2.fillRoundRect(0, 0, areaW, areaH, 18, 18);
+        // Customize tab area without delegating to BasicTabbedPaneUI
+        int tabCount = tabPane.getTabCount();
+        Rectangle iconRect = new Rectangle();
+        Rectangle textRect = new Rectangle();
+        for (int i = 0; i < tabCount; i++) {
+            if (i != selectedIndex) {
+                paintTab(g2, tabPlacement, rects, i, iconRect, textRect);
+            }
+        }
 
-        super.paintTabArea(g2, tabPlacement, selectedIndex);
+        if (selectedIndex >= 0) {
+            paintTab(g2, tabPlacement, rects, selectedIndex, iconRect, textRect);
+        }
+
         g2.dispose();
     }
 
@@ -109,18 +107,8 @@ public class ModernTabbedPaneUI extends BasicTabbedPaneUI {
 
         RoundRectangle2D pill = new RoundRectangle2D.Double(innerX, innerY, innerW, innerH, PILL_ARC, PILL_ARC);
 
-        if (isSelected) {
-            g2.setColor(tabSelected);
-            g2.fill(pill);
-            // subtle outline
-            g2.setStroke(new BasicStroke(1f));
-            g2.setColor(tabOutline);
-            g2.draw(pill);
-        } else {
-            // unselected softened fill
-            g2.setColor(tabUnselectedFill);
-            g2.fill(pill);
-        }
+        g2.setColor(isSelected ? tabSelected : tabUnselectedFill);
+        g2.fill(pill);
 
         g2.dispose();
     }
@@ -160,6 +148,11 @@ public class ModernTabbedPaneUI extends BasicTabbedPaneUI {
     protected void paintFocusIndicator(Graphics g, int tabPlacement, Rectangle[] rects, int tabIndex,
                                        Rectangle iconRect, Rectangle textRect, boolean isSelected) {
         // no focus indicator
+    }
+
+    @Override
+    protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) {
+        // suppress default content border to keep cards clean
     }
 
     @Override
