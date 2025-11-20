@@ -110,6 +110,14 @@ public class App extends JFrame {
         repaint();
     }
 
+    private String getIPFromClientNodeString(String val) {
+        if (!val.startsWith("ClientNode")) {
+            return val;
+        }
+        final String ipVal = val.substring(val.indexOf("hostName=") + 9);
+        return ipVal.substring(0, ipVal.indexOf(",") );
+    }
+
     /**
      * Initializes all the views and adds them to the card layout.
      */
@@ -119,9 +127,9 @@ public class App extends JFrame {
         mainViewModel = new MainViewModel(rpc);
         System.out.println("Meeting");
 
+        final UserProfile newUser = new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT);
         // Will be set when user joins a meeting
-        MeetingViewModel meetingViewModel = new MeetingViewModel(
-                new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT), rpc);
+        MeetingViewModel meetingViewModel = new MeetingViewModel(newUser, rpc);
 
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
@@ -176,7 +184,8 @@ public class App extends JFrame {
                 System.out.println("App: ipToMailMap: " + ipToMailMap);
                 ipToMailMap.forEach((ip, mail) -> {
                     System.out.println("App: ip: " + ip + " mail: " + mail);
-                    UserProfile new_user = new UserProfile(ip, mail, mail, ParticipantRole.STUDENT);
+                    UserProfile new_user = new UserProfile(mail, mail, mail, ParticipantRole.STUDENT);
+                    new_user.setIp(getIPFromClientNodeString(ip));
                     // Use the currently active meeting view model
                     activeMeetingViewModelRef[0].addParticipant(new_user);
                     System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
@@ -210,6 +219,9 @@ public class App extends JFrame {
                 newMeetingViewModel.setMeetingId(meetingId);
                 System.out.println("App: Passing meeting ID from MainViewModel to MeetingViewModel: " + meetingId);
 
+                // Create a new MeetingPage with the new view model
+                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
+
                 // Try to start the meeting
                 newMeetingViewModel.startMeeting();
 
@@ -229,8 +241,6 @@ public class App extends JFrame {
                     }
                 }));
 
-                // Create a new MeetingPage with the new view model
-                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
                 showView(MEETING_VIEW);
 
@@ -257,6 +267,9 @@ public class App extends JFrame {
                 
                 // Create a new meeting view model for joining meeting with Student role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
+
+                // Create a new MeetingPage with the new view model
+                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 
                 // Update the active meeting view model reference
                 activeMeetingViewModelRef[0] = newMeetingViewModel;
@@ -287,8 +300,6 @@ public class App extends JFrame {
                     }
                 }));
 
-                // Create a new MeetingPage with the new view model
-                meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
                 mainPanel.add(meetingViewRef[0], MEETING_VIEW);
                 showView(MEETING_VIEW);
 

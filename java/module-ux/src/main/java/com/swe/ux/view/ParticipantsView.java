@@ -1,3 +1,6 @@
+/**
+ *  Contributed by Sandeep Kumar.
+ */
 package com.swe.ux.view;
 
 import com.swe.controller.Meeting.UserProfile;
