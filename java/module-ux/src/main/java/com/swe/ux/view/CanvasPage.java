@@ -76,8 +76,7 @@ public class CanvasPage extends JPanel {
             );
 
             // CSS
-            String cssUrl = getClass().getClassLoader()
-                    .getResource("/fxml/canvas-view.css").toExternalForm();
+            String cssUrl = getClass().getResource("/fxml/canvas-view.css").toExternalForm();
             scene.getStylesheets().add(cssUrl);
 
             fxPanel.setScene(scene);
