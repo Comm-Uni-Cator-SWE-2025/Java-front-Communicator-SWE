@@ -3,11 +3,13 @@ package com.swe.ux.view;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.theme.Theme;
 import com.swe.ux.theme.ThemeManager;
+import com.swe.ux.ui.AnalogClockPanel;
 import com.swe.ux.ui.FrostedBackgroundPanel;
 import com.swe.ux.ui.FrostedBadgeLabel;
-import com.swe.ux.ui.SoftCardPanel;
 import com.swe.ux.ui.FrostedToolbarButton;
+import com.swe.ux.ui.MiniCalendarPanel;
 import com.swe.ux.ui.PlaceholderTextField;
+import com.swe.ux.ui.SoftCardPanel;
 import com.swe.ux.ui.ThemeToggleButton;
 import com.swe.ux.ui.FontUtil;
 import com.swe.ux.viewmodel.MainViewModel;
@@ -51,6 +53,35 @@ public class MainPage extends FrostedBackgroundPanel {
         startClock();
         applyTheme();
     }
+    /**
+ * Enables or disables the Start Meeting button and related UI controls.
+ */
+/**
+ * Enables or disables the Start Meeting button and related UI controls.
+ */
+public void setStartControlsEnabled(boolean enabled) {
+    try {
+        if (this.createMeetingButton != null) {
+            this.createMeetingButton.setEnabled(enabled);
+        }
+    } catch (Exception ignored) {}
+}
+
+/**
+ * Enables or disables the Join Meeting button and related UI controls.
+ */
+public void setJoinControlsEnabled(boolean enabled) {
+    try {
+        if (this.joinMeetingButton != null) {
+            this.joinMeetingButton.setEnabled(enabled);
+        }
+        if (this.meetingCodeField != null) {
+            this.meetingCodeField.setEnabled(enabled);
+        }
+    } catch (Exception ignored) {}
+}
+
+
 
     private void initializeUI() {
 
@@ -164,6 +195,28 @@ public class MainPage extends FrostedBackgroundPanel {
 
         mainArea.add(insightsCard, BorderLayout.CENTER);
 
+        // Sidebar widgets (clock + calendar)
+        JPanel sideColumn = new JPanel();
+        sideColumn.setOpaque(false);
+        sideColumn.setLayout(new BoxLayout(sideColumn, BoxLayout.Y_AXIS));
+
+        SoftCardPanel clockCard = new SoftCardPanel(20);
+        clockCard.setLayout(new BorderLayout());
+        clockCard.add(new AnalogClockPanel(), BorderLayout.CENTER);
+        clockCard.setMaximumSize(new Dimension(260, 260));
+        clockCard.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        SoftCardPanel calendarCard = new SoftCardPanel(20);
+        calendarCard.setLayout(new BorderLayout());
+        calendarCard.add(new MiniCalendarPanel(), BorderLayout.CENTER);
+        calendarCard.setMaximumSize(new Dimension(260, 280));
+        calendarCard.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        sideColumn.add(clockCard);
+        sideColumn.add(Box.createVerticalStrut(20));
+        sideColumn.add(calendarCard);
+
+        mainArea.add(sideColumn, BorderLayout.EAST);
 
 
 
