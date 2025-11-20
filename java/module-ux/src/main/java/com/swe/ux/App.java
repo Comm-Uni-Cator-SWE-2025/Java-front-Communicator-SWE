@@ -127,9 +127,9 @@ public class App extends JFrame {
         mainViewModel = new MainViewModel(rpc);
         System.out.println("Meeting");
 
+        final UserProfile newUser = new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT);
         // Will be set when user joins a meeting
-        MeetingViewModel meetingViewModel = new MeetingViewModel(
-                new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT), rpc);
+        MeetingViewModel meetingViewModel = new MeetingViewModel(newUser, rpc);
 
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
