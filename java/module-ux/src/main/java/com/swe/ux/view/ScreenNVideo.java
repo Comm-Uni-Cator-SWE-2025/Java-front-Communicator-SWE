@@ -70,13 +70,22 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         applyTheme();
     }
 
+    private String getIPFromClientNodeString(String val) {
+        if (!val.startsWith("ClientNode")) {
+            return val;
+        }
+        final String ipVal = val.substring(val.indexOf("hostname=") + 9);
+        return ipVal.substring(0, ipVal.indexOf(",") );
+    }
+
     /**
      * Adds a participant panel to the grid.
      * Prevents duplicates and updates the grid layout.
      * @param name The participant's display name.
-     * @param ip The participant's ip.
+     * @param ipUnConsumable The participant's ip.
      */
-    private void addParticipant(String name, String ip) {
+    private void addParticipant(String name, String ipUnConsumable) {
+        final String ip = getIPFromClientNodeString(ipUnConsumable);
         if (participantPanels.containsKey(ip)) {
             return;
         }
