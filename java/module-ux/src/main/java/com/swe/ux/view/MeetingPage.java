@@ -1,12 +1,15 @@
 package com.swe.ux.view;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.canvas.datamodel.collaboration.NetworkSimulator;
+import com.swe.canvas.datamodel.manager.ActionManager;
+import com.swe.canvas.datamodel.manager.ClientActionManager;
+import com.swe.canvas.datamodel.manager.HostActionManager;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.App;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.*;
-import com.swe.ux.viewmodel.CanvasViewModel;
 import com.swe.ux.viewmodel.ChatViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
 import com.swe.ux.viewmodel.ParticipantsViewModel;
@@ -170,8 +173,23 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
         // content components (assume these exist in your project)
         ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
-        CanvasViewModel canvasVM = new CanvasViewModel(new CanvasState());
-        CanvasPage canvasPage = new CanvasPage(canvasVM);
+        
+        // Create ActionManager for canvas using ClientActionManager
+        // Set up network simulation (Host + Client pattern)
+        NetworkSimulator network = new NetworkSimulator();
+        CanvasState hostCanvasState = new CanvasState(); // Authoritative state
+        String userId = "user-" + System.nanoTime() % 10000;
+        
+        // Create Host (authoritative)
+        HostActionManager hostManager = new HostActionManager("HOST", hostCanvasState, network);
+        
+        // Create Client (for UI)
+        CanvasState clientCanvasState = new CanvasState(); // Local mirror
+        ClientActionManager clientManager = new ClientActionManager(userId, clientCanvasState, network);
+        
+        // Use client manager for the UI
+        CanvasPage canvasPage = new CanvasPage(clientManager);
+        
         SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel();
 
         stageTabs.addTab("  Screen & Video  ", wrap(screenNVideo));

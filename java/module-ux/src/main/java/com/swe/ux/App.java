@@ -376,6 +376,25 @@ public class App extends JFrame {
         //     throw new RuntimeException(e);
         // }
 
+        // Initialize JavaFX toolkit early in a separate thread to avoid macOS conflicts
+        // This prevents macOS window management conflicts
+        Thread javaFXInitThread = new Thread(() -> {
+            try {
+                com.swe.ux.integration.JavaFXSwingBridge.initializeJavaFX();
+            } catch (Exception e) {
+                System.err.println("Warning: Could not initialize JavaFX early: " + e.getMessage());
+            }
+        });
+        javaFXInitThread.setDaemon(true);
+        javaFXInitThread.start();
+        
+        // Give JavaFX a moment to initialize
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+
         // Run on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
             try {

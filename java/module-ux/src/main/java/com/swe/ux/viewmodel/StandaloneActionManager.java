@@ -3,9 +3,11 @@ package com.swe.ux.viewmodel;
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.manager.ActionManager;
-import com.swe.canvas.datamodel.manager.UndoRedoStack;
-import com.swe.canvas.datamodel.serialization.SerializedAction;
+import com.swe.canvas.datamodel.manager.UndoRedoManager;
+import com.swe.canvas.datamodel.shape.Shape;
 
 /**
  * A simplified ActionManager for single-user mode.
@@ -14,64 +16,95 @@ import com.swe.canvas.datamodel.serialization.SerializedAction;
 public class StandaloneActionManager implements ActionManager {
 
     private final CanvasState canvasState;
-    private final UndoRedoStack undoRedoStack;
+    private final UndoRedoManager undoRedoManager;
     private final ActionFactory actionFactory;
     private final String userId;
-    private Runnable onUpdateCallback;
+    private Runnable onUpdateCallback = () -> {};
 
-    public StandaloneActionManager(CanvasState canvasState, ActionFactory actionFactory, String userId) {
+    public StandaloneActionManager(CanvasState canvasState, String userId) {
         this.canvasState = canvasState;
-        this.undoRedoStack = new UndoRedoStack();
-        this.actionFactory = actionFactory;
+        this.undoRedoManager = new UndoRedoManager();
+        this.actionFactory = new ActionFactory();
         this.userId = userId;
     }
 
+    @Override
+    public ActionFactory getActionFactory() {
+        return actionFactory;
+    }
+
+    @Override
+    public CanvasState getCanvasState() {
+        return canvasState;
+    }
+
+    @Override
+    public UndoRedoManager getUndoRedoManager() {
+        return undoRedoManager;
+    }
+
+    @Override
     public void setOnUpdate(Runnable callback) {
-        this.onUpdateCallback = callback;
+        this.onUpdateCallback = callback != null ? callback : () -> {};
     }
 
     private void notifyUpdate() {
-        if (onUpdateCallback != null) onUpdateCallback.run();
+        onUpdateCallback.run();
     }
 
     @Override
-    public void processIncomingAction(SerializedAction serializedAction) {
-        // Not used in standalone mode
-    }
-
-    @Override
-    public synchronized void requestLocalAction(Action action) {
-        // In single user mode, we trust local actions implicitly.
-        // Apply immediately.
+    public void requestCreate(Shape newShape) {
+        Action action = actionFactory.createCreateAction(newShape, userId);
+        // In standalone mode, apply immediately
         canvasState.applyState(action.getShapeId(), action.getNewState());
-        undoRedoStack.pushUndo(action);
+        undoRedoManager.push(action);
         notifyUpdate();
     }
 
     @Override
-    public synchronized void performUndo() {
-        Action actionToUndo = undoRedoStack.popUndo();
+    public void requestModify(ShapeState prevState, Shape modifiedShape) {
+        Action action = actionFactory.createModifyAction(canvasState, prevState.getShapeId(), modifiedShape, userId);
+        // In standalone mode, apply immediately
+        canvasState.applyState(action.getShapeId(), action.getNewState());
+        undoRedoManager.push(action);
+        notifyUpdate();
+    }
+
+    @Override
+    public void requestDelete(ShapeState shapeToDelete) {
+        Action action = actionFactory.createDeleteAction(canvasState, shapeToDelete.getShapeId(), userId);
+        // In standalone mode, apply immediately
+        canvasState.applyState(action.getShapeId(), action.getNewState());
+        undoRedoManager.push(action);
+        notifyUpdate();
+    }
+
+    @Override
+    public void requestUndo() {
+        Action actionToUndo = undoRedoManager.getActionToUndo();
         if (actionToUndo != null) {
-            Action inverse = actionFactory.createInverseAction(actionToUndo, userId);
-            // Apply inverse directly, don't push to standard undo stack yet
-            canvasState.applyState(inverse.getShapeId(), inverse.getNewState());
+            Action inverseAction = actionFactory.createInverseAction(actionToUndo, userId);
+            // Apply inverse immediately
+            canvasState.applyState(inverseAction.getShapeId(), inverseAction.getNewState());
+            undoRedoManager.applyHostUndo(); // Move pointer back
             notifyUpdate();
         }
     }
 
     @Override
-    public synchronized void performRedo() {
-        Action actionToRedo = undoRedoStack.popRedo();
+    public void requestRedo() {
+        Action actionToRedo = undoRedoManager.getActionToRedo();
         if (actionToRedo != null) {
-            // Re-apply original new state
+            // Re-apply original action
             canvasState.applyState(actionToRedo.getShapeId(), actionToRedo.getNewState());
+            undoRedoManager.applyHostRedo(); // Move pointer forward
             notifyUpdate();
         }
     }
 
     @Override
-    public UndoRedoStack getUndoRedoStack() {
-        return undoRedoStack;
+    public void processIncomingMessage(NetworkMessage message) {
+        // Not used in standalone mode
     }
 }
 
