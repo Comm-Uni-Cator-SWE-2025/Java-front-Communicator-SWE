@@ -3,7 +3,7 @@ package com.swe.ux.views;
 import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
-import com.swe.canvas.datamodel.manager.ActionManager;
+
 import com.swe.canvas.datamodel.manager.ClientActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
 import com.swe.controller.Meeting.ParticipantRole;

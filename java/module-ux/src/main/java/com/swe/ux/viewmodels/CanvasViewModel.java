@@ -17,9 +17,11 @@ import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeFactory;
 import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.datamodel.shape.ShapeType;
-import com.swe.canvas.ui.util.ColorConverter;
-import com.swe.canvas.ui.util.GeometryUtils;
+import com.swe.ux.canvas.util.ColorConverter;
+import com.swe.ux.canvas.util.GeometryUtils;
 import com.swe.networking.AbstractNetworking;
+import com.swe.canvas.mvvm.ToolType;
+
 
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;

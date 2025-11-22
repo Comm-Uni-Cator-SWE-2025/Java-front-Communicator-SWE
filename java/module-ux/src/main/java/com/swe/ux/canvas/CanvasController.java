@@ -2,7 +2,7 @@ package com.swe.ux.canvas;
 
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.manager.ActionManager;
-import com.swe.canvas.mvvm.CanvasViewModel;
+import com.swe.ux.viewmodels.CanvasViewModel;
 import com.swe.canvas.mvvm.ToolType;
 import com.swe.ux.canvas.util.ColorConverter;
 

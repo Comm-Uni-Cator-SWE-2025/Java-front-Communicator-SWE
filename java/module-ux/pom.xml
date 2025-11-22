@@ -56,7 +56,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.swe.canvas</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>module-canvas</artifactId>
             <version>${project.version}</version>
         </dependency>

@@ -19,10 +19,10 @@
   <!-- Modules (subprojects) -->
   <!-- ===================================================== -->
   <modules>
-    <module>module-ux</module>
-    <module>module-app</module>
     <module>module-networking</module>
     <module>module-canvas</module>
+    <module>module-ux</module>
+    <module>module-app</module>
   </modules>
 
   <!-- ===================================================== -->
@@ -176,5 +176,12 @@
     <encoding>UTF-8</encoding>
     <checkstyle.version>3.3.1</checkstyle.version>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
 
 </project>

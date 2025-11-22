@@ -1,15 +1,13 @@
 package com.swe.canvas.datamodel.manager;
 
-import com.swe.app.RPC;
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.collaboration.CanvasNetworkService;
 import com.swe.canvas.datamodel.collaboration.MessageType;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
-import com.swe.canvas.datamodel.collaboration.NetworkService;
-import com.swe.canvas.datamodel.serialization.DefaultActionDeserializer;
-import com.swe.canvas.datamodel.serialization.DefaultActionSerializer;
 import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 
@@ -26,19 +24,15 @@ public class ClientActionManager implements ActionManager {
     private final CanvasState canvasState; // Local mirror
     private final ActionFactory actionFactory;
     private final UndoRedoManager undoRedoManager;
-    private final NetworkService networkService;
-    private final DefaultActionSerializer serializer;
-    private final DefaultActionDeserializer deserializer;
+    private final CanvasNetworkService networkService;
     private Runnable onUpdateCallback = () -> {}; // No-op default
 
-    public ClientActionManager(String userId, CanvasState canvasState, NetworkService networkService, RPC rpc) {
+    public ClientActionManager(String userId, CanvasState canvasState, AbstractRPC rpc_) {
         this.userId = userId;
         this.canvasState = canvasState;
-        this.networkService = networkService;
+        this.networkService = new CanvasNetworkService();
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
-        this.serializer = new DefaultActionSerializer();
-        this.deserializer = new DefaultActionDeserializer();
     }
 
     @Override

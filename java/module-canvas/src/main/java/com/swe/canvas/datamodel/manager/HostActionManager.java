@@ -12,11 +12,8 @@ import com.swe.canvas.datamodel.collaboration.CanvasNetworkService;
 import com.swe.canvas.datamodel.collaboration.MessageType;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.collaboration.NetworkService;
-import com.swe.canvas.datamodel.serialization.DefaultActionDeserializer;
-import com.swe.canvas.datamodel.serialization.DefaultActionSerializer;
 import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.serialization.SerializationException;
-import com.swe.canvas.datamodel.serialization.SerializedAction;
 import com.swe.canvas.datamodel.shape.Shape;
 
 /**
@@ -33,21 +30,17 @@ public class HostActionManager implements ActionManager {
     private final ActionFactory actionFactory;
     private final UndoRedoManager undoRedoManager; // Host's local undo/redo
     private final NetworkService networkService;
-    private final DefaultActionSerializer serializer;
-    private final DefaultActionDeserializer deserializer;
-    private final AbstractRPC rpc;
+    
     private Runnable onUpdateCallback = () -> {}; // No-op default
 
 
-    public HostActionManager(String userId, CanvasState canvasState, AbstractRPC rpc) {
+    public HostActionManager(String userId, CanvasState canvasState, AbstractRPC rpc_) {
         this.userId = userId;
         this.canvasState = canvasState;
         this.networkService = new CanvasNetworkService();
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
-        this.serializer = new DefaultActionSerializer();
-        this.deserializer = new DefaultActionDeserializer();
-        this.rpc = rpc;
+        
     }
 
     @Override
@@ -130,8 +123,8 @@ public class HostActionManager implements ActionManager {
     public void requestDelete(ShapeState shapeToDelete) {
         Action action = actionFactory.createDeleteAction(canvasState, shapeToDelete.getShapeId(), userId);
         try {
-            SerializedAction sa = serializer.serialize(action);
-            NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getData());
+            String sa = NetActionSerializer.serializeAction(action);
+            NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getBytes());
             processIncomingMessage(msg);
         } catch (Exception e) {
             System.err.println("Host failed to serialize local action: " + e.getMessage());
@@ -173,7 +166,7 @@ public class HostActionManager implements ActionManager {
     @Override
     public void processIncomingMessage(NetworkMessage message) {
         try {
-            Action action = deserializer.deserialize(new SerializedAction(message.getSerializedAction()));
+            Action action = NetActionSerializer.deserializeAction(new String(message.getSerializedAction()));
             if (action == null) return;
             
             boolean isHostSelfAction = action.getNewState().getShape().getLastUpdatedBy().equals(userId);
