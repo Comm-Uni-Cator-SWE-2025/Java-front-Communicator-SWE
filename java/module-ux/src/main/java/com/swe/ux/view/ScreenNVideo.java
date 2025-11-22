@@ -284,6 +284,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         }
         SwingUtilities.invokeLater(() -> {
             activeParticipantPanel.setImage(null);
+            activeParticipantPanel.setDataRate(0);
         });
     }
 
