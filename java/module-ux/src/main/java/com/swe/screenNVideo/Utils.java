@@ -1,6 +1,7 @@
 /**
- *  Contributed by Priyanshu Pandey.
+ * Contributed by Priyanshu Pandey.
  */
+
 package com.swe.screenNVideo;
 
 import java.awt.image.BufferedImage;
@@ -59,34 +60,9 @@ public class Utils {
      */
     public static final String MODULE_REMOTE_KEY = "screenNVideo";
     /**
-     * Key constant for unsubscribe_as_viewer.
+     * bytes in 1 kb.
      */
-    public static final int BUFFER_SIZE = 1024 * 10; // 10 kb
-    /**
-     * Scale factor for X axis.
-     */
-    public static final int SCALE_X = 7;
-    /**
-     * Scale factor for Y axis.
-     */
-    public static final int SCALE_Y = 5;
-    /**
-     * PaddingX for the videoCapture to stitch to the ScreenCapture.
-     */
-    public static final int VIDEO_PADDING_X = 20;
-    /**
-     * PaddingY for the videoCapture to stitch to the ScreenCapture.
-     */
-    public static final int VIDEO_PADDING_Y = 20;
-
-    /**
-     * Width of the server.
-     */
-    public static final int SERVER_WIDTH = 800;
-    /**
-     * Height of the server.
-     */
-    public static final int SERVER_HEIGHT = 600;
+    public static final double KB = 1_024.0;
     /**
      * Width of the client.
      */
@@ -105,17 +81,16 @@ public class Utils {
     public static final int INT_MASK_8 = 8;
 
 
-    
     /**
      * Seconds in milliseconds.
      */
     public static final int SEC_IN_MS = 1000;
-    
+
     /**
      * Milli-seconds in nanoseconds.
      */
     public static final int MSEC_IN_NS = 1_000_000;
-    
+
     /**
      * Maximum tries to serialize the compressed packets.
      */
@@ -126,7 +101,7 @@ public class Utils {
      * @param bufferOut the buffer to write to
      * @param data the data to write
      */
-    public  static void writeInt(final ByteArrayOutputStream bufferOut, final int data) {
+    public static void writeInt(final ByteArrayOutputStream bufferOut, final int data) {
         bufferOut.write((data >> INT_MASK_24) & Utils.BYTE_MASK);
         bufferOut.write((data >> INT_MASK_16) & Utils.BYTE_MASK);
         bufferOut.write((data >> INT_MASK_8) & Utils.BYTE_MASK);

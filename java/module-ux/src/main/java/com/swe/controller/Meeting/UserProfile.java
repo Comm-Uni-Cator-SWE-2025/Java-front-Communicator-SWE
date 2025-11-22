@@ -38,9 +38,6 @@ public class UserProfile {
     @JsonProperty("logoUrl")
     private String logoUrl;
 
-    @JsonIgnore
-    private String ip = "";
-
     /**
      * Default constructor.
      * Required for frameworks like Jackson for deserialization.
@@ -63,18 +60,9 @@ public class UserProfile {
             final String finalLogoUrl,
             final ParticipantRole finalUserRole) {
         this.email = finalEmail;
-        this.ip = finalEmail;
         this.displayName = finalDisplayName;
         this.role = finalUserRole;
         this.logoUrl = finalLogoUrl;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
     }
 
     // --- Getters (These match the methods expected by the rest of the code) ---

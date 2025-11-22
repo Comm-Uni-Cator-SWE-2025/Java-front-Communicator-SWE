@@ -21,9 +21,15 @@ public class RImage {
      */
     private final String ip;
 
-    private RImage(final int[][] imageArgs, final String ipArgs) {
+    /**
+     * Data rate
+     */
+    private final long dataRate;
+
+    private RImage(final int[][] imageArgs, final String ipArgs, final long dataRateArgs) {
         ip = ipArgs;
         image = imageArgs;
+        dataRate = dataRateArgs;
     }
 
     /**
@@ -40,6 +46,9 @@ public class RImage {
         final int bufferStart = 0;
         buffer.get(ipBytes, bufferStart, ipLen);
         final String ip = new String(ipBytes);
+
+        // get the data Rate
+        final long dataRate = buffer.getLong();
 
         // get the UIImage
         final int height = buffer.getInt();
@@ -58,7 +67,7 @@ public class RImage {
                 image[i][j] = pixel;
             }
         }
-        return new RImage(image, ip);
+        return new RImage(image, ip, dataRate);
     }
 
     public int[][] getImage() {
@@ -67,5 +76,9 @@ public class RImage {
 
     public String getIp() {
         return ip;
+    }
+
+    public long getDataRate() {
+        return dataRate;
     }
 }
