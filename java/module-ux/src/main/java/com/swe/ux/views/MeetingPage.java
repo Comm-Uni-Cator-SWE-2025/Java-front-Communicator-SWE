@@ -1,7 +1,8 @@
 package com.swe.ux.views;
 
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.canvas.datamodel.canvas.CanvasState;
-import com.swe.canvas.datamodel.collaboration.NetworkSimulator;
+import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.manager.ClientActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
@@ -14,13 +15,18 @@ import com.swe.ux.ui.*;
 import com.swe.ux.viewmodels.ChatViewModel;
 import com.swe.ux.viewmodels.MeetingViewModel;
 import com.swe.ux.viewmodels.ParticipantsViewModel;
+import com.swe.networking.NetworkFront;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import com.swe.canvas.datamodel.collaboration.NetworkMessage;
+import com.swe.networking.AbstractNetworking;
 
 /**
  * MeetingPage
@@ -70,9 +76,11 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private JLabel liveClockLabel;
     private JLabel roleLabel;
     private Timer liveTimer;
+    private AbstractRPC rpc;
 
-    public MeetingPage(MeetingViewModel meetingViewModel) {
+    public MeetingPage(MeetingViewModel meetingViewModel, AbstractRPC rpc) {
         this.meetingViewModel = meetingViewModel;
+        this.rpc = rpc;
         initializeUI();
         registerThemeListener();
         setupBindings();
@@ -186,15 +194,32 @@ public class MeetingPage extends FrostedBackgroundPanel {
         ClientActionManager clientManager = null;
         CanvasPage canvasPage = null;
 
+        AbstractNetworking networkInstance = NetworkFront.getInstance();
+
+
         // Create Host (authoritative)
         if (meetingViewModel.currentUser.getRole() == ParticipantRole.INSTRUCTOR){
-            hostManager = new HostActionManager("HOST", hostCanvasState, network);
+            hostManager = new HostActionManager("HOST", hostCanvasState, network, rpc);
             canvasPage = new CanvasPage(hostManager);
         }else {
             CanvasState clientCanvasState = new CanvasState(); // Local mirror
-            clientManager = new ClientActionManager(userId, clientCanvasState, network);
+            clientManager = new ClientActionManager(userId, clientCanvasState, network, rpc);
             canvasPage = new CanvasPage(clientManager);
         }
+
+
+
+        networkInstance.subscribe(2, (data) -> {
+            String message = new String(data);
+            NetworkMessage netMsg = NetworkMessage.deserialize(message);
+
+            if(meetingViewModel.currentUser.getRole() == ParticipantRole.INSTRUCTOR){
+                hostManager.processIncomingMessage(netMsg);
+            }
+            else{
+                clientManager.processIncomingMessage(netMsg);
+            }
+        });
         
         // Use client manager for the UI
         

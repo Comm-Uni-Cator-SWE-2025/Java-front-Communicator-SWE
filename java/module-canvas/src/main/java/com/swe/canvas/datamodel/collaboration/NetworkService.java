@@ -1,7 +1,4 @@
 package com.swe.canvas.datamodel.collaboration;
-
-
-import com.swe.canvas.datamodel.manager.ActionManager;
 /**
  * Abstract interface for the network.
  * This is implemented by a stub/simulator.
@@ -19,10 +16,4 @@ public interface NetworkService {
      */
     void broadcastMessage(NetworkMessage message);
 
-    /**
-     * A way for the network to know about the manager processing its messages.
-     * (This is part of the simulation stub)
-     */
-    void registerHost(ActionManager host);
-    void registerClient(ActionManager client);
 }

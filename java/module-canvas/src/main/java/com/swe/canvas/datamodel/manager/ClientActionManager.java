@@ -1,5 +1,6 @@
 package com.swe.canvas.datamodel.manager;
 
+import com.swe.app.RPC;
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
@@ -9,7 +10,7 @@ import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.collaboration.NetworkService;
 import com.swe.canvas.datamodel.serialization.DefaultActionDeserializer;
 import com.swe.canvas.datamodel.serialization.DefaultActionSerializer;
-import com.swe.canvas.datamodel.serialization.SerializedAction;
+import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 
 /**
@@ -30,7 +31,7 @@ public class ClientActionManager implements ActionManager {
     private final DefaultActionDeserializer deserializer;
     private Runnable onUpdateCallback = () -> {}; // No-op default
 
-    public ClientActionManager(String userId, CanvasState canvasState, NetworkService networkService) {
+    public ClientActionManager(String userId, CanvasState canvasState, NetworkService networkService, RPC rpc) {
         this.userId = userId;
         this.canvasState = canvasState;
         this.networkService = networkService;
@@ -38,7 +39,6 @@ public class ClientActionManager implements ActionManager {
         this.undoRedoManager = new UndoRedoManager();
         this.serializer = new DefaultActionSerializer();
         this.deserializer = new DefaultActionDeserializer();
-        this.networkService.registerClient(this);
     }
 
     @Override
@@ -55,8 +55,8 @@ public class ClientActionManager implements ActionManager {
      */
     private void sendActionToHost(Action action, MessageType type) {
         try {
-            SerializedAction serializedAction = serializer.serialize(action);
-            NetworkMessage message = new NetworkMessage(type, serializedAction.getData());
+            String serializedAction = NetActionSerializer.serializeAction(action);
+            NetworkMessage message = new NetworkMessage(type, serializedAction.getBytes());
             networkService.sendMessageToHost(message);
         } catch (Exception e) {
             System.err.println("Client failed to send action: " + e.getMessage());
@@ -110,9 +110,12 @@ public class ClientActionManager implements ActionManager {
 
     @Override
     public void processIncomingMessage(NetworkMessage message) {
+        
+        
         System.out.println("[Client " + userId + "] Processing incoming message...");
         try {
-            Action action = deserializer.deserialize(new SerializedAction(message.getSerializedAction()));
+            String data = new String(message.getSerializedAction(), "UTF-8");
+            Action action = NetActionSerializer.deserializeAction(data);
             if (action == null) return;
 
             // This is the key logic from the prompt

@@ -138,7 +138,7 @@ public class App extends JFrame {
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
         MainPage mainView = new MainPage(mainViewModel);
-        MeetingPage meetingView = new MeetingPage(meetingViewModel);
+        MeetingPage meetingView = new MeetingPage(meetingViewModel, rpc);
 
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
