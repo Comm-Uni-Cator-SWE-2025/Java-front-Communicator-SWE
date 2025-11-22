@@ -188,6 +188,41 @@ public class ChatView extends JPanel {
         }
     }
 
+    private void scrollToMessage(String targetMessageId) {
+        if (targetMessageId == null) return;
+
+        Component targetComponent = messageComponentMap.get(targetMessageId);
+
+        if (targetComponent != null) {
+            // 1. SCROLL logic
+            // We get the bounds of the component and tell the visible rect to go there
+            Rectangle bounds = targetComponent.getBounds();
+            messageContainer.scrollRectToVisible(bounds);
+
+            // 2. HIGHLIGHT logic (Flash effect like WhatsApp)
+            // We assume targetComponent is the JPanel wrapper we created
+            if (targetComponent instanceof JPanel) {
+                JPanel panel = (JPanel) targetComponent;
+                Color originalColor = panel.getBackground();
+                Color highlightColor = new Color(0xFF, 0xFA, 0xD2); // Light Gold/Yellow
+
+                // Change color immediately
+                panel.setBackground(highlightColor);
+                panel.repaint();
+
+                // Change it back after 1 second using a Swing Timer
+                new Timer(1000, e -> {
+                    panel.setBackground(originalColor);
+                    panel.repaint();
+                    ((Timer)e.getSource()).stop(); // Stop the timer
+                }).start();
+            }
+        } else {
+            // Optional: Show a small toast if the message isn't loaded/found
+            System.out.println("Message " + targetMessageId + " not found in current view.");
+        }
+    }
+
     private void removeMessageFromView(String messageId) {
         SwingUtilities.invokeLater(() -> {
             Component componentToRemove = messageComponentMap.get(messageId);
@@ -210,12 +245,46 @@ public class ChatView extends JPanel {
     // Helper to add message on EDT
     private void addMessageToView(MessageVM messageVM) {
         SwingUtilities.invokeLater(() -> {
-            messageContainer.add(createMessageComponent(messageVM));
-            messageContainer.revalidate();
-            messageContainer.repaint();
-            // Auto-scroll to bottom
-            JScrollBar vertical = scrollPane.getVerticalScrollBar();
-            vertical.setValue(vertical.getMaximum());
+            // 1. Check if we already have a component for this message ID
+            if (messageComponentMap.containsKey(messageVM.messageId)) {
+                // --- UPDATE LOGIC ---
+                Component oldComponent = messageComponentMap.get(messageVM.messageId);
+
+                // Find the index of the old component
+                int index = -1;
+                for (int i = 0; i < messageContainer.getComponentCount(); i++) {
+                    if (messageContainer.getComponent(i) == oldComponent) {
+                        index = i;
+                        break;
+                    }
+                }
+
+                // If found, replace it
+                if (index != -1) {
+                    messageContainer.remove(index); // Remove old bubble
+
+                    // Create new bubble (Text bubble with "This message was deleted")
+                    Component newComponent = createMessageComponent(messageVM);
+
+                    messageContainer.add(newComponent, index); // Add new at SAME index
+                    messageComponentMap.put(messageVM.messageId, newComponent); // Update map
+
+                    messageContainer.revalidate();
+                    messageContainer.repaint();
+                }
+            } else {
+                // --- ADD NEW LOGIC (Original) ---
+                Component messageComponent = createMessageComponent(messageVM);
+                messageComponentMap.put(messageVM.messageId, messageComponent);
+                messageContainer.add(messageComponent);
+
+                messageContainer.revalidate();
+                messageContainer.repaint();
+
+                // Only scroll to bottom for NEW messages
+                JScrollBar vertical = scrollPane.getVerticalScrollBar();
+                vertical.setValue(vertical.getMaximum());
+            }
         });
     }
 
@@ -238,7 +307,8 @@ public class ChatView extends JPanel {
         bubble.setMaximumSize(new Dimension(300, 9999));
 
         if (messageVM.hasQuote()) {
-            bubble.add(createQuotePanel(messageVM.quotedContent));
+            // Pass the ID here
+            bubble.add(createQuotePanel(messageVM.quotedContent, messageVM.replyToId));
             bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
@@ -270,7 +340,8 @@ public class ChatView extends JPanel {
         bubble.setMaximumSize(new Dimension(300, 9999));
 
         if (messageVM.hasQuote()) {
-            bubble.add(createQuotePanel(messageVM.quotedContent));
+            // Pass the ID here
+            bubble.add(createQuotePanel(messageVM.quotedContent, messageVM.replyToId));
             bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
@@ -348,18 +419,34 @@ public class ChatView extends JPanel {
     /**
      * Reusable UI Helper - Quote Panel
      */
-    private Component createQuotePanel(String quotedContent) {
+    // Change signature to accept replyToId
+    private Component createQuotePanel(String quotedContent, String replyToId) {
         JPanel quotePanel = new JPanel(new BorderLayout());
         quotePanel.setBackground(new Color(0xDDDDDD));
         quotePanel.setBorder(new CompoundBorder(
                 BorderFactory.createMatteBorder(0, 3, 0, 0, new Color(0x007BFF)),
                 new EmptyBorder(3, 5, 3, 5)
         ));
+
         JLabel quoteLabel = new JLabel(quotedContent);
         quoteLabel.setFont(new Font("Arial", Font.ITALIC, 11));
         quoteLabel.setForeground(new Color(0x555555));
         quotePanel.add(quoteLabel, BorderLayout.CENTER);
         quotePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // --- NEW: MAKE IT CLICKABLE ---
+        if (replyToId != null) {
+            quotePanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            quotePanel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    scrollToMessage(replyToId);
+                }
+            });
+            // Optional: Add tooltip
+            quotePanel.setToolTipText("Click to jump to original message");
+        }
+
         return quotePanel;
     }
 
@@ -367,50 +454,66 @@ public class ChatView extends JPanel {
      * Reusable UI Helper - Footer Panel (with Reply/Delete buttons)
      */
     // ✅ FIXED: Use MessageVM instead of ChatViewModel.MessageVM
+    /**
+     * Reusable UI Helper - Footer Panel (with Reply/Delete buttons)
+     */
     private JPanel createFooterPanel(MessageVM messageVM) {
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
         footer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // 1. Always show the timestamp
         JLabel timeLabel = new JLabel(messageVM.timestamp);
         timeLabel.setFont(new Font("Arial", Font.PLAIN, 10));
         timeLabel.setForeground(Color.GRAY);
+        footer.add(timeLabel, BorderLayout.WEST);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        buttonPanel.setOpaque(false);
+        // 2. CHECK IF MESSAGE IS DELETED
+        // We check if the content contains the specific text we set in the ViewModel
+        boolean isDeleted = messageVM.content != null &&
+                messageVM.content.contains("This message was deleted");
 
-        JButton replyBtn = new JButton("Reply");
-        replyBtn.setFont(new Font("Arial", Font.PLAIN, 10));
-        replyBtn.setBorderPainted(false);
-        replyBtn.setContentAreaFilled(false);
-        replyBtn.setForeground(new Color(0x007BFF));
-        replyBtn.setMargin(new Insets(0, 0, 0, 0));
-        replyBtn.addActionListener(e -> {
-            viewModel.startReply(messageVM);
-            messageInputField.requestFocus();
-        });
-        buttonPanel.add(replyBtn);
+        // 3. ONLY ADD BUTTONS IF THE MESSAGE IS NOT DELETED
+        if (!isDeleted) {
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+            buttonPanel.setOpaque(false);
 
-        if (messageVM.isSentByMe) {
-            JButton deleteBtn = new JButton("Delete");
-            deleteBtn.setFont(new Font("Arial", Font.PLAIN, 10));
-            deleteBtn.setBorderPainted(false);
-            deleteBtn.setContentAreaFilled(false);
-            deleteBtn.setForeground(Color.RED);
-            deleteBtn.setMargin(new Insets(0, 5, 0, 0));
-            deleteBtn.addActionListener(e -> {
-                int choice = JOptionPane.showConfirmDialog(this,
-                        "Are you sure you want to delete this message?", "Delete Message",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                if (choice == JOptionPane.YES_OPTION) {
-                    viewModel.deleteMessage(messageVM);
-                }
+            // --- Reply Button ---
+            JButton replyBtn = new JButton("Reply");
+            replyBtn.setFont(new Font("Arial", Font.PLAIN, 10));
+            replyBtn.setBorderPainted(false);
+            replyBtn.setContentAreaFilled(false);
+            replyBtn.setForeground(new Color(0x007BFF));
+            replyBtn.setMargin(new Insets(0, 0, 0, 0));
+            replyBtn.addActionListener(e -> {
+                viewModel.startReply(messageVM);
+                messageInputField.requestFocus(); // Focus input after clicking reply
             });
-            buttonPanel.add(deleteBtn);
+            buttonPanel.add(replyBtn);
+
+            // --- Delete Button (Only if sent by me) ---
+            if (messageVM.isSentByMe) {
+                JButton deleteBtn = new JButton("Delete");
+                deleteBtn.setFont(new Font("Arial", Font.PLAIN, 10));
+                deleteBtn.setBorderPainted(false);
+                deleteBtn.setContentAreaFilled(false);
+                deleteBtn.setForeground(Color.RED);
+                deleteBtn.setMargin(new Insets(0, 5, 0, 0));
+                deleteBtn.addActionListener(e -> {
+                    int choice = JOptionPane.showConfirmDialog(this,
+                            "Are you sure you want to delete this message?", "Delete Message",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (choice == JOptionPane.YES_OPTION) {
+                        viewModel.deleteMessage(messageVM);
+                    }
+                });
+                buttonPanel.add(deleteBtn);
+            }
+
+            // Add the button panel to the footer
+            footer.add(buttonPanel, BorderLayout.EAST);
         }
 
-        footer.add(timeLabel, BorderLayout.WEST);
-        footer.add(buttonPanel, BorderLayout.EAST);
         return footer;
     }
 
@@ -433,4 +536,5 @@ public class ChatView extends JPanel {
         }
         return wrapper;
     }
+
 }

@@ -10,10 +10,11 @@ public class MessageVM {
     public final String fileName;         // File name (if file message)
     public final long compressedFileSize; // Size from metadata
     public final byte[] fileContent;      // Usually NULL for metadata-only flow
+    public final String replyToId;
 
     public MessageVM(String messageId, String username, String content, String fileName,
                      long compressedFileSize, byte[] fileContent,
-                     String timestamp, boolean isSentByMe, String quotedContent) {
+                     String timestamp, boolean isSentByMe, String quotedContent,String replyToId) {
         this.messageId = messageId;
         this.username = username;
         this.content = content;
@@ -23,6 +24,7 @@ public class MessageVM {
         this.timestamp = timestamp;
         this.isSentByMe = isSentByMe;
         this.quotedContent = quotedContent;
+        this.replyToId = replyToId;
     }
 
     public boolean hasQuote() { return quotedContent != null; }
