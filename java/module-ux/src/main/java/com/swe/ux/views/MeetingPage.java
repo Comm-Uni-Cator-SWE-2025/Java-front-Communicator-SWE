@@ -5,6 +5,7 @@ import com.swe.canvas.datamodel.collaboration.NetworkSimulator;
 import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.manager.ClientActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
+import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.App;
 import com.swe.ux.binding.PropertyListeners;
@@ -181,15 +182,21 @@ public class MeetingPage extends FrostedBackgroundPanel {
         CanvasState hostCanvasState = new CanvasState(); // Authoritative state
         String userId = "user-" + System.nanoTime() % 10000;
         
+        HostActionManager hostManager = null;
+        ClientActionManager clientManager = null;
+        CanvasPage canvasPage = null;
+
         // Create Host (authoritative)
-        HostActionManager hostManager = new HostActionManager("HOST", hostCanvasState, network);
-        
-        // Create Client (for UI)
-        CanvasState clientCanvasState = new CanvasState(); // Local mirror
-        ClientActionManager clientManager = new ClientActionManager(userId, clientCanvasState, network);
+        if (meetingViewModel.currentUser.getRole() == ParticipantRole.INSTRUCTOR){
+            hostManager = new HostActionManager("HOST", hostCanvasState, network);
+            canvasPage = new CanvasPage(hostManager);
+        }else {
+            CanvasState clientCanvasState = new CanvasState(); // Local mirror
+            clientManager = new ClientActionManager(userId, clientCanvasState, network);
+            canvasPage = new CanvasPage(clientManager);
+        }
         
         // Use client manager for the UI
-        CanvasPage canvasPage = new CanvasPage(clientManager);
         
         SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel();
 

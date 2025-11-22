@@ -2,11 +2,15 @@ package com.swe.ux;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.graph.AbstractNetwork;
 import com.swe.app.RPC;
 import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.serialize.DataSerializer;
+import com.swe.networking.AbstractController;
+import com.swe.networking.AbstractNetworking;
+import com.swe.networking.NetworkFront;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
 
@@ -121,6 +125,7 @@ public class App extends JFrame {
      * Initializes all the views and adds them to the card layout.
      */
     private void initViews() {
+
         // Initialize ViewModels
         loginViewModel = new LoginViewModel(rpc);
         mainViewModel = new MainViewModel(rpc);
@@ -361,6 +366,8 @@ public class App extends JFrame {
         Thread handler = null;
         try {
             handler = rpc.connect(portNumber);
+            AbstractController nController = NetworkFront.getInstance();
+            nController.consumeRPC(rpc);
         } catch (IOException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
