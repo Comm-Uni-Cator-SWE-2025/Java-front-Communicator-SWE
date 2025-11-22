@@ -1,6 +1,6 @@
 package com.swe.canvas.datamodel.shape;
 
-import com.swe.canvas.datamodel.canvas.CanvasState;
+// import com.swe.canvas.datamodel.canvas.CanvasState;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -35,11 +35,11 @@ public final class ShapeId implements Serializable {
     /**
      * Constructs a ShapeId from a given string.
      *
-     * @param id The string ID.
+     * @param id_ The string ID.
      * @throws NullPointerException if the id is null.
      */
-    public ShapeId(final String id) {
-        this.id = Objects.requireNonNull(id, "ID cannot be null");
+    public ShapeId(final String id_) {
+        this.id = Objects.requireNonNull(id_, "ID cannot be null");
     }
 
     /**

@@ -1,60 +1,45 @@
 package com.swe.canvas.datamodel.serialization;
 
-import com.swe.canvas.datamodel.action.Action;
+import java.nio.charset.StandardCharsets;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import com.swe.canvas.datamodel.action.Action;
 
 /**
  * Default implementation of {@link ActionDeserializer}.
  *
- * <p>This implementation uses Java's built-in {@link ObjectInputStream}
- * to deserialize byte arrays back into {@link Action} objects.
+ * <p>This implementation now uses manual JSON deserialization via
+ * {@link ManualJsonConverter}, replacing the need for Java's
+ * built-in binary serialization.
  * </p>
- *
- * <p><b>Thread Safety:</b> This class is stateless and thread-safe.
- * New streams are created for each operation.
- * </p>
- *
- * @author Gajjala Bhavani Shankar
- 
- 
  */
 public class DefaultActionDeserializer implements ActionDeserializer {
 
     /**
-     * Deserializes data using Java's object serialization.
+     * Deserializes data using manual JSON parsing.
      *
      * @param data The DTO containing the serialized data.
      * @return The reconstituted {@link Action} object.
-     * @throws SerializationException if an {@link IOException} or
-     * {@link ClassNotFoundException} occurs.
+     * @throws SerializationException if deserialization fails.
      */
     @Override
     public Action deserialize(final SerializedAction data) throws SerializationException {
         final byte[] bytes = data.getData();
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-             ObjectInputStream ois = new ObjectInputStream(bis)) {
 
-            final Object obj = ois.readObject();
-            String className = "";
-            if (obj != null){
-                className = obj.getClass().getName();
-            }
-            else {
-                className = "null";
-            }
+        try {
+            // Convert the byte array (which is JSON) to a string
+            final String json = new String(bytes, StandardCharsets.UTF_8);
 
-            if (obj instanceof Action) {
-                return (Action) obj;
+            // Call the manual JSON deserializer
+            final Action action = NetActionSerializer.deserializeAction(json);
+
+            if (action != null) {
+                return action;
             } else {
-                throw new SerializationException("Deserialized object is not of type Action: " 
-                + className);
+                throw new SerializationException("Deserialized object is null or not of type Action.");
             }
 
-        } catch (IOException | ClassNotFoundException e) {
-            throw new SerializationException("Failed to deserialize action", e);
+        } catch (SerializationException e) {
+            throw new SerializationException("Failed to manually deserialize action from bytes.", e);
         }
     }
 }
