@@ -86,6 +86,11 @@ public class MeetingViewModel extends BaseViewModel {
      */
     public void endMeeting() {
         if (currentMeeting != null) {
+            // Call RPC to end the meeting
+            if (rpc != null) {
+                rpc.call("core/endMeeting", new byte[0]);
+            }
+            
             addSystemMessage("Meeting ended");
             currentMeeting.endMeeting();
             isMeetingActive.set(false);
