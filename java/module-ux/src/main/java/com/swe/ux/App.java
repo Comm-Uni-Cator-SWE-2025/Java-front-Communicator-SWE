@@ -2,6 +2,7 @@ package com.swe.ux;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.swe.controller.ClientNode;
 import com.swe.controller.RPC;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
@@ -127,7 +128,7 @@ public class App extends JFrame {
         mainViewModel = new MainViewModel(rpc);
         System.out.println("Meeting");
 
-        final UserProfile newUser = new UserProfile(Utils.getSelfIP(), "You", "You", ParticipantRole.STUDENT);
+        final UserProfile newUser = new UserProfile(Utils.getSelfIP(), "You", ParticipantRole.STUDENT);
         // Will be set when user joins a meeting
         MeetingViewModel meetingViewModel = new MeetingViewModel(newUser, rpc);
 
@@ -173,20 +174,19 @@ public class App extends JFrame {
         // New participant
         // rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
         //     final String viewerIP = new String(data);
-        //     UserProfile new_user = new UserProfile(viewerIP, "New User", "New User", ParticipantRole.STUDENT);
+        //     UserProfile new_user = new UserProfile(viewerIP, "New User", ParticipantRole.STUDENT);
         //     meetingViewModel.addParticipant(new_user);
         //     return new byte[0];
         // });
 
-        rpc.subscribe("core/setIpToMailMap", (data) -> {
+        rpc.subscribe("core/updateParticipants", (data) -> {
             try {
-                Map<String, String> ipToMailMap = DataSerializer.deserialize(data, new TypeReference<Map<String, String>>() {});
-                System.out.println("App: ipToMailMap: " + ipToMailMap);
-                ipToMailMap.forEach((ip, mail) -> {
-                    System.out.println("App: ip: " + ip + " mail: " + mail);
-                    UserProfile new_user = new UserProfile(getIPFromClientNodeString(ip), mail, mail, ParticipantRole.STUDENT);
+                Map<ClientNode, UserProfile> participantsMap = DataSerializer.deserialize(data, new TypeReference<Map<ClientNode, UserProfile>>() {});
+                System.out.println("App: participantsMap: " + participantsMap);
+                participantsMap.forEach((clientNode, userProfile) -> {
+                    System.out.println("App: clientNode: " + clientNode + " userProfile: " + userProfile);
                     // Use the currently active meeting view model
-                    activeMeetingViewModelRef[0].addParticipant(new_user);
+                    activeMeetingViewModelRef[0].addParticipant(userProfile);
                     System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
                 });
             } catch (JsonProcessingException e) {
