@@ -1,4 +1,4 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import com.swe.chat.FileMessageSerializer;
 import com.swe.chat.MessageVM;

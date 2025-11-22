@@ -1,7 +1,7 @@
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.chat.MessageVM;
-import com.swe.ux.viewmodel.ChatViewModel;
+import com.swe.ux.viewmodels.ChatViewModel;
 
 import javax.swing.*;
 import javax.swing.border.Border;

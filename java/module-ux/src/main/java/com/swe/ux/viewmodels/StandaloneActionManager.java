@@ -1,4 +1,4 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;

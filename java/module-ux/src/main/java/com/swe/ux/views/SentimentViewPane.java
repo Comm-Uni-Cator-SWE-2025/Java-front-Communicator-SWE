@@ -1,10 +1,10 @@
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.ux.model.analytics.SentimentPoint;
 import com.swe.ux.service.MessageDataService;
-import com.swe.ux.viewmodel.ShapeViewModel;
-import com.swe.ux.viewmodel.SentimentViewModel;
+import com.swe.ux.viewmodels.ShapeViewModel;
+import com.swe.ux.viewmodels.SentimentViewModel;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;

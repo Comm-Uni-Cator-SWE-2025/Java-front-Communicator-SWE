@@ -10,12 +10,12 @@ import com.swe.controller.serialize.DataSerializer;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
 
-import com.swe.ux.view.LoginPage;
-import com.swe.ux.view.MainPage;
-import com.swe.ux.view.MeetingPage;
-import com.swe.ux.viewmodel.LoginViewModel;
-import com.swe.ux.viewmodel.MainViewModel;
-import com.swe.ux.viewmodel.MeetingViewModel;
+import com.swe.ux.views.LoginPage;
+import com.swe.ux.views.MainPage;
+import com.swe.ux.views.MeetingPage;
+import com.swe.ux.viewmodels.LoginViewModel;
+import com.swe.ux.viewmodels.MainViewModel;
+import com.swe.ux.viewmodels.MeetingViewModel;
 
 import javax.swing.*;
 import java.awt.*;

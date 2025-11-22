@@ -1,4 +1,4 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

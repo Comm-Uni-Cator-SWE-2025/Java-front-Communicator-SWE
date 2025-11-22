@@ -1,4 +1,4 @@
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.ux.theme.Theme;
 import com.swe.ux.theme.ThemeManager;
@@ -8,7 +8,7 @@ import com.swe.ux.ui.SoftCardPanel;
 import com.swe.ux.ui.FrostedToolbarButton;
 import com.swe.ux.ui.ThemeToggleButton;
 import com.swe.ux.ui.FontUtil;
-import com.swe.ux.viewmodel.LoginViewModel;
+import com.swe.ux.viewmodels.LoginViewModel;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;

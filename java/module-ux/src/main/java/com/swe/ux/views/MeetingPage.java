@@ -1,4 +1,4 @@
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.collaboration.NetworkSimulator;
@@ -10,9 +10,9 @@ import com.swe.ux.App;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.*;
-import com.swe.ux.viewmodel.ChatViewModel;
-import com.swe.ux.viewmodel.MeetingViewModel;
-import com.swe.ux.viewmodel.ParticipantsViewModel;
+import com.swe.ux.viewmodels.ChatViewModel;
+import com.swe.ux.viewmodels.MeetingViewModel;
+import com.swe.ux.viewmodels.ParticipantsViewModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

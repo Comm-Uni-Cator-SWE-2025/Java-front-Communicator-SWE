@@ -1,4 +1,4 @@
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.ux.canvas.CanvasController;
@@ -12,13 +12,16 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.net.URL;
 
 /**
  * Canvas Page - Embeds canvas FXML using JFXPanel
- * Matches the pattern used by SentimentInsightsPanel exactly to avoid macOS crashes
- * Fills the exact same space as ScreenNVideo and Analytics tabs
+ * Matches the sizing and layout behavior of ScreenNVideo component
+ * Dynamically resizes to fit within panel bounds without scrollbars
  */
 public class CanvasPage extends JPanel {
 
@@ -27,10 +30,15 @@ public class CanvasPage extends JPanel {
     private final ActionManager actionManager;
     private final JFXPanel fxPanel;
     private boolean initialized = false;
+    private Scene scene;
+    private Parent root;
 
     public CanvasPage(ActionManager actionManager) {
         this.actionManager = actionManager;
-        setLayout(new BorderLayout());
+        
+        // Match ScreenNVideo layout: BorderLayout with padding
+        setLayout(new BorderLayout(10, 10));
+        setBorder(new EmptyBorder(10, 10, 10, 10));
         setOpaque(false);
 
         // Initialize JavaFX early
@@ -42,7 +50,16 @@ public class CanvasPage extends JPanel {
 
         // Create JFXPanel - no preferred size, let layout manager handle it
         fxPanel = new JFXPanel();
+        fxPanel.setOpaque(false);
         add(fxPanel, BorderLayout.CENTER);
+
+        // Add resize listener to match ScreenNVideo behavior
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateCanvasSize();
+            }
+        });
 
         // Apply theme
         ThemeManager.getInstance().applyThemeRecursively(this);
@@ -84,7 +101,7 @@ public class CanvasPage extends JPanel {
             }
 
             FXMLLoader loader = new FXMLLoader(fxmlUrl);
-            Parent root = loader.load();
+            root = loader.load();
             CanvasController controller = loader.getController();
 
             // Initialize controller
@@ -92,10 +109,11 @@ public class CanvasPage extends JPanel {
                 controller.initModel(actionManager);
             }
 
-            // Create scene with reasonable default size
-            // JFXPanel will automatically resize it when the panel resizes
-            // BorderPane will fill the scene automatically
-            Scene scene = new Scene(root, 1000, 700);
+            // Calculate initial size based on available space
+            Dimension availableSize = getAvailableSize();
+            
+            // Create scene with calculated size - matching ScreenNVideo's dynamic sizing
+            scene = new Scene(root, availableSize.width, availableSize.height);
 
             // Load CSS
             URL cssUrl = ClassLoader.getSystemClassLoader().getResource("css/canvas-view.css");
@@ -110,14 +128,68 @@ public class CanvasPage extends JPanel {
             }
 
             // Set the scene on the JFXPanel
-            // JFXPanel will automatically resize the scene when it resizes
-            // NO manual resize handling needed - that causes macOS crashes
             fxPanel.setScene(scene);
+            
+            // Ensure initial sizing is correct after scene is set
+            SwingUtilities.invokeLater(() -> {
+                updateCanvasSize();
+            });
 
         } catch (Exception e) {
             e.printStackTrace();
             SwingUtilities.invokeLater(() -> showError(e.getMessage()));
         }
+    }
+
+    /**
+     * Calculate available size for the canvas, matching ScreenNVideo's approach.
+     * Accounts for borders, padding, and ensures it fits within panel bounds.
+     */
+    private Dimension getAvailableSize() {
+        Dimension size = getSize();
+        if (size.width == 0 || size.height == 0) {
+            // Fallback to reasonable defaults if not yet laid out
+            Container parent = getParent();
+            if (parent != null) {
+                size = parent.getSize();
+            }
+            if (size.width == 0 || size.height == 0) {
+                size = new Dimension(800, 600); // Default fallback
+            }
+        }
+
+        // Account for border and padding (10px on each side from EmptyBorder)
+        Insets insets = getInsets();
+        int availableWidth = size.width - (insets.left + insets.right);
+        int availableHeight = size.height - (insets.top + insets.bottom);
+
+        // Ensure minimum size
+        availableWidth = Math.max(400, availableWidth);
+        availableHeight = Math.max(300, availableHeight);
+
+        return new Dimension(availableWidth, availableHeight);
+    }
+
+    /**
+     * Update canvas size when panel is resized, matching ScreenNVideo's resize behavior.
+     * JFXPanel automatically scales the Scene content to fit its bounds.
+     * We just need to ensure the panel revalidates and repaints.
+     */
+    private void updateCanvasSize() {
+        if (!initialized || !isDisplayable()) {
+            return;
+        }
+
+        // JFXPanel automatically scales the Scene to fit its container
+        // We just need to trigger a revalidation to ensure proper layout
+        SwingUtilities.invokeLater(() -> {
+            if (fxPanel != null) {
+                // Don't set preferred size - let BorderLayout handle sizing
+                // JFXPanel will automatically scale the Scene content
+                fxPanel.revalidate();
+                fxPanel.repaint();
+            }
+        });
     }
 
     private void showError(String message) {

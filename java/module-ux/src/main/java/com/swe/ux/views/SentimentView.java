@@ -1,4 +1,4 @@
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import javafx.application.Application;
 import javafx.scene.Scene;

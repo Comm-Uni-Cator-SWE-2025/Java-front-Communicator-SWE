@@ -1,7 +1,7 @@
 /**
  *  Contributed by Sandeep Kumar.
  */
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
@@ -10,8 +10,8 @@ import com.swe.ux.model.UIImage;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.ParticipantPanel;
-import com.swe.ux.viewmodel.MeetingViewModel;
-import com.swe.ux.viewmodel.ScreenNVideoModel;
+import com.swe.ux.viewmodels.MeetingViewModel;
+import com.swe.ux.viewmodels.ScreenNVideoModel;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;

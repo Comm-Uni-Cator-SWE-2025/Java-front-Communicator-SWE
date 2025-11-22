@@ -5,8 +5,6 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ColorPicker?>
-<?import javafx.scene.control.CustomMenuItem?>
-<?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.ToggleButton?>
@@ -26,7 +24,7 @@
   3. The Canvas (fx:id="canvas") is inside it and handles drawing events.
 -->
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.swe.canvas.ui.CanvasController">
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.swe.ux.canvas.CanvasController">
     <fx:define>
         <ToggleGroup fx:id="toolGroup" />
     </fx:define>
@@ -82,20 +80,11 @@
                 </HBox>
                 <Separator orientation="VERTICAL" />
                 <HBox alignment="CENTER" spacing="8.0">
-                    <MenuButton fx:id="sizeMenuButton" styleClass="toolbar-icon-button" contentDisplay="GRAPHIC_ONLY">
-                        <graphic>
-                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
-                                <SVGPath styleClass="svg-icon" content="M3,18H21V16H3V18M3,13H21V11H3V13M3,6V8H21V6H3Z" />
-                            </StackPane>
-                        </graphic>
-                        <items>
-                            <CustomMenuItem hideOnClick="false">
-                                <content>
-                                    <Slider fx:id="sizeSlider" min="1" max="20" value="2" blockIncrement="1" majorTickUnit="1" minorTickCount="0" snapToTicks="true" orientation="HORIZONTAL" prefWidth="120" showTickMarks="true" showTickLabels="false" />
-                                </content>
-                            </CustomMenuItem>
-                        </items>
-                    </MenuButton>
+                    <!-- Size Slider - Directly accessible without MenuButton popup -->
+                    <HBox alignment="CENTER" spacing="4.0" style="-fx-padding: 0 4 0 4;">
+                        <SVGPath styleClass="svg-icon" content="M3,18H21V16H3V18M3,13H21V11H3V13M3,6V8H21V6H3Z" style="-fx-pref-width: 18; -fx-pref-height: 18;" />
+                        <Slider fx:id="sizeSlider" min="1" max="20" value="2" blockIncrement="1" majorTickUnit="1" minorTickCount="0" snapToTicks="true" orientation="HORIZONTAL" prefWidth="120" showTickMarks="true" showTickLabels="false" />
+                    </HBox>
                     <ColorPicker fx:id="colorPicker" styleClass="color-picker-button" onAction="#onColorSelected" />
                 </HBox>
                 <Separator orientation="VERTICAL" />

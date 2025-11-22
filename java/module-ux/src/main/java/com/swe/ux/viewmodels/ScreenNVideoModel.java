@@ -1,7 +1,7 @@
 /**
  *  Contributed by Sandeep Kumar.
  */
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.RImage;

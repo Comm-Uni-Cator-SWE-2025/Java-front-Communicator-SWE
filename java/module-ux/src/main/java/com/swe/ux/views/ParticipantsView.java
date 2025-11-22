@@ -1,13 +1,13 @@
 /**
  *  Contributed by Sandeep Kumar.
  */
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.Theme;
 import com.swe.ux.theme.ThemeManager;
-import com.swe.ux.viewmodel.ParticipantsViewModel;
+import com.swe.ux.viewmodels.ParticipantsViewModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

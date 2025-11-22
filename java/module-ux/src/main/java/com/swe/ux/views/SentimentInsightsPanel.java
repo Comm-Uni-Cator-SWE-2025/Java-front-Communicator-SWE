@@ -1,4 +1,4 @@
-package com.swe.ux.view;
+package com.swe.ux.views;
 
 import com.swe.ux.theme.ThemeManager;
 import javafx.application.Platform;

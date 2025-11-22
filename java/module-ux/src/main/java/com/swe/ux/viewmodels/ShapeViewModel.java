@@ -1,4 +1,4 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.ux.service.ShapeDataService;

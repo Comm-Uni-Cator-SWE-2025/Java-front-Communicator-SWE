@@ -1,4 +1,4 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
