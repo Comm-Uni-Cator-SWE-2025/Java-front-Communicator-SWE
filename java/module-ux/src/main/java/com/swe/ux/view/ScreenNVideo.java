@@ -351,8 +351,12 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
             // Handle participant addition
             participants.forEach(participant -> {
-                System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + participant.getEmail());
-                addParticipant(participant.getDisplayName(), participant.getEmail());
+                String ip = meetingViewModel.ipToMail.get(participant.getEmail());
+                if (ip == null) {
+                    return;
+                }
+                System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + ip);
+                addParticipant(participant.getDisplayName(), ip);
             });
         }));
 
