@@ -20,6 +20,8 @@
   <!-- ===================================================== -->
   <modules>
     <module>module-ux</module>
+    <module>module-app</module>
+    <module>module-networking</module>
     <module>module-canvas</module>
   </modules>
 
