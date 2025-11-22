@@ -16,6 +16,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.time.ZoneId;
+import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * The ViewModel for the Chat module.
@@ -30,7 +33,7 @@ public class ChatViewModel {
     private final String currentUserId = "user-" + UUID.randomUUID().toString().substring(0, 8);
     private final String currentDisplayName = "A";
 
-    private static final long MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+//    private static final long MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
     private final Map<String, MessageVM> messageHistory = new ConcurrentHashMap<>();
     private String currentReplyId = null;
@@ -56,16 +59,59 @@ public class ChatViewModel {
         this.rpc.subscribe("chat:message-deleted", this::handleBackendDelete);
     }
 
+
+    // Add this helper method inside ChatViewModel
+    private String formatToLocalTime(LocalDateTime utcDateTime) {
+        if (utcDateTime == null) return "";
+        return utcDateTime.atZone(ZoneId.of("UTC"))
+                .withZoneSameInstant(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    /**
+     * DEBUG: Prints the current state of message history to the console.
+     */
+    public void printMessageHistory() {
+        System.out.println("\n====== DEBUG: MESSAGE HISTORY DUMP (" + messageHistory.size() + " items) ======");
+
+        if (messageHistory.isEmpty()) {
+            System.out.println("(History is empty)");
+        } else {
+            // Iterate over every message in the map
+            messageHistory.values().forEach(vm -> {
+                System.out.println("------------------------------------------------");
+                System.out.println("ID        : " + vm.messageId);
+                System.out.println("Time      : " + vm.timestamp);
+                System.out.println("Sender    : " + vm.username + (vm.isSentByMe ? " (Me)" : ""));
+
+                if (vm.isFileMessage()) {
+                    System.out.println("Type      : FILE");
+                    System.out.println("File Name : " + vm.fileName);
+                    System.out.println("Caption   : " + vm.content);
+                } else {
+                    System.out.println("Type      : TEXT");
+                    System.out.println("Content   : " + vm.content);
+                }
+
+                System.out.println("ReplyToID : " + vm.replyToId);
+            });
+        }
+        System.out.println("============================================================\n");
+    }
+
     /**
      * HANDLER 1: Text Message from Backend
      */
     private byte[] handleBackendTextMessage(byte[] data) {
         ChatMessage message = ChatMessageSerializer.deserialize(data);
+        // Convert UTC LocalDateTime to User's System Default TimeZone
+        String localTime = formatToLocalTime(message.getTimestamp());
+
         handleIncomingMessage(
                 message.getMessageId(),
                 message.getUserId(),
                 message.getSenderDisplayName(),
-                message.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm")),
+                localTime,
                 message.getReplyToMessageId(),
                 message.getContent(),  // Text content
                 null,                  // No file
@@ -96,11 +142,14 @@ public class ChatViewModel {
                     ? message.getFileContent().length
                     : 0;
 
+            // Convert UTC to Local Time
+            String localTime = formatToLocalTime(message.getTimestamp());
+
             handleIncomingMessage(
                     message.getMessageId(),
                     message.getUserId(),
                     message.getSenderDisplayName(),
-                    message.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm")),
+                    localTime,
                     message.getReplyToMessageId(),
                     message.getCaption(),    // Caption
                     message.getFileName(),   // File name
@@ -139,9 +188,29 @@ public class ChatViewModel {
 
     private byte[] handleBackendDelete(byte[] messageIdBytes) {
         String messageId = new String(messageIdBytes, StandardCharsets.UTF_8);
-        messageHistory.remove(messageId);
-        if (onMessageRemoved != null) {
-            onMessageRemoved.accept(messageId);
+
+        MessageVM oldMsg = messageHistory.get(messageId);
+        if (oldMsg != null) {
+            MessageVM deletedMsg = new MessageVM(
+                    oldMsg.messageId,
+                    oldMsg.username,
+                    "<i>This message was deleted</i>", // New content
+                    null, 0, null, // No file
+                    oldMsg.timestamp,
+                    oldMsg.isSentByMe,
+                    null, // Remove quote
+                    null
+            );
+
+            // Replace in history
+            messageHistory.put(messageId, deletedMsg);
+
+            // Notify View to REFRESH this specific message
+            // Note: You might need a new callback like onMessageUpdated
+            // For now, we can re-use onMessageAdded if your View handles updates (by ID)
+            if (onMessageAdded != null) {
+                onMessageAdded.accept(deletedMsg);
+            }
         }
         return new byte[0];
     }
@@ -171,16 +240,19 @@ public class ChatViewModel {
         byte[] messageBytes = ChatMessageSerializer.serialize(messageToSend);
         sendRpc("chat:send-text", messageBytes);
 
+        String localTimeFormatted = formatToLocalTime(messageToSend.getTimestamp());
+
         // Optimistic update
         handleIncomingMessage(
                 messageToSend.getMessageId(),
                 messageToSend.getUserId(),
                 messageToSend.getSenderDisplayName(),
-                messageToSend.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm")),
+                localTimeFormatted,
                 messageToSend.getReplyToMessageId(),
                 messageToSend.getContent(),
                 null, 0, null
         );
+        printMessageHistory();
     }
 
     /**
@@ -300,24 +372,33 @@ public class ChatViewModel {
                 fileContent,  // Usually NULL!
                 formattedTime,
                 isSentByMe,
-                quotedContent
+                quotedContent,
+                replyToId
         );
 
         messageHistory.put(vm.messageId, vm);
         if (onMessageAdded != null) {
             onMessageAdded.accept(vm);
         }
+        printMessageHistory();
     }
 
     public void userSelectedFileToAttach(File selectedFile) {
         if (selectedFile == null) return;
 
-        if (selectedFile.length() > MAX_FILE_SIZE_BYTES) {
+        if (selectedFile.length() == 0) {
             if (onShowErrorDialog != null) {
-                onShowErrorDialog.accept("File is too large (Max 50MB).");
+                onShowErrorDialog.accept("Cannot send an empty file.");
             }
             return;
         }
+
+//        if (selectedFile.length() > MAX_FILE_SIZE_BYTES) {
+//            if (onShowErrorDialog != null) {
+//                onShowErrorDialog.accept("File is too large (Max 50MB).");
+//            }
+//            return;
+//        }
 
         this.attachedFile = selectedFile;
         if (onAttachmentSet != null) {
@@ -325,17 +406,40 @@ public class ChatViewModel {
         }
     }
 
+    // In ChatViewModel.java
+
     public void deleteMessage(MessageVM messageToDelete) {
         if (messageToDelete == null || !messageToDelete.isSentByMe) return;
 
+        // 1. Send RPC to backend (keep this)
         byte[] messageIdBytes = messageToDelete.messageId.getBytes(StandardCharsets.UTF_8);
         sendRpc("chat:delete-message", messageIdBytes);
 
-        messageHistory.remove(messageToDelete.messageId);
-        if (onMessageRemoved != null) {
-            onMessageRemoved.accept(messageToDelete.messageId);
+        // 2. CREATE THE "DELETED" VERSION OF THE MESSAGE
+        // We convert the file or text message into a simple text message with italics
+        MessageVM deletedMsg = new MessageVM(
+                messageToDelete.messageId,
+                messageToDelete.username,
+                "<i>This message was deleted</i>", // HTML italics for styling
+                null,           // FileName is gone
+                0,              // Size is 0
+                null,           // Content is null
+                messageToDelete.timestamp,
+                messageToDelete.isSentByMe,
+                null,
+                null// Remove any quoted reply content
+        );
+
+        // 3. UPDATE THE HISTORY (Do not remove!)
+        messageHistory.put(messageToDelete.messageId, deletedMsg);
+
+        // 4. NOTIFY VIEW TO UPDATE (Use onMessageAdded, NOT onMessageRemoved)
+        // Your View logic already handles updating if the ID exists
+        if (onMessageAdded != null) {
+            onMessageAdded.accept(deletedMsg);
         }
 
+        // 5. Handle Reply cancellation logic
         if (this.currentReplyId != null && this.currentReplyId.equals(messageToDelete.messageId)) {
             cancelReply();
         }
