@@ -82,6 +82,7 @@ public class CanvasController {
      */
     @FXML
     public void initialize() {
+        
         // We can't create the ViewModel here anymore,
         // because it needs the IActionManager to be injected.
         // The logic is moved to initModel() and initializeControls().
@@ -312,6 +313,7 @@ public class CanvasController {
     
     @FXML
     private void onRegularize() {
+
         System.out.println("Regularize button clicked (no logic assigned).");
     }
 

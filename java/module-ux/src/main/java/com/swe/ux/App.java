@@ -357,7 +357,7 @@ public class App extends JFrame {
             portNumber = Integer.parseInt(port);
         }
 
-        final AbstractRPC rpc = new RPC();
+        final AbstractRPC rpc = RPC.getInstance();
 
         App app = App.getInstance(rpc);
 

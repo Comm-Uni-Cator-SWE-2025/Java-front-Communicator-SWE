@@ -13,9 +13,17 @@ public class RPC implements AbstractRPC {
     HashMap<String, Function<byte[], byte[]>> methods;
 
     private SocketryServer socketryServer;
+    private static RPC instance = null;
 
-    public RPC() {
+    private RPC() {
         methods = new HashMap<>();
+    }
+
+    public static RPC getInstance() {
+        if (instance == null) {
+            instance = new RPC();
+        }
+        return instance;
     }
 
     public void subscribe(String methodName, Function<byte[], byte[]> method) {
