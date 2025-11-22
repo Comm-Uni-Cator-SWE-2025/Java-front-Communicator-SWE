@@ -6,7 +6,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 
-import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
@@ -260,5 +259,28 @@ public class CanvasViewModel {
 
     public void redo() {
         actionManager.requestRedo();
+    }
+
+    public void handleValidatedUpdate() {
+        if (transientShape == null) return;
+
+        final ShapeId tid = transientShape.getShapeId();
+        if (tid == null) return;
+
+        final ShapeState st = canvasState.getShapeState(tid);
+
+        // DELETE fix:
+        // Clear ghost when:
+        // 1) server removed the shape (st == null)
+        // 2) server marked it deleted   (st.isDeleted())
+        if (st == null || st.isDeleted()) {
+            transientShape = null;
+            try { ghostTimer.cancel(); } catch (Exception ignored) {}
+            return;
+        }
+
+        // CREATE / MODIFY confirmation
+        transientShape = null;
+        try { ghostTimer.cancel(); } catch (Exception ignored) {}
     }
 }
