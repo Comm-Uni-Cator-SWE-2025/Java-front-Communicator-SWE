@@ -186,31 +186,50 @@ public class ChatViewModel {
         return new byte[0];
     }
 
-    private byte[] handleBackendDelete(byte[] messageIdBytes) {
-        String messageId = new String(messageIdBytes, StandardCharsets.UTF_8);
+    private byte[] handleBackendDelete(byte[] data) {
+        try {
+            // 1. Decode the ID
+            String rawId = new String(data, StandardCharsets.UTF_8);
 
-        MessageVM oldMsg = messageHistory.get(messageId);
-        if (oldMsg != null) {
-            MessageVM deletedMsg = new MessageVM(
-                    oldMsg.messageId,
-                    oldMsg.username,
-                    "<i>This message was deleted</i>", // New content
-                    null, 0, null, // No file
-                    oldMsg.timestamp,
-                    oldMsg.isSentByMe,
-                    null, // Remove quote
-                    null
-            );
+            // 2. SANITIZE: Important! Trim whitespace/newlines that might break the match
+            String messageId = rawId.trim();
 
-            // Replace in history
-            messageHistory.put(messageId, deletedMsg);
+            System.out.println("[FRONT] Received DELETE signal for ID: '" + messageId + "'");
 
-            // Notify View to REFRESH this specific message
-            // Note: You might need a new callback like onMessageUpdated
-            // For now, we can re-use onMessageAdded if your View handles updates (by ID)
-            if (onMessageAdded != null) {
-                onMessageAdded.accept(deletedMsg);
+            // 3. Look up the message
+            MessageVM oldMsg = messageHistory.get(messageId);
+
+            if (oldMsg != null) {
+                // 4. Create the "Deleted" replacement
+                MessageVM deletedMsg = new MessageVM(
+                        oldMsg.messageId,
+                        oldMsg.username,
+                        "<i>This message was deleted</i>", // The specific text your View looks for
+                        null,           // Clear filename
+                        0,              // Clear size
+                        null,           // Clear file content
+                        oldMsg.timestamp,
+                        oldMsg.isSentByMe,
+                        null,           // Remove quote
+                        null            // Remove reply ID
+                );
+
+                // 5. Update History
+                messageHistory.put(messageId, deletedMsg);
+
+                // 6. Trigger the View Update
+                if (onMessageAdded != null) {
+                    // This forces the View to swap the bubble
+                    onMessageAdded.accept(deletedMsg);
+                }
+                System.out.println("[FRONT] Message deleted successfully in View.");
+            } else {
+                System.err.println("[FRONT] DELETE FAILED: Message ID '" + messageId + "' not found in history.");
+                // Optional: Print keys to see what IS in history
+                // System.out.println("Available keys: " + messageHistory.keySet());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return new byte[0];
     }
