@@ -90,6 +90,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         // Center area: stage (left) + sidebar (right)
         JPanel center = new JPanel(new BorderLayout(16, 0));
         center.setOpaque(false);
+        center.setName("centerPanel"); // For debugging
 
         stageCard = buildStageCard();
         center.add(stageCard, BorderLayout.CENTER);
@@ -257,10 +258,13 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
     private void openSidebarToTab(String tabName) {
         // Ensure sidebar visible then select the tab
-        if (!sidebarCard.isVisible()) {
+        boolean wasHidden = !sidebarCard.isVisible();
+        if (wasHidden) {
             sidebarCard.setVisible(true);
             sidebarVisible = true;
+            btnHidePanels.setText("Hide Panels");
         }
+        
         // select tab if exists
         for (int i = 0; i < sidebarTabs.getTabCount(); i++) {
             String title = sidebarTabs.getTitleAt(i);
@@ -269,9 +273,29 @@ public class MeetingPage extends FrostedBackgroundPanel {
                 break;
             }
         }
+        
         // visual state for header/bottom toggles
         btnParticipants.setCustomFill(tabName.equalsIgnoreCase("Participants") ? new Color(90, 160, 255, 160) : null);
         btnChat.setCustomFill(tabName.equalsIgnoreCase("Chat") ? new Color(90, 160, 255, 160) : null);
+        
+        // Force proper repaint when showing sidebar
+        if (wasHidden) {
+            Container parent = sidebarCard.getParent();
+            if (parent != null) {
+                parent.revalidate();
+                parent.repaint();
+            }
+            if (stageCard != null) {
+                stageCard.revalidate();
+                stageCard.repaint();
+            }
+        }
+        
+        // Ensure proper repaint
+        SwingUtilities.invokeLater(() -> {
+            revalidate();
+            repaint();
+        });
     }
 
 
@@ -287,8 +311,26 @@ public class MeetingPage extends FrostedBackgroundPanel {
             sidebarVisible = true;
             btnHidePanels.setText("Hide Panels");
         }
-        revalidate();
-        repaint();
+        
+        // Force proper cleanup and repaint to remove any visual artifacts
+        // Keep component in layout, just toggle visibility and repaint
+        Container centerPanel = sidebarCard.getParent();
+        if (centerPanel != null) {
+            centerPanel.revalidate();
+            centerPanel.repaint();
+        }
+        
+        // Also ensure stage card repaints to fill the space properly
+        if (stageCard != null) {
+            stageCard.revalidate();
+            stageCard.repaint();
+        }
+        
+        // Force full repaint of the entire page to clear any residue
+        SwingUtilities.invokeLater(() -> {
+            revalidate();
+            repaint();
+        });
     }
 
     // ---------------- Controls Bar ----------------
