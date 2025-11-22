@@ -1,0 +1,436 @@
+package com.swe.ux.view;
+
+import com.swe.chat.MessageVM;
+import com.swe.ux.viewmodel.ChatViewModel;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * The Chat UI View. It is a JPanel that can be embedded in the main application.
+ */
+public class ChatView extends JPanel {
+
+    private final ChatViewModel viewModel;
+
+    // UI Components
+    private final JPanel messageContainer;
+    private final JScrollPane scrollPane;
+    private final JTextField messageInputField;
+    private final JButton sendButton;
+    private final JPanel replyQuotePanel;
+    private final JLabel replyQuoteLabel;
+    private final JButton attachButton;
+    private final JPanel attachmentPanel;
+    private final JLabel attachmentLabel;
+
+    private final Map<String, Component> messageComponentMap = new HashMap<>();
+
+    public ChatView(ChatViewModel viewModel) {
+        this.viewModel = viewModel;
+
+        // --- Setup Main Panel ---
+        setLayout(new BorderLayout(0, 0));
+        setBackground(new Color(0xE5DDD5)); // Optional: Set a background color for the whole chat area
+
+        // --- Message List (Center) ---
+        messageContainer = new JPanel();
+        messageContainer.setLayout(new BoxLayout(messageContainer, BoxLayout.Y_AXIS));
+        messageContainer.setBackground(Color.WHITE);
+
+        JPanel messageContainerWrapper = new JPanel(new BorderLayout());
+        messageContainerWrapper.setBackground(Color.WHITE);
+        messageContainerWrapper.setBorder(new EmptyBorder(10, 10, 10, 10));
+        messageContainerWrapper.add(messageContainer, BorderLayout.NORTH);
+
+        scrollPane = new JScrollPane(messageContainerWrapper);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xCCCCCC)));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        add(scrollPane, BorderLayout.CENTER);
+
+        // --- Bottom Panel (Input + Reply) ---
+        JPanel bottomVBox = new JPanel();
+        bottomVBox.setLayout(new BoxLayout(bottomVBox, BoxLayout.Y_AXIS));
+
+        // --- Attachment Panel ---
+        attachmentPanel = new JPanel(new BorderLayout(5, 5));
+        attachmentPanel.setBackground(new Color(0xEFEFEF));
+        attachmentPanel.setBorder(new CompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xCCCCCC)),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+        attachmentLabel = new JLabel("Attached: file.txt");
+        attachmentLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        attachmentLabel.setForeground(Color.GRAY);
+
+        JButton cancelAttachmentButton = new JButton("X");
+        cancelAttachmentButton.setMargin(new Insets(2, 4, 2, 4));
+        cancelAttachmentButton.addActionListener(e -> viewModel.cancelAttachment());
+        bottomVBox.add(attachmentPanel);
+
+        // Reply Panel (Hidden by default)
+        replyQuotePanel = new JPanel(new BorderLayout(5, 5));
+        replyQuotePanel.setBackground(new Color(0xEFEFEF));
+        replyQuotePanel.setBorder(new CompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xCCCCCC)),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+        replyQuoteLabel = new JLabel("Replying to...");
+        replyQuoteLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        replyQuoteLabel.setForeground(Color.GRAY); // Force dark text for visibility
+
+        JButton cancelReplyButton = new JButton("X");
+        cancelReplyButton.setMargin(new Insets(2, 4, 2, 4));
+        // Bind action to ViewModel
+        cancelReplyButton.addActionListener(e -> viewModel.cancelReply());
+
+        replyQuotePanel.add(replyQuoteLabel, BorderLayout.CENTER);
+        replyQuotePanel.add(cancelReplyButton, BorderLayout.EAST);
+        replyQuotePanel.setVisible(false);
+        bottomVBox.add(replyQuotePanel);
+
+        // Input Panel
+        JPanel inputHBox = new JPanel(new BorderLayout(10, 10));
+        inputHBox.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        messageInputField = new JTextField();
+        messageInputField.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        sendButton = new JButton("Send");
+        sendButton.setBackground(new Color(0x00, 0x7B, 0xFF));
+        sendButton.setForeground(Color.WHITE);
+        sendButton.setFocusPainted(false);
+        sendButton.setFont(new Font("Arial", Font.BOLD, 12));
+
+        attachButton = new JButton("+");
+        attachButton.setFont(new Font("Arial", Font.BOLD, 16));
+        attachButton.setMargin(new Insets(1, 5, 1, 5));
+
+        JPanel buttonPanel = new JPanel(new BorderLayout(5, 0));
+        buttonPanel.add(attachButton, BorderLayout.WEST);
+        buttonPanel.add(sendButton, BorderLayout.CENTER);
+
+        // Bind actions to ViewModel
+        sendButton.addActionListener(e -> viewModel.send(messageInputField.getText()));
+        messageInputField.addActionListener(e -> viewModel.send(messageInputField.getText()));
+
+        inputHBox.add(messageInputField, BorderLayout.CENTER);
+        inputHBox.add(buttonPanel, BorderLayout.EAST);
+        bottomVBox.add(inputHBox);
+
+        add(bottomVBox, BorderLayout.SOUTH);
+
+        // --- Bind ViewModel Callbacks ---
+        viewModel.setOnClearInput(() -> messageInputField.setText(""));
+
+        viewModel.setOnReplyStateChange(quoteText -> {
+            replyQuotePanel.setVisible(quoteText != null);
+            if (quoteText != null) replyQuoteLabel.setText(quoteText);
+            revalidate(); repaint();
+        });
+
+        viewModel.setOnAttachmentSet(attachmentName -> {
+            attachmentPanel.setVisible(attachmentName != null);
+            if (attachmentName != null) attachmentLabel.setText(attachmentName);
+            revalidate();
+            repaint();
+        });
+
+        viewModel.setOnMessageAdded(this::addMessageToView);
+        viewModel.setOnMessageRemoved(this::removeMessageFromView);
+
+        // --- Bind actions to ViewModel ---
+        sendButton.addActionListener(e -> viewModel.send(messageInputField.getText()));
+        messageInputField.addActionListener(e -> viewModel.send(messageInputField.getText()));
+
+        attachButton.addActionListener(e -> showSelectFileDialog());
+
+        // Bind dialog callbacks
+        viewModel.setOnShowErrorDialog(message -> {
+            JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+        });
+
+        viewModel.setOnShowSuccessDialog(message -> {
+            JOptionPane.showMessageDialog(this, message, "File Saved", JOptionPane.INFORMATION_MESSAGE);
+        });
+    }
+
+    /**
+     * This method contains the Swing logic for showing the "Select File" dialog.
+     */
+    private void showSelectFileDialog() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select a file to send");
+
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+
+            // Sanitize path
+            String cleanPath = selectedFile.getAbsolutePath().trim();
+            if (cleanPath.startsWith("*")) {
+                cleanPath = cleanPath.substring(1).trim();
+            }
+            File finalFile = new File(cleanPath);
+
+            // Notify the ViewModel of the user's choice
+            viewModel.userSelectedFileToAttach(finalFile);
+        }
+    }
+
+    private void removeMessageFromView(String messageId) {
+        SwingUtilities.invokeLater(() -> {
+            Component componentToRemove = messageComponentMap.get(messageId);
+            if (componentToRemove != null) {
+                messageContainer.remove(componentToRemove);
+                messageComponentMap.remove(messageId);
+                messageContainer.revalidate();
+                messageContainer.repaint();
+            }
+        });
+    }
+
+    private String formatFileSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(1024));
+        String pre = "KMGTPE".charAt(exp - 1) + "";
+        return String.format("%.1f %sB", bytes / Math.pow(1024, exp), pre);
+    }
+
+    // Helper to add message on EDT
+    private void addMessageToView(MessageVM messageVM) {
+        SwingUtilities.invokeLater(() -> {
+            messageContainer.add(createMessageComponent(messageVM));
+            messageContainer.revalidate();
+            messageContainer.repaint();
+            // Auto-scroll to bottom
+            JScrollBar vertical = scrollPane.getVerticalScrollBar();
+            vertical.setValue(vertical.getMaximum());
+        });
+    }
+
+    private Component createMessageComponent(MessageVM messageVM) {
+        if (messageVM.isFileMessage()) {
+            return createFileBubble(messageVM);
+        } else {
+            return createTextBubble(messageVM);
+        }
+    }
+
+    /**
+     * Factory for building a Text Message bubble.
+     */
+    // ✅ FIXED: Use MessageVM instead of ChatViewModel.MessageVM
+    private Component createTextBubble(MessageVM messageVM) {
+        JPanel bubble = new JPanel();
+        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
+        bubble.setBorder(new EmptyBorder(8, 8, 8, 12));
+        bubble.setMaximumSize(new Dimension(300, 9999));
+
+        if (messageVM.hasQuote()) {
+            bubble.add(createQuotePanel(messageVM.quotedContent));
+            bubble.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+
+        JLabel usernameLabel = new JLabel(messageVM.username);
+        usernameLabel.setFont(new Font("Arial", Font.BOLD, 13));
+
+        JLabel contentLabel = new JLabel("<html><p style=\"width:220px;\">" + messageVM.content + "</p></html>");
+        contentLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        contentLabel.setForeground(Color.BLACK);
+
+        JPanel footer = createFooterPanel(messageVM);
+
+        bubble.add(usernameLabel);
+        bubble.add(Box.createRigidArea(new Dimension(0, 2)));
+        bubble.add(contentLabel);
+        bubble.add(Box.createRigidArea(new Dimension(0, 5)));
+        bubble.add(footer);
+
+        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe);
+    }
+
+    /**
+     * Factory for building a File Message bubble.
+     */
+    private Component createFileBubble(MessageVM messageVM) {
+        JPanel bubble = new JPanel();
+        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
+        bubble.setBorder(new EmptyBorder(8, 8, 8, 12));
+        bubble.setMaximumSize(new Dimension(300, 9999));
+
+        if (messageVM.hasQuote()) {
+            bubble.add(createQuotePanel(messageVM.quotedContent));
+            bubble.add(Box.createRigidArea(new Dimension(0, 5)));
+        }
+
+        JLabel usernameLabel = new JLabel(messageVM.username);
+        usernameLabel.setFont(new Font("Arial", Font.BOLD, 13));
+
+        JPanel filePanel = new JPanel(new BorderLayout(10, 0));
+        filePanel.setOpaque(false);
+        filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        Icon fileIcon = UIManager.getIcon("FileView.fileIcon");
+        JLabel iconLabel = new JLabel(fileIcon);
+        iconLabel.setVerticalAlignment(SwingConstants.TOP);
+        filePanel.add(iconLabel, BorderLayout.WEST);
+
+        JPanel infoPanel = new JPanel();
+        infoPanel.setOpaque(false);
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel fileNameLabel = new JLabel(messageVM.fileName);
+        fileNameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        fileNameLabel.setForeground(Color.BLACK);
+        infoPanel.add(fileNameLabel);
+
+        // ⭐ Display compressed size from metadata
+        String sizeDisplay = messageVM.compressedFileSize > 0
+                ? formatFileSize(messageVM.compressedFileSize) + " (compressed)"
+                : "Size unknown";
+        JLabel sizeLabel = new JLabel(sizeDisplay);
+        sizeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        sizeLabel.setForeground(Color.GRAY);
+        infoPanel.add(sizeLabel);
+
+        filePanel.add(infoPanel, BorderLayout.CENTER);
+
+        // Save button for received files only
+        if (!messageVM.isSentByMe) {
+            infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+            JButton saveButton = new JButton("Save File");
+            saveButton.setFont(new Font("Arial", Font.PLAIN, 12));
+            saveButton.setMargin(new Insets(2, 5, 2, 5));
+            saveButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            saveButton.addActionListener(e -> {
+                // ⭐ Request backend to decompress and save
+                viewModel.downloadFile(messageVM);
+            });
+            infoPanel.add(saveButton);
+        }
+
+        JPanel footer = createFooterPanel(messageVM);
+
+        bubble.add(usernameLabel);
+        bubble.add(Box.createRigidArea(new Dimension(0, 5)));
+        bubble.add(filePanel);
+
+        if (messageVM.content != null && !messageVM.content.trim().isEmpty()) {
+            bubble.add(Box.createRigidArea(new Dimension(0, 8)));
+            JLabel captionLabel = new JLabel(
+                    "<html><p style=\"width:220px;\">" + messageVM.content + "</p></html>"
+            );
+            captionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            captionLabel.setForeground(Color.BLACK);
+            captionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            bubble.add(captionLabel);
+        }
+
+        bubble.add(Box.createRigidArea(new Dimension(0, 5)));
+        bubble.add(footer);
+
+        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe);
+    }
+
+    /**
+     * Reusable UI Helper - Quote Panel
+     */
+    private Component createQuotePanel(String quotedContent) {
+        JPanel quotePanel = new JPanel(new BorderLayout());
+        quotePanel.setBackground(new Color(0xDDDDDD));
+        quotePanel.setBorder(new CompoundBorder(
+                BorderFactory.createMatteBorder(0, 3, 0, 0, new Color(0x007BFF)),
+                new EmptyBorder(3, 5, 3, 5)
+        ));
+        JLabel quoteLabel = new JLabel(quotedContent);
+        quoteLabel.setFont(new Font("Arial", Font.ITALIC, 11));
+        quoteLabel.setForeground(new Color(0x555555));
+        quotePanel.add(quoteLabel, BorderLayout.CENTER);
+        quotePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return quotePanel;
+    }
+
+    /**
+     * Reusable UI Helper - Footer Panel (with Reply/Delete buttons)
+     */
+    // ✅ FIXED: Use MessageVM instead of ChatViewModel.MessageVM
+    private JPanel createFooterPanel(MessageVM messageVM) {
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setOpaque(false);
+        footer.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel timeLabel = new JLabel(messageVM.timestamp);
+        timeLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+        timeLabel.setForeground(Color.GRAY);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        buttonPanel.setOpaque(false);
+
+        JButton replyBtn = new JButton("Reply");
+        replyBtn.setFont(new Font("Arial", Font.PLAIN, 10));
+        replyBtn.setBorderPainted(false);
+        replyBtn.setContentAreaFilled(false);
+        replyBtn.setForeground(new Color(0x007BFF));
+        replyBtn.setMargin(new Insets(0, 0, 0, 0));
+        replyBtn.addActionListener(e -> {
+            viewModel.startReply(messageVM);
+            messageInputField.requestFocus();
+        });
+        buttonPanel.add(replyBtn);
+
+        if (messageVM.isSentByMe) {
+            JButton deleteBtn = new JButton("Delete");
+            deleteBtn.setFont(new Font("Arial", Font.PLAIN, 10));
+            deleteBtn.setBorderPainted(false);
+            deleteBtn.setContentAreaFilled(false);
+            deleteBtn.setForeground(Color.RED);
+            deleteBtn.setMargin(new Insets(0, 5, 0, 0));
+            deleteBtn.addActionListener(e -> {
+                int choice = JOptionPane.showConfirmDialog(this,
+                        "Are you sure you want to delete this message?", "Delete Message",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (choice == JOptionPane.YES_OPTION) {
+                    viewModel.deleteMessage(messageVM);
+                }
+            });
+            buttonPanel.add(deleteBtn);
+        }
+
+        footer.add(timeLabel, BorderLayout.WEST);
+        footer.add(buttonPanel, BorderLayout.EAST);
+        return footer;
+    }
+
+    /**
+     * Reusable UI Helper - Wrap Bubble (align left/right based on sender)
+     */
+    private Component wrapBubble(JPanel bubble, JLabel usernameLabel, boolean isSentByMe) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setBackground(Color.WHITE);
+        wrapper.setBorder(new EmptyBorder(3, 0, 3, 0));
+
+        if (isSentByMe) {
+            bubble.setBackground(new Color(0xE1, 0xF5, 0xFE));
+            usernameLabel.setForeground(new Color(0x00, 0x5A, 0x9E));
+            wrapper.add(bubble, BorderLayout.EAST);
+        } else {
+            bubble.setBackground(new Color(0xF1, 0xF1, 0xF1));
+            usernameLabel.setForeground(new Color(0x00, 0x7B, 0xFF));
+            wrapper.add(bubble, BorderLayout.WEST);
+        }
+        return wrapper;
+    }
+}

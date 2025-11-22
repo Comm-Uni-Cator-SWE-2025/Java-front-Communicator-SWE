@@ -1,0 +1,110 @@
+package com.swe.ux.model;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import com.swe.controller.Meeting.UserProfile;
+
+/**
+ * Represents a meeting with participants and messages.
+ */
+public class Meeting {
+    private final String id;
+    private String title;
+    private final LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private final List<UserProfile> participants;
+    private final List<ChatMessage> messages;
+    private boolean videoEnabled;
+    private boolean screenSharingEnabled;
+    private boolean audioEnabled;
+
+    public Meeting(String title) {
+        this.id = UUID.randomUUID().toString();
+        this.title = title;
+        this.startTime = LocalDateTime.now();
+        this.participants = new ArrayList<>();
+        this.messages = new ArrayList<>();
+        this.videoEnabled = false;
+        this.screenSharingEnabled = false;
+    }
+
+    // Getters
+    public String getId() { return id; }
+    public String getTitle() { return title; }
+    public LocalDateTime getStartTime() { return startTime; }
+    public LocalDateTime getEndTime() { return endTime; }
+    public List<UserProfile> getParticipants() { return new ArrayList<>(participants); }
+    public List<ChatMessage> getMessages() { return new ArrayList<>(messages); }
+
+    // Methods
+    public void addParticipant(UserProfile user) {
+        boolean userPresent = participants.stream().map(UserProfile::getEmail).toList().contains(user.getEmail());
+        if (!userPresent) {
+            participants.add(user);
+        }
+    }
+
+    public boolean isAudioEnabled() {
+        return audioEnabled;
+    }
+
+    public void setAudioEnabled(boolean audioEnabled) {
+        this.audioEnabled = audioEnabled;
+    }
+
+    public void setVideoEnabled(boolean enabled) {
+        this.videoEnabled = enabled;
+    }
+
+    public void setScreenSharingEnabled(boolean enabled) {
+        this.screenSharingEnabled = enabled;
+    }
+
+    public void setMeetingTitle(String title) {
+        this.title = title;
+    }
+
+    public void removeParticipant(UserProfile user) {
+        participants.remove(user);
+    }
+
+    public void addMessage(ChatMessage message) {
+        messages.add(message);
+    }
+
+    public void endMeeting() {
+        this.endTime = LocalDateTime.now();
+    }
+
+    public boolean isActive() {
+        return endTime == null;
+    }
+
+    /**
+     * Represents a chat message within a meeting.
+     */
+    public static class ChatMessage {
+        private final UserProfile sender;
+        private final String content;
+        private final LocalDateTime timestamp;
+
+        public ChatMessage(UserProfile sender, String content) {
+            this.sender = sender;
+            this.content = content;
+            this.timestamp = LocalDateTime.now();
+        }
+
+        // Getters
+        public UserProfile getSender() { return sender; }
+        public String getContent() { return content; }
+        public LocalDateTime getTimestamp() { return timestamp; }
+
+        @Override
+        public String toString() {
+            return String.format("%s: %s", sender.getDisplayName(), content);
+        }
+    }
+}
