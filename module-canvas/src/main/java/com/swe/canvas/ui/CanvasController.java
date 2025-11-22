@@ -140,9 +140,14 @@ public class CanvasController {
 
         // Set the redraw callback
         // this.actionManager.setOnUpdate(this::redraw);
+        // FIX: Ensure both logic update and redraw happen on the UI thread sequentially
         this.actionManager.setOnUpdate(() -> {
-            viewModel.handleValidatedUpdate();
-            redraw();
+            Platform.runLater(() -> {
+                if (viewModel != null) {
+                    viewModel.handleValidatedUpdate();
+                }
+                redraw();
+            });
         });
 
 

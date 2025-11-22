@@ -25,19 +25,13 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
 
-/**
- * View model for the canvas.
- * This class is now a "thin client" as per the prompt.
- * It does not modify its own state.
- * It sends requests to the IActionManager and displays a "ghost shape" (transientShape).
- */
 public class CanvasViewModel {
 
     private final ActionManager actionManager;
-    private final CanvasState canvasState; // This is now a local mirror
+    private final CanvasState canvasState;
     private final ActionFactory actionFactory;
     private final ShapeFactory shapeFactory;
-    private final String userId; // This VM's user ID
+    private final String userId;
 
     public final ObjectProperty<ToolType> activeTool = new SimpleObjectProperty<>(ToolType.FREEHAND);
     public final ObjectProperty<Color> activeColor = new SimpleObjectProperty<>(Color.BLACK);
@@ -45,24 +39,23 @@ public class CanvasViewModel {
     public final ObjectProperty<ShapeId> selectedShapeId = new SimpleObjectProperty<>(null);
 
     private final List<Point> currentPoints = new ArrayList<>();
-    
-    // "Ghost Shape" for 2-second timeout
-    private Shape transientShape = null; 
-    private Timer ghostTimer = new Timer(true); // Daemon timer
+
+    // Ghost Shape Logic
+    private Shape transientShape = null;
+    private Timer ghostTimer = new Timer(true);
+
+    // FIX: Track the intent of the ghost (Are we waiting for it to vanish or appear?)
+    private boolean isPendingDelete = false;
 
     private double lastDragX;
     private double lastDragY;
     public boolean isDraggingSelection = false;
-    private ShapeState originalShapeForDrag = null; // Store the original state for drag
+    private ShapeState originalShapeForDrag = null;
 
-    /**
-     * This ViewModel is created by the Main app and injected with the
-     * appropriate action manager (Host or Client).
-     */
     public CanvasViewModel(String userId, ActionManager actionManager) {
         this.userId = userId;
         this.actionManager = actionManager;
-        this.canvasState = actionManager.getCanvasState(); // Get state from manager
+        this.canvasState = actionManager.getCanvasState();
         this.actionFactory = actionManager.getActionFactory();
         this.shapeFactory = new ShapeFactory();
     }
@@ -71,9 +64,6 @@ public class CanvasViewModel {
         return canvasState;
     }
 
-    /**
-     * Returns the "ghost shape" for rendering.
-     */
     public Shape getTransientShape() {
         return transientShape;
     }
@@ -82,7 +72,6 @@ public class CanvasViewModel {
         actionManager.setOnUpdate(r);
     }
 
-    // --- Property Updates (Now send requests) ---
     public void updateSelectedShapeColor(final Color newFxColor) {
         updateShapeProperty(s -> s.setColor(ColorConverter.toAwt(newFxColor)));
     }
@@ -98,22 +87,21 @@ public class CanvasViewModel {
             if (currentState != null && !currentState.isDeleted()) {
                 final Shape modifiedShape = currentState.getShape().copy();
                 modifier.accept(modifiedShape);
-                
-                // Send MODIFY request
+
                 actionManager.requestModify(currentState, modifiedShape);
-                
-                // Show ghost shape
+
+                // FIX: Intent is Modify (not delete)
+                this.isPendingDelete = false;
                 showGhostShape(modifiedShape);
             }
         }
     }
 
-    // --- Input Handling (Client Logic) ---
-
     public void onMousePressed(final double x, final double y) {
         lastDragX = x;
         lastDragY = y;
-        transientShape = null; // Clear any previous ghost
+        transientShape = null;
+        isPendingDelete = false; // Reset intent
 
         if (activeTool.get() == ToolType.SELECT) {
             final ShapeId hitShapeId = findHitShape(x, y);
@@ -123,8 +111,10 @@ public class CanvasViewModel {
                 final ShapeState ss = canvasState.getShapeState(hitShapeId);
                 if (ss != null && !ss.isDeleted() && ss.getShape() != null) {
                     isDraggingSelection = true;
-                    originalShapeForDrag = ss; // Store original state
-                    transientShape = ss.getShape().copy(); // Start ghosting
+                    originalShapeForDrag = ss;
+                    // Start ghosting for drag
+                    transientShape = ss.getShape().copy();
+                    isPendingDelete = false; // Dragging is a modify operation
                 } else {
                     isDraggingSelection = false;
                     originalShapeForDrag = null;
@@ -146,11 +136,9 @@ public class CanvasViewModel {
     public void onMouseDragged(final double x, final double y) {
         if (activeTool.get() == ToolType.SELECT) {
             if (isDraggingSelection && transientShape != null && originalShapeForDrag != null) {
-                // Apply delta to the ghost shape
                 final double dx = x - lastDragX;
                 final double dy = y - lastDragY;
                 transientShape.translate(dx, dy);
-                
                 lastDragX = x;
                 lastDragY = y;
             }
@@ -166,53 +154,50 @@ public class CanvasViewModel {
 
     public void onMouseReleased(final double x, final double y) {
         if (activeTool.get() == ToolType.SELECT) {
-            // Commit the drag/move
             if (isDraggingSelection && transientShape != null && originalShapeForDrag != null) {
-                // We must send the *original* state as prevState
                 actionManager.requestModify(originalShapeForDrag, transientShape);
-                // transientShape is already set, just start the timer
+
+                // FIX: Intent is Modify
+                this.isPendingDelete = false;
                 startGhostTimer();
             }
             isDraggingSelection = false;
             originalShapeForDrag = null;
-            
+
         } else if (transientShape != null) {
-            // Commit the new drawing
             actionManager.requestCreate(transientShape);
-            startGhostTimer(); // Show ghost until confirmed
+
+            // FIX: Intent is Create
+            this.isPendingDelete = false;
+            startGhostTimer();
         }
-        
+
         currentPoints.clear();
     }
-    
-    // --- Ghost Shape Logic ---
-    
+
     private void showGhostShape(Shape shape) {
         transientShape = shape;
         startGhostTimer();
     }
-    
+
     private void startGhostTimer() {
-        ghostTimer.cancel(); // Cancel any existing timer
+        ghostTimer.cancel();
         ghostTimer = new Timer(true);
         ghostTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 transientShape = null;
-                // We must redraw on the UI thread
                 Platform.runLater(() -> {
                     if (actionManager != null) {
-                        // This forces a redraw by notifying the manager
                         actionManager.getCanvasState().notifyUpdate();
                     }
                 });
             }
-        }, 2000); // 2 second timeout
+        }, 2000);
     }
 
     private ShapeId findHitShape(final double x, final double y) {
         final List<Shape> shapes = new ArrayList<>(canvasState.getVisibleShapes());
-        // Iterate backwards to select top-most shapes first
         for (int i = shapes.size() - 1; i >= 0; i--) {
             if (GeometryUtils.hitTest(shapes.get(i), x, y)) {
                 return shapes.get(i).getShapeId();
@@ -231,8 +216,10 @@ public class CanvasViewModel {
             case FREEHAND: type = ShapeType.FREEHAND; break;
             default: type = ShapeType.FREEHAND; break;
         }
-        
-        // Create the shape with the client's user ID
+
+        // Creating a new shape (not delete)
+        this.isPendingDelete = false;
+
         transientShape = shapeFactory.createShape(
                 type, ShapeId.randomId(), new ArrayList<>(currentPoints),
                 activeStrokeWidth.get(), ColorConverter.toAwt(activeColor.get()), userId);
@@ -244,23 +231,24 @@ public class CanvasViewModel {
             final ShapeState stateToDelete = canvasState.getShapeState(id);
             if (stateToDelete != null && !stateToDelete.isDeleted()) {
                 actionManager.requestDelete(stateToDelete);
-                
-                // Show deleted shape as a ghost
+
+                // FIX: Set intent to Delete
+                this.isPendingDelete = true;
+
                 Shape ghost = stateToDelete.getShape().copy();
-                showGhostShape(ghost); // Show ghost
+                showGhostShape(ghost);
                 selectedShapeId.set(null);
             }
         }
     }
 
-    public void undo() {
-        actionManager.requestUndo();
-    }
+    public void undo() { actionManager.requestUndo(); }
+    public void redo() { actionManager.requestRedo(); }
 
-    public void redo() {
-        actionManager.requestRedo();
-    }
-
+    /**
+     * FIX: Revised logic to check for conflict resolution correctly.
+     * Only clears the ghost if the server state matches the intent.
+     */
     public void handleValidatedUpdate() {
         if (transientShape == null) return;
 
@@ -268,19 +256,35 @@ public class CanvasViewModel {
         if (tid == null) return;
 
         final ShapeState st = canvasState.getShapeState(tid);
+        boolean isDeletedInServer = (st == null || st.isDeleted());
 
-        // DELETE fix:
-        // Clear ghost when:
-        // 1) server removed the shape (st == null)
-        // 2) server marked it deleted   (st.isDeleted())
-        if (st == null || st.isDeleted()) {
-            transientShape = null;
-            try { ghostTimer.cancel(); } catch (Exception ignored) {}
-            return;
+        if (isPendingDelete) {
+            // CASE: We are deleting.
+            // We only clear the ghost if the server confirms it's GONE.
+            if (isDeletedInServer) {
+                transientShape = null;
+                try { ghostTimer.cancel(); } catch (Exception ignored) {}
+            }
+            // If !isDeletedInServer, implies server hasn't processed delete yet.
+            // Keep ghost (so original remains hidden by renderer).
+        } else {
+            // CASE: Create or Modify.
+            // We clear the ghost if the server confirms it EXISTS (and implies it's updated).
+            // (If the server says it's deleted, we also clear because our create/modify failed).
+            if (!isDeletedInServer) {
+                transientShape = null;
+                try { ghostTimer.cancel(); } catch (Exception ignored) {}
+            }
+            else if (st == null) {
+                // Special case: If we created a shape with a RandomID, but server assigned a NewID,
+                // our RandomID won't exist in state. The ghost usually stays until timer,
+                // OR we can choose to clear it to avoid duplication if we assume success.
+                // For now, we let the timer handle the ID mismatch scenario, or clear if strict.
+                // Safest approach for "Create" with ID swap is to clear ghost on *any* update
+                // because the new shape (NewID) is likely already in the VisibleShapes list.
+                transientShape = null;
+                try { ghostTimer.cancel(); } catch (Exception ignored) {}
+            }
         }
-
-        // CREATE / MODIFY confirmation
-        transientShape = null;
-        try { ghostTimer.cancel(); } catch (Exception ignored) {}
     }
 }
