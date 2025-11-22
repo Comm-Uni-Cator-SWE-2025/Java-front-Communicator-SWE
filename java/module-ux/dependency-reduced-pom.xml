@@ -191,13 +191,13 @@
   </reporting>
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
-    <jacoco.branch.coverage.ratio>0.85</jacoco.branch.coverage.ratio>
-    <jacoco.line.coverage.ratio>0.90</jacoco.line.coverage.ratio>
-    <jacoco.version>0.8.11</jacoco.version>
     <checkstyle.version>3.3.1</checkstyle.version>
+    <jacoco.branch.coverage.ratio>0.85</jacoco.branch.coverage.ratio>
     <maven.failsafe.version>3.2.2</maven.failsafe.version>
+    <jacoco.line.coverage.ratio>0.90</jacoco.line.coverage.ratio>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.10.1</junit.version>
     <maven.surefire.version>3.2.2</maven.surefire.version>
+    <jacoco.version>0.8.11</jacoco.version>
   </properties>
 </project>

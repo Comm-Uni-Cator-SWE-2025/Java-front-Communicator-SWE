@@ -3,8 +3,10 @@ package com.swe.ux.views;
 import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.ux.model.analytics.SentimentPoint;
 import com.swe.ux.service.MessageDataService;
+import com.swe.ux.views.ScreenVideoTelemetryView;
 import com.swe.ux.viewmodels.ShapeViewModel;
 import com.swe.ux.viewmodels.SentimentViewModel;
+import com.swe.ux.viewmodels.ScreenVideoTelemetryViewModel;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -39,6 +41,7 @@ import java.util.TimerTask;
 public class SentimentViewPane extends StackPane {
     private final SentimentViewModel viewModel;
     private final ShapeViewModel shapeViewModel;
+    private final ScreenVideoTelemetryViewModel telemetryViewModel;
     private final MessageDataService messageDataService;
     private final List<String> allMessages;
 
@@ -47,6 +50,7 @@ public class SentimentViewPane extends StackPane {
     private VBox topRightPane;
     private VBox bottomLeftPane;
     private VBox bottomRightPane;
+    private ScreenVideoTelemetryView telemetryView;
     private VBox messageContainer;
     private ScrollPane messageScrollPane;
     private LineChart<Number, Number> chart;
@@ -59,6 +63,7 @@ public class SentimentViewPane extends StackPane {
     public SentimentViewPane() {
         this.viewModel = new SentimentViewModel();
         this.shapeViewModel = new ShapeViewModel();
+        this.telemetryViewModel = new ScreenVideoTelemetryViewModel();
         this.messageDataService = new MessageDataService();
         this.allMessages = new ArrayList<>();
 
@@ -97,8 +102,10 @@ public class SentimentViewPane extends StackPane {
         bottomRightPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: 10;");
         bottomRightPane.setMinHeight(0);
         bottomRightPane.setMinWidth(0);
-        Label bottomRightLabel = new Label("Bottom Right Panel");
-        bottomRightPane.getChildren().add(bottomRightLabel);
+        telemetryView = new ScreenVideoTelemetryView(telemetryViewModel);
+        telemetryView.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        bottomRightPane.getChildren().add(telemetryView);
+        VBox.setVgrow(telemetryView, Priority.ALWAYS);
 
         GridPane.setHgrow(topLeftPane, Priority.ALWAYS);
         GridPane.setVgrow(topLeftPane, Priority.ALWAYS);
@@ -155,6 +162,9 @@ public class SentimentViewPane extends StackPane {
         VBox.setVgrow(barChart, Priority.ALWAYS);
 
         getChildren().add(root);
+
+        telemetryViewModel.fetchAndUpdateData();
+        telemetryView.refresh();
     }
 
     private void bindPaneSizing() {
@@ -432,6 +442,9 @@ public class SentimentViewPane extends StackPane {
 
                     shapeViewModel.fetchAndUpdateData();
                     updateBarChartWithAnimation(false);
+
+                    telemetryViewModel.fetchAndUpdateData();
+                    telemetryView.refresh();
 
                     updateMessages();
                 });
