@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CosmosOperations.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module-cloud</a> &gt; <a href="index.source.html" class="el_package">cosmosoperations</a> &gt; <span class="el_source">CosmosOperations.java</span></div><h1>CosmosOperations.java</h1><pre class="source lang-java linenums">package cosmosoperations;
+
+import com.azure.cosmos.ConsistencyLevel;
+import com.azure.cosmos.CosmosException;
+import com.azure.cosmos.CosmosClient;
+import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.cosmos.CosmosContainer;
+import com.azure.cosmos.CosmosDatabase;
+import com.azure.cosmos.models.CosmosContainerProperties;
+import com.azure.cosmos.models.CosmosItemRequestOptions;
+import com.azure.cosmos.models.CosmosItemResponse;
+import com.azure.cosmos.models.CosmosQueryRequestOptions;
+import com.azure.cosmos.models.PartitionKey;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import datastructures.CloudResponse;
+import datastructures.Entity;
+import interfaces.IdbConnector;
+import io.github.cdimascio.dotenv.Dotenv;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+
+/**
+ * Provides CRUD operations for Azure Cosmos DB.
+ * Each container represents a table, and each document represents a record.
+ */
+<span class="fc" id="L30">public class CosmosOperations implements IdbConnector {</span>
+
+    /** Cosmos DB client. */
+    private CosmosClient client;
+
+    /** Cosmos DB database instance. */
+    private CosmosDatabase database;
+
+    /** JSON object mapper for serialization. */
+<span class="fc" id="L39">    private final ObjectMapper mapper = new ObjectMapper();</span>
+
+    /** Endpoint URL for the Cosmos DB account. */
+    private String endpoint;
+
+    /** Authorization key for Cosmos DB. */
+    private String key;
+
+    /** Database name in Cosmos DB. */
+    private String databaseName;
+
+    /** Success status code constant. */
+    private static final int HTTP_OK = 200;
+
+    /** Conflict status code constant. */
+    private static final int HTTP_CONFLICT = 409;
+
+    /** Not found status code constant. */
+    private static final int HTTP_NOT_FOUND = 404;
+
+    /** Bad request status code constant. */
+    private static final int HTTP_BAD_REQUEST = 400;
+
+    /**
+     * Initializes the Cosmos client using credentials from the .env file.
+     */
+    @Override
+    public void init() {
+        try {
+<span class="fc" id="L68">            endpoint = System.getenv(&quot;COSMOS_ENDPOINT&quot;);</span>
+<span class="fc" id="L69">            key = System.getenv(&quot;COSMOS_KEY&quot;);</span>
+<span class="fc" id="L70">            databaseName = System.getenv(&quot;COSMOS_DATABASE&quot;);</span>
+
+            // Fallback to Dotenv for local testing if variables are null
+<span class="pc bpc" id="L73" title="5 of 6 branches missed.">            if (endpoint == null || key == null || databaseName == null) {</span>
+<span class="fc" id="L74">                System.out.println(&quot;Warning: Environment variables not found. Falling back to .env file...&quot;);</span>
+<span class="fc" id="L75">                final Dotenv dotenv = Dotenv.load();</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">                if (endpoint == null) {</span>
+<span class="fc" id="L77">                    endpoint = dotenv.get(&quot;COSMOS_ENDPOINT&quot;);</span>
+                }
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">                if (key == null) {</span>
+<span class="fc" id="L80">                    key = dotenv.get(&quot;COSMOS_KEY&quot;);</span>
+                }
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                if (databaseName == null) {</span>
+<span class="fc" id="L83">                    databaseName = dotenv.get(&quot;COSMOS_DATABASE&quot;);</span>
+                }
+            }
+
+<span class="fc" id="L87">            client = new CosmosClientBuilder()</span>
+<span class="fc" id="L88">                    .endpoint(endpoint)</span>
+<span class="fc" id="L89">                    .key(key)</span>
+<span class="fc" id="L90">                    .consistencyLevel(ConsistencyLevel.EVENTUAL)</span>
+<span class="fc" id="L91">                    .contentResponseOnWriteEnabled(true)</span>
+<span class="fc" id="L92">                    .buildClient();</span>
+
+<span class="fc" id="L94">            database = client.getDatabase(databaseName);</span>
+<span class="nc" id="L95">        } catch (final Exception e) {</span>
+<span class="nc" id="L96">            System.out.println(&quot;Error initializing Cosmos client: &quot; + e.getMessage());</span>
+<span class="fc" id="L97">        }</span>
+<span class="fc" id="L98">    }</span>
+
+    /**
+     * Retrieves data from a specified container.
+     * @param request The entity containing the query details.
+     * @return A CloudResponse containing matching documents or fields.
+     */
+    @Override
+    public CloudResponse getData(final Entity request) {
+<span class="fc" id="L107">        final CosmosContainer container = database.getContainer(request.module() + &quot;_&quot; + request.table());</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        if (hasId(request)) {</span>
+<span class="fc" id="L109">            return fetchById(container, request);</span>
+        }
+<span class="fc" id="L111">        return fetchAll(container, request);</span>
+    }
+
+    /**
+     * Checks if the given request has a valid ID.
+     * @param request The entity to check.
+     * @return True if the ID is not null or empty, false otherwise.
+     */
+    private boolean hasId(final Entity request) {
+<span class="pc bpc" id="L120" title="1 of 4 branches missed.">        return request.id() != null &amp;&amp; !request.id().isEmpty();</span>
+    }
+
+    /**
+     * Fetches a single document by its ID.
+     * @param container The Cosmos container.
+     * @param request The entity containing ID and type.
+     * @return CloudResponse with the document or specific field.
+     */
+    private CloudResponse fetchById(final CosmosContainer container, final Entity request) {
+        try {
+<span class="fc" id="L131">            final CosmosItemResponse&lt;JsonNode&gt; itemResponse =</span>
+<span class="fc" id="L132">                    container.readItem(request.id(), new PartitionKey(request.id()), JsonNode.class);</span>
+<span class="fc" id="L133">            final JsonNode doc = itemResponse.getItem();</span>
+
+<span class="pc bpc" id="L135" title="1 of 4 branches missed.">            if (request.type() != null &amp;&amp; !request.type().isEmpty()) {</span>
+<span class="fc" id="L136">                final JsonNode data = doc.path(&quot;data&quot;).path(request.type());</span>
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">                if (data.isMissingNode()) {</span>
+<span class="nc" id="L138">                    return new CloudResponse(HTTP_NOT_FOUND, &quot;Field '&quot; + request.type() + &quot;' not found.&quot;, null);</span>
+                }
+<span class="fc" id="L140">                return new CloudResponse(HTTP_OK, &quot;Field retrieved successfully.&quot;, data);</span>
+            }
+
+<span class="fc" id="L143">            return new CloudResponse(HTTP_OK, &quot;Document retrieved successfully.&quot;, doc);</span>
+<span class="nc" id="L144">        } catch (CosmosException e) {</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">            if (e.getStatusCode() == HTTP_NOT_FOUND) {</span>
+<span class="nc" id="L146">                return new CloudResponse(HTTP_NOT_FOUND, &quot;Document with ID '&quot; + request.id() + &quot;' not found.&quot;, null);</span>
+            }
+<span class="nc" id="L148">            throw e;</span>
+        }
+    }
+
+    /**
+     * Fetches multiple documents with optional filters.
+     * @param container The Cosmos container.
+     * @param request The entity with query parameters.
+     * @return CloudResponse with list of retrieved documents.
+     */
+    private CloudResponse fetchAll(final CosmosContainer container, final Entity request) {
+<span class="fc" id="L159">        final String query = buildQuery(request);</span>
+
+<span class="fc" id="L161">        List&lt;JsonNode&gt; results = container.queryItems(query, new CosmosQueryRequestOptions(), JsonNode.class)</span>
+<span class="fc" id="L162">                .stream()</span>
+<span class="fc" id="L163">                .sorted((a, b) -&gt; Double.compare(b.path(&quot;timestamp&quot;).asDouble(), a.path(&quot;timestamp&quot;).asDouble()))</span>
+<span class="fc" id="L164">                .collect(Collectors.toList());</span>
+
+<span class="pc bpc" id="L166" title="1 of 4 branches missed.">        if (request.lastN() &gt; 0 &amp;&amp; results.size() &gt; request.lastN()) {</span>
+<span class="fc" id="L167">            results = results.subList(0, request.lastN());</span>
+        }
+
+<span class="pc bpc" id="L170" title="1 of 4 branches missed.">        if (request.type() != null &amp;&amp; !request.type().isEmpty()) {</span>
+<span class="fc" id="L171">            results = results.stream()</span>
+<span class="fc" id="L172">                    .map(r -&gt; r.path(&quot;data&quot;).path(request.type()))</span>
+<span class="fc" id="L173">                    .collect(Collectors.toList());</span>
+        }
+
+<span class="fc" id="L176">        return new CloudResponse(HTTP_OK, &quot;Documents retrieved successfully.&quot;, mapper.valueToTree(results));</span>
+    }
+
+    /**
+     * Builds a Cosmos DB SQL query based on time range.
+     * @param request The entity containing the time range.
+     * @return The generated SQL query.
+     */
+    private String buildQuery(final Entity request) {
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        if (request.timeRange() != null) {</span>
+<span class="fc" id="L186">            return String.format(</span>
+                    &quot;SELECT * FROM c WHERE c.timestamp BETWEEN %f AND %f&quot;,
+<span class="fc" id="L188">                    request.timeRange().fromTime(),</span>
+<span class="fc" id="L189">                    request.timeRange().toTime()</span>
+            );
+        }
+<span class="fc" id="L192">        return &quot;SELECT * FROM c&quot;;</span>
+    }
+
+    /**
+     * Inserts a new document into the container.
+     * @param request The entity containing the data to insert.
+     * @return CloudResponse indicating insertion status.
+     */
+    @Override
+    public CloudResponse postData(final Entity request) {
+<span class="fc" id="L202">        final CosmosContainer container = database.getContainer(request.module() + &quot;_&quot; + request.table());</span>
+<span class="fc" id="L203">        final ObjectNode document = mapper.createObjectNode();</span>
+
+<span class="fc" id="L205">        document.put(&quot;id&quot;, request.id());</span>
+<span class="fc" id="L206">        document.put(&quot;timestamp&quot;, (double) System.currentTimeMillis());</span>
+<span class="fc" id="L207">        document.set(&quot;data&quot;, request.data());</span>
+
+        try {
+<span class="fc" id="L210">            container.createItem(document);</span>
+<span class="fc" id="L211">            return new CloudResponse(HTTP_OK, &quot;Document inserted successfully.&quot;, null);</span>
+<span class="fc" id="L212">        } catch (CosmosException e) {</span>
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">            if (e.getStatusCode() == HTTP_CONFLICT) {</span>
+<span class="fc" id="L214">                return new CloudResponse(HTTP_CONFLICT, &quot;Document with ID '&quot; + request.id() + &quot;' already exists.&quot;, null);</span>
+            }
+<span class="nc" id="L216">            throw e;</span>
+        }
+    }
+
+    /**
+     * Creates a new container if it doesn't exist.
+     * @param request The entity specifying the table name.
+     * @return CloudResponse indicating creation status.
+     */
+    @Override
+    public CloudResponse createData(final Entity request) {
+<span class="fc" id="L227">        final String tableName = request.module() + &quot;_&quot; + request.table();</span>
+<span class="fc" id="L228">        final boolean exists = database.readAllContainers()</span>
+<span class="fc" id="L229">                .stream()</span>
+<span class="fc" id="L230">                .anyMatch(c -&gt; c.getId().equals(tableName));</span>
+
+<span class="fc bfc" id="L232" title="All 2 branches covered.">        if (exists) {</span>
+<span class="fc" id="L233">            return new CloudResponse(HTTP_OK, &quot;Container '&quot; + tableName + &quot;' already exists.&quot;, null);</span>
+        }
+
+<span class="fc" id="L236">        final CosmosContainerProperties containerProperties =</span>
+                new CosmosContainerProperties(tableName, &quot;/id&quot;);
+
+<span class="fc" id="L239">        database.createContainerIfNotExists(containerProperties);</span>
+<span class="fc" id="L240">        return new CloudResponse(HTTP_OK, &quot;Container '&quot; + tableName + &quot;' created successfully.&quot;, null);</span>
+    }
+
+    /**
+     * Deletes a specific document or an entire container.
+     * @param request The entity containing table and optional ID.
+     * @return CloudResponse indicating deletion result.
+     */
+    @Override
+    public CloudResponse deleteData(final Entity request) {
+<span class="fc" id="L250">        final String tableName = request.module() + &quot;_&quot; + request.table();</span>
+<span class="fc" id="L251">        final CosmosContainer container = database.getContainer(tableName);</span>
+
+        // Case 1: Delete specific field if both ID and Type are present
+<span class="pc bpc" id="L254" title="1 of 6 branches missed.">        if (hasId(request) &amp;&amp; request.type() != null &amp;&amp; !request.type().isEmpty()) {</span>
+<span class="fc" id="L255">            final CosmosItemResponse&lt;ObjectNode&gt; response = container.readItem(request.id(), new PartitionKey(request.id()), ObjectNode.class);</span>
+<span class="fc" id="L256">            final ObjectNode document = response.getItem();</span>
+
+<span class="fc" id="L258">            final JsonNode dataNode = document.get(&quot;data&quot;);</span>
+<span class="pc bpc" id="L259" title="2 of 4 branches missed.">            if (dataNode != null &amp;&amp; dataNode.isObject()) {</span>
+<span class="fc" id="L260">                ((ObjectNode) dataNode).remove(request.type());</span>
+<span class="fc" id="L261">                document.put(&quot;timestamp&quot;, (double) System.currentTimeMillis());</span>
+<span class="fc" id="L262">                container.replaceItem(document, request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());</span>
+<span class="fc" id="L263">                return new CloudResponse(HTTP_OK, &quot;Field '&quot; + request.type() + &quot;' deleted successfully.&quot;, null);</span>
+            }
+<span class="nc" id="L265">            return new CloudResponse(HTTP_OK, &quot;Field '&quot; + request.type() + &quot;' not found.&quot;, null);</span>
+        }
+
+        // Case 2: Delete entire document if ID is present but Type is NOT
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        if (hasId(request)) {</span>
+<span class="fc" id="L270">            container.deleteItem(request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());</span>
+<span class="fc" id="L271">            return new CloudResponse(HTTP_OK, &quot;Document deleted successfully.&quot;, null);</span>
+        }
+
+        // Case 3: Delete entire container if ID is missing
+<span class="fc" id="L275">        container.delete();</span>
+<span class="fc" id="L276">        return new CloudResponse(HTTP_OK, &quot;Container '&quot; + tableName + &quot;' deleted successfully.&quot;, null);</span>
+    }
+
+    /**
+     * Updates a document with new data.
+     * @param request The entity containing ID and updated data.
+     * @return CloudResponse indicating update result.
+     */
+    @Override
+    public CloudResponse updateData(final Entity request) {
+<span class="fc" id="L286">        final CosmosContainer container = database.getContainer(request.module() + &quot;_&quot; + request.table());</span>
+
+<span class="pc bpc" id="L288" title="1 of 4 branches missed.">        if (request.type() != null &amp;&amp; !request.type().isEmpty()) {</span>
+<span class="fc" id="L289">            final CosmosItemResponse&lt;ObjectNode&gt; response = container.readItem(request.id(), new PartitionKey(request.id()), ObjectNode.class);</span>
+<span class="fc" id="L290">            final ObjectNode document = response.getItem();</span>
+
+<span class="fc" id="L292">            JsonNode dataNode = document.get(&quot;data&quot;);</span>
+<span class="pc bpc" id="L293" title="2 of 4 branches missed.">            if (dataNode == null || !dataNode.isObject()) {</span>
+<span class="nc" id="L294">                dataNode = mapper.createObjectNode();</span>
+<span class="nc" id="L295">                document.set(&quot;data&quot;, dataNode);</span>
+            }
+
+<span class="fc" id="L298">            final JsonNode newValue = request.data().get(request.type());</span>
+
+<span class="pc bpc" id="L300" title="1 of 2 branches missed.">            if (newValue == null) {</span>
+<span class="nc" id="L301">                return new CloudResponse(HTTP_BAD_REQUEST, &quot;New value was not provided for data to be updated: &quot;</span>
+<span class="nc" id="L302">                        + request.type(), null);</span>
+            }
+
+<span class="fc" id="L305">            ((ObjectNode) dataNode).set(request.type(), newValue);</span>
+<span class="fc" id="L306">            document.put(&quot;timestamp&quot;, (double) System.currentTimeMillis());</span>
+
+<span class="fc" id="L308">            container.replaceItem(document, request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());</span>
+<span class="fc" id="L309">            return new CloudResponse(HTTP_OK, &quot;Field '&quot; + request.type() + &quot;' updated successfully.&quot;, null);</span>
+        }
+
+<span class="fc" id="L312">        final ObjectNode document = mapper.createObjectNode();</span>
+<span class="fc" id="L313">        document.put(&quot;id&quot;, request.id());</span>
+<span class="fc" id="L314">        document.put(&quot;timestamp&quot;, (double) System.currentTimeMillis());</span>
+<span class="fc" id="L315">        document.set(&quot;data&quot;, request.data());</span>
+
+<span class="fc" id="L317">        container.replaceItem(document, request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());</span>
+<span class="fc" id="L318">        return new CloudResponse(HTTP_OK, &quot;Document updated successfully.&quot;, null);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
