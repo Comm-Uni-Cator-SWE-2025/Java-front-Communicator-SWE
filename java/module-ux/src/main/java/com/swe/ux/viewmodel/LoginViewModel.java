@@ -28,7 +28,6 @@ public class LoginViewModel extends BaseViewModel {
         try {
             byte[] data = rpc.call("core/register", new byte[0]).get();
             UserProfile user = DataSerializer.deserialize(data, UserProfile.class);
-            user.setEmail(Utils.getSelfIP());
             currentUser.set(user);
         } catch (Exception e) {
             authErrorMessage.set("Authentication failed: " + e.getMessage());
