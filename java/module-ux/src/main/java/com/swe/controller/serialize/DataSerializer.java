@@ -25,7 +25,7 @@ public class DataSerializer {
 
     public static <T> T deserialize(byte[] data, TypeReference<T> typeReference) throws JsonProcessingException {
         String json = new String(data, StandardCharsets.UTF_8);
-
+        objectMapper.registerModule(new ClientNodeModule());
         return objectMapper.readValue(json, typeReference);
     }
 }
