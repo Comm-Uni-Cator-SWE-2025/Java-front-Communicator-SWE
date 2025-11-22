@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.swe.controller.Meeting.UserProfile;
-import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.Meeting;
@@ -13,10 +13,10 @@ import com.swe.ux.model.Meeting;
  * ViewModel for managing meeting-related business logic and state.
  */
 public class MeetingViewModel extends BaseViewModel {
-    private final UserProfile currentUser;
+    public final UserProfile currentUser;
     private Meeting currentMeeting = new Meeting("Meeting");
     public AbstractRPC rpc;
-    
+
     // Bindable properties
     public final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
     public final BindableProperty<String> meetingId = new BindableProperty<>("", "meetingId");
@@ -26,7 +26,8 @@ public class MeetingViewModel extends BaseViewModel {
     public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
     public final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
     public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
-    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
+    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(),
+            "participants");
     public final BindableProperty<String> role = new BindableProperty<>("", "role");
 
     public MeetingViewModel(UserProfile currentUser, AbstractRPC rpc) {
@@ -34,7 +35,7 @@ public class MeetingViewModel extends BaseViewModel {
         this.currentUser = currentUser;
         this.rpc = rpc;
     }
-    
+
     public MeetingViewModel(UserProfile currentUser, String role, AbstractRPC rpc) {
         this.currentUser = currentUser;
         this.rpc = rpc;
@@ -44,6 +45,7 @@ public class MeetingViewModel extends BaseViewModel {
     /**
      * Sets the meeting ID for this meeting.
      * This should be called before startMeeting() to use an existing meeting ID.
+     * 
      * @param id The meeting ID to set
      */
     public void setMeetingId(String id) {
@@ -55,18 +57,19 @@ public class MeetingViewModel extends BaseViewModel {
     /**
      * Start a new meeting with the current user as a participant.
      * The meeting ID must be set via setMeetingId() before calling this method.
-     * The meeting ID comes from either RPC (when creating) or user input (when joining).
+     * The meeting ID comes from either RPC (when creating) or user input (when
+     * joining).
      */
     public void startMeeting() {
         // Get the meeting ID that was set via setMeetingId()
         String newMeetingId = meetingId.get();
-        
+
         // Meeting ID must be provided before starting the meeting
         if (newMeetingId == null || newMeetingId.trim().isEmpty()) {
             System.err.println("Error: Meeting ID must be set before starting a meeting");
             return;
         }
-        
+
         // Create the meeting with the provided ID
         String title = meetingTitle.get();
         if (title == null || title.trim().isEmpty()) {
@@ -75,7 +78,7 @@ public class MeetingViewModel extends BaseViewModel {
         }
         currentMeeting.setMeetingTitle(title);
         currentMeeting.addParticipant(currentUser);
-        
+
         isMeetingActive.set(true);
         updateParticipants();
         addSystemMessage("Meeting started with ID: " + newMeetingId);
@@ -204,7 +207,8 @@ public class MeetingViewModel extends BaseViewModel {
 
     private void addSystemMessage(String message) {
         if (currentMeeting != null) {
-//            currentMeeting.addMessage(new Meeting.ChatMessage(null, "[System] " + message));
+            // currentMeeting.addMessage(new Meeting.ChatMessage(null, "[System] " +
+            // message));
             updateMessages();
         }
     }
@@ -215,7 +219,7 @@ public class MeetingViewModel extends BaseViewModel {
     }
 
     public boolean isCurrentUserInMeeting() {
-        return currentMeeting != null && 
-               currentMeeting.getParticipants().contains(currentUser);
+        return currentMeeting != null &&
+                currentMeeting.getParticipants().contains(currentUser);
     }
 }

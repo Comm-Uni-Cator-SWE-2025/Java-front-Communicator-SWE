@@ -2,9 +2,9 @@ package com.swe.ux.viewmodels;
 
 import com.swe.chat.FileMessageSerializer;
 import com.swe.chat.MessageVM;
-import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.controller.RPC;
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.ux.model.ChatMessage;
+import com.swe.app.RPC;
 import com.swe.chat.ChatMessageSerializer;
 import com.swe.ux.model.FileMessage;
 

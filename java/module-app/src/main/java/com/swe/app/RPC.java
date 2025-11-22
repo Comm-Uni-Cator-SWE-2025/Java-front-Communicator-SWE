@@ -1,7 +1,7 @@
-package com.swe.controller;
+package com.swe.app;
 
 import com.socketry.SocketryServer;
-import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.app.RPCinterface.AbstractRPC;
 
 import java.io.IOException;
 import java.util.HashMap;

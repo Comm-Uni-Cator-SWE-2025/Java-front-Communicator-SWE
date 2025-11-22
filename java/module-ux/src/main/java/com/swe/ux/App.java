@@ -2,11 +2,15 @@ package com.swe.ux;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.swe.controller.RPC;
+import com.google.common.graph.AbstractNetwork;
+import com.swe.app.RPC;
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
-import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
+import com.swe.networking.AbstractController;
+import com.swe.networking.AbstractNetworking;
+import com.swe.networking.NetworkFront;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
 
@@ -40,7 +44,6 @@ public class App extends JFrame {
     public static final String LOGIN_VIEW = "LOGIN";
     public static final String MAIN_VIEW = "MAIN";
     public static final String MEETING_VIEW = "MEETING";
-
 
     // Current user
     private UserProfile currentUser;
@@ -115,13 +118,14 @@ public class App extends JFrame {
             return val;
         }
         final String ipVal = val.substring(val.indexOf("hostName=") + 9);
-        return ipVal.substring(0, ipVal.indexOf(",") );
+        return ipVal.substring(0, ipVal.indexOf(","));
     }
 
     /**
      * Initializes all the views and adds them to the card layout.
      */
     private void initViews() {
+
         // Initialize ViewModels
         loginViewModel = new LoginViewModel(rpc);
         mainViewModel = new MainViewModel(rpc);
@@ -136,12 +140,10 @@ public class App extends JFrame {
         MainPage mainView = new MainPage(mainViewModel);
         MeetingPage meetingView = new MeetingPage(meetingViewModel);
 
-
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
         mainPanel.add(meetingView, MEETING_VIEW);
-
 
         meetingViewModel.startMeeting();
         // Set up navigation listeners
@@ -172,20 +174,20 @@ public class App extends JFrame {
         // Use an array to hold the current active meeting view model reference
         MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { meetingViewModel };
 
-
-
-
         // New participant
         // rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
-        //     final String viewerIP = new String(data);
-        //     UserProfile new_user = new UserProfile(viewerIP, "New User", "New User", ParticipantRole.STUDENT);
-        //     meetingViewModel.addParticipant(new_user);
-        //     return new byte[0];
+        // final String viewerIP = new String(data);
+        // UserProfile new_user = new UserProfile(viewerIP, "New User", "New User",
+        // ParticipantRole.STUDENT);
+        // meetingViewModel.addParticipant(new_user);
+        // return new byte[0];
         // });
 
         rpc.subscribe("core/setIpToMailMap", (data) -> {
             try {
-                Map<String, String> ipToMailMap = DataSerializer.deserialize(data, new TypeReference<Map<String, String>>() {});
+                Map<String, String> ipToMailMap = DataSerializer.deserialize(data,
+                        new TypeReference<Map<String, String>>() {
+                        });
                 System.out.println("App: ipToMailMap: " + ipToMailMap);
                 ipToMailMap.forEach((ip, mail) -> {
                     System.out.println("App: ip: " + ip + " mail: " + mail);
@@ -206,7 +208,7 @@ public class App extends JFrame {
             if (startMeeting && currentUser != null) {
                 // First, get the meeting ID from MainViewModel by creating the meeting
                 String meetingId = mainViewModel.startMeeting();
-                
+
                 // Only proceed if we successfully got a meeting ID
                 if (meetingId == null || meetingId.trim().isEmpty()) {
                     System.err.println("App: Failed to create meeting - no meeting ID received from RPC");
@@ -216,10 +218,10 @@ public class App extends JFrame {
 
                 // Create a new meeting view model for this meeting with Instructor role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
-                
+
                 // Update the active meeting view model reference
                 activeMeetingViewModelRef[0] = newMeetingViewModel;
-                
+
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingId);
                 System.out.println("App: Passing meeting ID from MainViewModel to MeetingViewModel: " + meetingId);
@@ -260,7 +262,6 @@ public class App extends JFrame {
                 // Get the meeting code from MainViewModel
                 String meetingCode = mainViewModel.meetingCode.get();
 
-                
                 // Only proceed if we have a valid meeting code
                 if (meetingCode == null || meetingCode.trim().isEmpty()) {
                     System.err.println("App: Failed to join meeting - no meeting code provided");
@@ -269,20 +270,20 @@ public class App extends JFrame {
                 }
 
                 mainViewModel.joinMeeting(meetingCode);
-                
+
                 // Create a new meeting view model for joining meeting with Student role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
 
                 // Create a new MeetingPage with the new view model
                 meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
-                
+
                 // Update the active meeting view model reference
                 activeMeetingViewModelRef[0] = newMeetingViewModel;
 
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingCode);
                 System.out.println("App: Passing meeting code from MainViewModel to MeetingViewModel: " + meetingCode);
-                
+
                 // Try to start the meeting with the provided meeting ID
                 newMeetingViewModel.startMeeting();
 
@@ -356,7 +357,7 @@ public class App extends JFrame {
     public static void main(String[] args) {
         int portNumber = 6942;
 
-        if (args.length > 0) { 
+        if (args.length > 0) {
             String port = args[0];
             portNumber = Integer.parseInt(port);
         }
@@ -370,15 +371,17 @@ public class App extends JFrame {
         Thread handler = null;
         try {
             handler = rpc.connect(portNumber);
+            AbstractController nController = NetworkFront.getInstance();
+            nController.consumeRPC(rpc);
         } catch (IOException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
         // try {
-        //     byte[] data = rpc.call("core/register", new byte[0]).get();
-        //     System.out.println("Data: " + data.length);
+        // byte[] data = rpc.call("core/register", new byte[0]).get();
+        // System.out.println("Data: " + data.length);
         // } catch (InterruptedException | ExecutionException e) {
-        //     throw new RuntimeException(e);
+        // throw new RuntimeException(e);
         // }
 
         // Initialize JavaFX toolkit early in a separate thread to avoid macOS conflicts
@@ -392,7 +395,7 @@ public class App extends JFrame {
         });
         javaFXInitThread.setDaemon(true);
         javaFXInitThread.start();
-        
+
         // Give JavaFX a moment to initialize
         try {
             Thread.sleep(100);

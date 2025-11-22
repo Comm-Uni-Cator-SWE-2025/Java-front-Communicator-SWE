@@ -29,6 +29,12 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.github.enchanteddev</groupId>
+      <artifactId>socketry</artifactId>
+      <version>V3</version>
+    </dependency>
   </dependencies>
 
   <build>

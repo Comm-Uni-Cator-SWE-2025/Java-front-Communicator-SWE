@@ -3,7 +3,7 @@
  */
 package com.swe.ux.views;
 
-import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.model.UIImage;

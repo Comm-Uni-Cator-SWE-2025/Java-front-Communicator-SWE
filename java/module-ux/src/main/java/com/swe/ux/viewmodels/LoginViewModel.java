@@ -1,7 +1,7 @@
 package com.swe.ux.viewmodels;
 
 import com.swe.controller.Meeting.UserProfile;
-import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.BindableProperty;
