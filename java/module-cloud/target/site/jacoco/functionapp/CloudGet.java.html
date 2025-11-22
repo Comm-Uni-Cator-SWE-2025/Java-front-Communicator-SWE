@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CloudGet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module-cloud</a> &gt; <a href="index.source.html" class="el_package">functionapp</a> &gt; <span class="el_source">CloudGet.java</span></div><h1>CloudGet.java</h1><pre class="source lang-java linenums">/******************************************************************************
+ * Filename    = CloudGet.java
+ * Author      = Nikhil S Thomas
+ * Product     = cloud-function-app
+ * Project     = Comm-Uni-Cator
+ * Description = Defines custom Azure Function App API for fetching a record.
+ *****************************************************************************/
+
+package functionapp;
+
+import java.util.Optional;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.microsoft.azure.functions.ExecutionContext;
+import com.microsoft.azure.functions.HttpMethod;
+import com.microsoft.azure.functions.HttpRequestMessage;
+import com.microsoft.azure.functions.HttpResponseMessage;
+import com.microsoft.azure.functions.annotation.AuthorizationLevel;
+import com.microsoft.azure.functions.annotation.FunctionName;
+import com.microsoft.azure.functions.annotation.HttpTrigger;
+
+import cosmosoperations.DbConnectorFactory;
+import datastructures.CloudResponse;
+import datastructures.Entity;
+import interfaces.IdbConnector;
+
+
+/**
+ * Azure Function App API for fetching a record.
+ */
+<span class="fc" id="L31">public class CloudGet extends CloudHelper {</span>
+    /**
+     * Handles HTTP POST requests to fetch a record from the cloud database.
+     *
+     * @param request The incoming HTTP request containing the JSON body.
+     * @param context The Azure Functions execution context for logging.
+     * @return An HTTP response indicating success or failure of the operation.
+     * @throws JsonProcessingException If JSON parsing fails for the input body.
+     */
+    @FunctionName(&quot;CloudGet&quot;)
+    public HttpResponseMessage runCloudGet(
+            @HttpTrigger(name = &quot;req&quot;, methods = HttpMethod.POST, authLevel = AuthorizationLevel.ANONYMOUS) final HttpRequestMessage&lt;Optional&lt;String&gt;&gt; request,
+            final ExecutionContext context) throws JsonProcessingException {
+<span class="fc" id="L44">        context.getLogger().info(&quot;Java HTTP trigger processed a request.&quot;);</span>
+        try {
+<span class="fc" id="L46">            final String jsonBody = request.getBody().orElse(&quot;&quot;);</span>
+<span class="fc" id="L47">            final Entity entityRequest = getObjectMapper().readValue(jsonBody, Entity.class);</span>
+
+<span class="fc" id="L49">            final IdbConnector dbConnector = DbConnectorFactory.getDbConnector(&quot;cosmo&quot;);</span>
+<span class="fc" id="L50">            context.getLogger().info(&quot;Initialized DB Connector&quot;);</span>
+<span class="fc" id="L51">            final CloudResponse cloudResponse = dbConnector.getData(entityRequest);</span>
+<span class="fc" id="L52">            context.getLogger().info(&quot;Received Get CloudResponse: [&quot; + cloudResponse.status_code() + &quot;] &quot; + cloudResponse.message());</span>
+
+<span class="fc" id="L54">            return handleResponse(cloudResponse, request);</span>
+<span class="fc" id="L55">        } catch (Exception e) {</span>
+<span class="fc" id="L56">            context.getLogger().info(&quot;[ERROR] Exception in CloudGet: &quot; + e.getMessage());</span>
+<span class="fc" id="L57">            return handleError(request);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,5 @@
+# Created at 2025-11-20T23:08:31.718
+Boot Manifest-JAR contains absolute paths in classpath 'D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
