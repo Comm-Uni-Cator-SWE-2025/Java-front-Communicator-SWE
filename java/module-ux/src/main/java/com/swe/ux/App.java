@@ -184,8 +184,7 @@ public class App extends JFrame {
                 System.out.println("App: ipToMailMap: " + ipToMailMap);
                 ipToMailMap.forEach((ip, mail) -> {
                     System.out.println("App: ip: " + ip + " mail: " + mail);
-                    UserProfile new_user = new UserProfile(mail, mail, mail, ParticipantRole.STUDENT);
-                    new_user.setIp(getIPFromClientNodeString(ip));
+                    UserProfile new_user = new UserProfile(getIPFromClientNodeString(ip), mail, mail, ParticipantRole.STUDENT);
                     // Use the currently active meeting view model
                     activeMeetingViewModelRef[0].addParticipant(new_user);
                     System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
