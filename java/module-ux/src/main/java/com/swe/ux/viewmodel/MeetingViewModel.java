@@ -80,7 +80,9 @@ public class MeetingViewModel extends BaseViewModel {
         }
         currentMeeting.setMeetingTitle(title);
         currentMeeting.addParticipant(currentUser);
-        
+
+        ipToMail.put(currentUser.getEmail(), Utils.getSelfIP());
+
         isMeetingActive.set(true);
         updateParticipants();
         addSystemMessage("Meeting started with ID: " + newMeetingId);
