@@ -1,13 +1,17 @@
 functionlibrary\CloudFunctionLibrary.class
+functionapp\KeepWarm.class
 functionapp\CloudGet.class
 cosmosoperations\CosmosOperations.class
 interfaces\ICrashHandler.class
+functionapp\CloudLog.class
 functionapp\CloudCreate.class
+functionlibrary\CloudLogger.class
 datastructures\Entity.class
 datastructures\CloudResponse.class
 cosmosoperations\MockDbConnector.class
 functionapp\CloudPost.class
 cosmosoperations\DbConnectorFactory.class
+crashhandler\InsightProvider.class
 functionapp\CloudHelper.class
 datastructures\TimeRange.class
 functionapp\CloudDelete.class

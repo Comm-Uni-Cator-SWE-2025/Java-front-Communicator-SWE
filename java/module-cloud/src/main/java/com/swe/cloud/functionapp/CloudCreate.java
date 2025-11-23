@@ -43,9 +43,11 @@ public class CloudCreate extends CloudHelper {
             final ExecutionContext context) throws JsonProcessingException {
         context.getLogger().info("Java HTTP trigger processed a request.");
         try {
+            // Read the Entity from the request
             final String jsonBody = request.getBody().orElse("");
             final Entity entityRequest = getObjectMapper().readValue(jsonBody, Entity.class);
 
+            // Initialize the DB Connector using the factory and pass the Entity to the appropriate function
             final IdbConnector dbConnector = DbConnectorFactory.getDbConnector("cosmo");
             context.getLogger().info("Initialized DB Connector");
             final CloudResponse cloudResponse =  dbConnector.createData(entityRequest);

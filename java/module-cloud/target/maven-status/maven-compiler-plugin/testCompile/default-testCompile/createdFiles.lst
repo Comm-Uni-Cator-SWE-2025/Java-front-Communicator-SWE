@@ -1,14 +1,17 @@
 functionapp\CloudPostTest.class
 cosmosoperations\MockDbConnectorTest.class
 crashhandler\CrashHandlerTest.class
+crashhandler\InsightProviderTest.class
 functionapp\CloudUpdateTest.class
 cosmosoperations\DbConnectorFactoryTest.class
 functionlibrary\CloudFunctionLibraryTest.class
 functionapp\CloudCreateTest.class
 cosmosoperations\CosmosOperationsTest.class
 functionapp\CloudTestBase.class
+functionlibrary\CloudLoggerTest.class
 functionapp\CloudDeleteTest.class
 functionapp\CloudHelperTest.class
 functionapp\CloudGetTest.class
+functionapp\CloudLogTest.class
 functionapp\FakeResponseBuilder.class
 functionapp\FakeResponseBuilder$1.class

@@ -1,4 +1,5 @@
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\CloudCreate.java
+D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\crashhandler\InsightProvider.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\cosmosoperations\MockDbConnector.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\CloudDelete.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\cosmosoperations\DbConnectorFactory.java
@@ -9,8 +10,11 @@ D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-fr
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\interfaces\IdbConnector.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\CloudPost.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\CloudHelper.java
+D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\CloudLog.java
+D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionlibrary\CloudLogger.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\datastructures\TimeRange.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionlibrary\CloudFunctionLibrary.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\CloudUpdate.java
+D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\KeepWarm.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\interfaces\ICrashHandler.java
 D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\main\java\com\swe\cloud\functionapp\CloudGet.java

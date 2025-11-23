@@ -1,3 +1,10 @@
+/******************************************************************************
+ * Filename    = CosmosOperations.java
+ * Author      = Sidarth Prabhu
+ * Project     = Comm-Uni-Cator
+ * Description = Cosmos Helper for the function app to connect, store and retrieve from DB
+ *****************************************************************************/
+
 package cosmosoperations;
 
 import com.azure.cosmos.ConsistencyLevel;
@@ -257,18 +264,26 @@ public class CosmosOperations implements IdbConnector {
 
             final JsonNode dataNode = document.get("data");
             if (dataNode != null && dataNode.isObject()) {
-                ((ObjectNode) dataNode).remove(request.type());
-                document.put("timestamp", (double) System.currentTimeMillis());
-                container.replaceItem(document, request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());
-                return new CloudResponse(HTTP_OK, "Field '" + request.type() + "' deleted successfully.", null);
+                if (((ObjectNode) dataNode).remove(request.type()) != null) {
+                    document.put("timestamp", (double) System.currentTimeMillis());
+                    container.replaceItem(document, request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());
+                    return new CloudResponse(HTTP_OK, "Field '" + request.type() + "' deleted successfully.", null);
+                }
             }
-            return new CloudResponse(HTTP_OK, "Field '" + request.type() + "' not found.", null);
+            return new CloudResponse(HTTP_NOT_FOUND, "Field '" + request.type() + "' not found.", null);
         }
 
         // Case 2: Delete entire document if ID is present but Type is NOT
         if (hasId(request)) {
-            container.deleteItem(request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());
-            return new CloudResponse(HTTP_OK, "Document deleted successfully.", null);
+            try {
+                container.deleteItem(request.id(), new PartitionKey(request.id()), new CosmosItemRequestOptions());
+                return new CloudResponse(HTTP_OK, "Document deleted successfully.", null);
+            } catch (CosmosException e) {
+                if (e.getStatusCode() == HTTP_NOT_FOUND) {
+                    return new CloudResponse(HTTP_NOT_FOUND, "Document with ID '" + request.id() + "' not found.", null);
+                }
+                throw e;
+            }
         }
 
         // Case 3: Delete entire container if ID is missing

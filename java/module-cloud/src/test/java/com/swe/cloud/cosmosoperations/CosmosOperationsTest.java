@@ -82,6 +82,30 @@ class CosmosOperationsTest {
     }
 
     @Test
+    void getDataTest_DocumentNotFound() {
+        Entity notFoundEntity = new Entity(
+                testEntity.module(), testEntity.table(), "NonExistentId",
+                null, -1, null, null
+        );
+        CloudResponse response = cosmosDbConnector.getData(notFoundEntity);
+
+        assertEquals(404, response.status_code());
+        assertTrue(response.message().contains("not found"));
+    }
+
+    @Test
+    void getDataTest_FieldNotFound() {
+        Entity fieldNotFoundEntity = new Entity(
+                testEntity.module(), testEntity.table(), testEntity.id(),
+                "nonExistentField", -1, null, null
+        );
+        CloudResponse response = cosmosDbConnector.getData(fieldNotFoundEntity);
+
+        assertEquals(404, response.status_code());
+        assertTrue(response.message().contains("Field 'nonExistentField' not found"));
+    }
+
+    @Test
     void postData_ConflictTest() {
         CloudResponse cloudResponse = cosmosDbConnector.postData(testEntity);
 
@@ -123,6 +147,30 @@ class CosmosOperationsTest {
                 cloudResponse.message().contains("deleted successfully"),
                 "Expected deletion success message"
         );
+    }
+
+    @Test
+    void deleteData_DocumentNotFound() {
+        Entity notFoundEntity = new Entity(
+                testEntity.module(), testEntity.table(), "NonExistentId",
+                null, -1, null, null
+        );
+        CloudResponse response = cosmosDbConnector.deleteData(notFoundEntity);
+
+        assertEquals(404, response.status_code());
+        assertTrue(response.message().contains("not found"));
+    }
+
+    @Test
+    void deleteData_FieldNotFound() {
+        Entity deleteFieldEntity = new Entity(
+                testEntity.module(), testEntity.table(), testEntity.id(),
+                "nonExistentField", -1, null, null
+        );
+        CloudResponse response = cosmosDbConnector.deleteData(deleteFieldEntity);
+
+        assertEquals(404, response.status_code());
+        assertTrue(response.message().contains("not found"));
     }
 
     @Test
@@ -177,6 +225,54 @@ class CosmosOperationsTest {
         assertEquals(200, cloudResponse.status_code());
         assertEquals("Document updated successfully.", cloudResponse.message());
         assertNull(cloudResponse.data(), "Update operation should return null data");
+    }
+
+    @Test
+    void updateData_AddField() {
+        cosmosDbConnector.postData(new Entity(
+                "TestModule",
+                "TestTable",
+                "TestUpdate",
+                null,
+                -1,
+                null,
+                null
+        ));
+        ObjectNode dataWrapper = mapper.createObjectNode();
+        dataWrapper.put("data1", 999);
+
+        Entity entity = new Entity(
+                "TestModule", "TestTable", "TestUpdate",
+                "data1", -1, null, dataWrapper
+        );
+
+        CloudResponse response = cosmosDbConnector.updateData(entity);
+        assertEquals(200, response.status_code());
+        cosmosDbConnector.deleteData(new Entity(
+                "TestModule",
+                "TestTable",
+                "TestUpdate",
+                null,
+                -1,
+                null,
+                null
+        ));
+    }
+
+    @Test
+    void updateData_MissingNewValue() {
+        ObjectNode dataWrapper = mapper.createObjectNode();
+        dataWrapper.put("wrongKey", 999);
+
+        Entity badRequestEntity = new Entity(
+                testEntity.module(), testEntity.table(), testEntity.id(),
+                "data1", -1, null, dataWrapper
+        );
+
+        CloudResponse response = cosmosDbConnector.updateData(badRequestEntity);
+
+        assertEquals(400, response.status_code());
+        assertTrue(response.message().contains("New value was not provided"));
     }
 
     @Test

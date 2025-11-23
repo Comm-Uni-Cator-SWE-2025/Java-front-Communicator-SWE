@@ -1,0 +1,10 @@
+{
+  "scriptFile" : "../module-cloud-1.0-SNAPSHOT.jar",
+  "entryPoint" : "functionapp.KeepWarm.runKeepWarm",
+  "bindings" : [ {
+    "type" : "timerTrigger",
+    "direction" : "in",
+    "name" : "timerInfo",
+    "schedule" : "0 */5 * * * *"
+  } ]
+}
