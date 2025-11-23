@@ -1,3 +1,13 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: ThemeManager.java
+ *  Owner: Aryan Mathur
+ *  Roll Number : 122201017
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.ux.theme;
 
 import java.awt.Color;
