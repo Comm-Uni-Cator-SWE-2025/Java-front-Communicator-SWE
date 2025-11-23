@@ -1,3 +1,13 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: MeetingPage.java
+ *  Owner: Vaibhav Yadav
+ *  Roll Number : 142201015
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.ux.view;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
