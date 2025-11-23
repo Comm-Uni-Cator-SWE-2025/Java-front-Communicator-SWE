@@ -1,3 +1,13 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: LightTheme.java
+ *  Owner: Vaibhav Yadav
+ *  Roll Number : 142201015
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.ux.theme;
 
 import java.awt.Color;
