@@ -1,3 +1,14 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: FrostedBadgeLabel.java
+ *  Owner: Vaibhav Yadav
+ *  Roll Number : 142201015
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
+
+
 package com.swe.ux.ui;
 
 import java.awt.Dimension;
