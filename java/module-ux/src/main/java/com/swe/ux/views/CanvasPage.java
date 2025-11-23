@@ -40,6 +40,8 @@ public class CanvasPage extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setOpaque(false);
+        setMinimumSize(new Dimension(0, 0));
+        setPreferredSize(null);
 
         // Initialize JavaFX early
         try {
@@ -51,6 +53,8 @@ public class CanvasPage extends JPanel {
         // Create JFXPanel - no preferred size, let layout manager handle it
         fxPanel = new JFXPanel();
         fxPanel.setOpaque(false);
+        fxPanel.setMinimumSize(new Dimension(0, 0));
+        fxPanel.setPreferredSize(new Dimension(0, 0));
         add(fxPanel, BorderLayout.CENTER);
 
         // Add resize listener to match ScreenNVideo behavior
@@ -163,9 +167,9 @@ public class CanvasPage extends JPanel {
         int availableWidth = size.width - (insets.left + insets.right);
         int availableHeight = size.height - (insets.top + insets.bottom);
 
-        // Ensure minimum size
-        availableWidth = Math.max(400, availableWidth);
-        availableHeight = Math.max(300, availableHeight);
+        // Allow shrinking fully when sidebar/chat panels are shown
+        availableWidth = Math.max(1, availableWidth);
+        availableHeight = Math.max(1, availableHeight);
 
         return new Dimension(availableWidth, availableHeight);
     }

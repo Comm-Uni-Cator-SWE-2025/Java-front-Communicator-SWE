@@ -14,9 +14,9 @@ import javax.swing.UIManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swe.cloud.datastructures.Entity;
-import com.swe.cloud.datastructures.TimeRange;
-import com.swe.cloud.functionlibrary.CloudFunctionLibrary;
+import datastructures.Entity;
+import datastructures.TimeRange;
+import functionlibrary.CloudFunctionLibrary;
 import com.swe.ux.App;
 import com.swe.ux.ui.ModernTabbedPaneUI;
 

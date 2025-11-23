@@ -19,6 +19,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -34,6 +36,9 @@ import java.util.Date;
  * - Theme-consistent and re-applies custom tab UI on theme changes
  */
 public class MeetingPage extends FrostedBackgroundPanel {
+    private static final int SIDEBAR_MIN_WIDTH = 280;
+    private static final int SIDEBAR_MAX_WIDTH = 520;
+    private static final int SIDEBAR_DEFAULT_WIDTH = 360;
 
     private final MeetingViewModel meetingViewModel;
 
@@ -49,11 +54,13 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private JTabbedPane stageTabs;
 
     // sidebar (right)
+    private JSplitPane centerSplit;
     private SoftCardPanel sidebarCard;
     private JTabbedPane sidebarTabs;
     private JPanel chatPanel;
     private JPanel participantsPanel;
     private boolean sidebarVisible = false;
+    private int lastSidebarWidth = SIDEBAR_DEFAULT_WIDTH;
 
     // bottom chat toggler
     private FrostedToolbarButton btnChat;
@@ -88,18 +95,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
         headerCard = buildHeader();
         add(headerCard, BorderLayout.NORTH);
 
-        // Center area: stage (left) + sidebar (right)
-        JPanel center = new JPanel(new BorderLayout(16, 0));
-        center.setOpaque(false);
-        center.setName("centerPanel"); // For debugging
-
-        stageCard = buildStageCard();
-        center.add(stageCard, BorderLayout.CENTER);
-
-        sidebarCard = buildSidebarCard();
-        center.add(sidebarCard, BorderLayout.EAST);
-
-        add(center, BorderLayout.CENTER);
+        // Center area: stage (left) + sidebar (right) inside a split pane for responsive resizing
+        centerSplit = buildCenterSplit();
+        add(centerSplit, BorderLayout.CENTER);
 
         // Bottom controls
         controlsBar = buildControlsBar();
@@ -163,6 +161,28 @@ public class MeetingPage extends FrostedBackgroundPanel {
     }
 
     // ---------------- Stage ----------------
+    private JSplitPane buildCenterSplit() {
+        stageCard = buildStageCard();
+        sidebarCard = buildSidebarCard();
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, stageCard, sidebarCard);
+        split.setOpaque(false);
+        split.setBorder(null);
+        split.setDividerSize(10);
+        split.setResizeWeight(0.75); // favor stage area
+        split.setContinuousLayout(true);
+        split.setOneTouchExpandable(false);
+        attachSplitListeners(split);
+
+        stageCard.setMinimumSize(new Dimension(400, 0));
+        sidebarCard.setMinimumSize(new Dimension(280, 0));
+
+        // start collapsed
+        sidebarCard.setVisible(false);
+        split.setDividerLocation(1.0);
+        return split;
+    }
+
     private SoftCardPanel buildStageCard() {
         SoftCardPanel card = new SoftCardPanel(20);
         card.setLayout(new BorderLayout(12, 12));
@@ -212,6 +232,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         JPanel w = new JPanel(new BorderLayout());
         w.setOpaque(false);
         w.add(p, BorderLayout.CENTER);
+        w.setMinimumSize(new Dimension(0, 0));
         return w;
     }
 
@@ -264,14 +285,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
     }
 
     private void openSidebarToTab(String tabName) {
-        // Ensure sidebar visible then select the tab
-        boolean wasHidden = !sidebarCard.isVisible();
-        if (wasHidden) {
-            sidebarCard.setVisible(true);
-            sidebarVisible = true;
-            btnHidePanels.setText("Hide Panels");
-        }
-        
+        int widthHint = sidebarCard.isVisible() ? getCurrentSidebarWidth() : lastSidebarWidth;
+        ensureSidebarShowing(widthHint <= 0 ? SIDEBAR_DEFAULT_WIDTH : widthHint);
+
         // select tab if exists
         for (int i = 0; i < sidebarTabs.getTabCount(); i++) {
             String title = sidebarTabs.getTitleAt(i);
@@ -280,64 +296,172 @@ public class MeetingPage extends FrostedBackgroundPanel {
                 break;
             }
         }
-        
+
         // visual state for header/bottom toggles
         btnParticipants.setCustomFill(tabName.equalsIgnoreCase("Participants") ? new Color(90, 160, 255, 160) : null);
-        btnChat.setCustomFill(tabName.equalsIgnoreCase("Chat") ? new Color(90, 160, 255, 160) : null);
-        
-        // Force proper repaint when showing sidebar
-        if (wasHidden) {
-            Container parent = sidebarCard.getParent();
-            if (parent != null) {
-                parent.revalidate();
-                parent.repaint();
-            }
-            if (stageCard != null) {
-                stageCard.revalidate();
-                stageCard.repaint();
-            }
+        if (btnChat != null) {
+            btnChat.setCustomFill(tabName.equalsIgnoreCase("Chat") ? new Color(90, 160, 255, 160) : null);
         }
-        
-        // Ensure proper repaint
+
+        refreshLayoutContainers();
+    }
+
+
+    private void toggleSidebarVisibility() {
+        if (sidebarCard.isVisible()) {
+            captureSidebarWidth();
+            sidebarCard.setVisible(false);
+            sidebarVisible = false;
+            btnParticipants.setCustomFill(null);
+            if (btnChat != null) {
+                btnChat.setCustomFill(null);
+            }
+            btnHidePanels.setText("Show Panels");
+            collapseSidebarSpace();
+        } else {
+            int widthHint = lastSidebarWidth <= 0 ? SIDEBAR_DEFAULT_WIDTH : lastSidebarWidth;
+            ensureSidebarShowing(widthHint);
+        }
+        refreshLayoutContainers();
+    }
+
+    private void ensureSidebarShowing(int desiredWidth) {
+        if (sidebarCard == null) {
+            return;
+        }
+        sidebarCard.setVisible(true);
+        sidebarVisible = true;
+        btnHidePanels.setText("Hide Panels");
+        setSidebarWidth(desiredWidth);
+    }
+
+    private void setSidebarWidth(int desiredWidth) {
+        if (centerSplit == null) {
+            return;
+        }
+        int widthHint = desiredWidth > 0 ? desiredWidth : SIDEBAR_DEFAULT_WIDTH;
+        if (centerSplit.getWidth() <= 0) {
+            final int targetWidth = widthHint;
+            SwingUtilities.invokeLater(() -> setSidebarWidth(targetWidth));
+            return;
+        }
+
+        int totalWidth = centerSplit.getWidth();
+        int clamped = clampSidebarWidth(widthHint, totalWidth);
+        setSidebarWidthInternal(clamped, totalWidth);
+    }
+
+    private void setSidebarWidthInternal(int sidebarWidth, int totalWidth) {
+        if (centerSplit == null) {
+            return;
+        }
+        int dividerSize = centerSplit.getDividerSize();
+        int dividerLocation = Math.max(0, totalWidth - sidebarWidth - dividerSize);
+        dividerLocation = Math.min(dividerLocation, centerSplit.getMaximumDividerLocation());
+        centerSplit.setDividerLocation(dividerLocation);
+        lastSidebarWidth = sidebarWidth;
+    }
+
+    private int clampSidebarWidth(int desiredWidth, int totalWidth) {
+        int dividerSize = centerSplit != null ? centerSplit.getDividerSize() : 0;
+        int availableForSidebar = Math.max(0, totalWidth - dividerSize);
+        int stageMin = 0;
+        if (stageCard != null && stageCard.getMinimumSize() != null) {
+            stageMin = stageCard.getMinimumSize().width;
+        }
+        int maxAllowable = Math.max(0, availableForSidebar - stageMin);
+        int minWidth = Math.min(SIDEBAR_MIN_WIDTH, maxAllowable);
+        int maxWidth = Math.min(SIDEBAR_MAX_WIDTH, maxAllowable);
+        if (maxWidth < minWidth) {
+            maxWidth = minWidth;
+        }
+        int width = desiredWidth;
+        if (width < minWidth) {
+            width = minWidth;
+        }
+        if (width > maxWidth) {
+            width = maxWidth;
+        }
+        return width;
+    }
+
+    private void captureSidebarWidth() {
+        if (sidebarCard == null) {
+            return;
+        }
+        int width = getCurrentSidebarWidth();
+        if (width > 0) {
+            lastSidebarWidth = width;
+        }
+    }
+
+    private int getCurrentSidebarWidth() {
+        if (centerSplit == null) {
+            return lastSidebarWidth;
+        }
+        int totalWidth = centerSplit.getWidth();
+        if (totalWidth <= 0) {
+            return lastSidebarWidth;
+        }
+        int dividerLocation = centerSplit.getDividerLocation();
+        int dividerSize = centerSplit.getDividerSize();
+        return Math.max(0, totalWidth - dividerLocation - dividerSize);
+    }
+
+    private void collapseSidebarSpace() {
+        if (centerSplit != null) {
+            centerSplit.setDividerLocation(1.0);
+        }
+    }
+
+    private void refreshLayoutContainers() {
+        if (sidebarCard == null) {
+            return;
+        }
+        Container centerPanel = sidebarCard.getParent();
+        if (centerPanel != null) {
+            centerPanel.revalidate();
+            centerPanel.repaint();
+        }
+        if (stageCard != null) {
+            stageCard.revalidate();
+            stageCard.repaint();
+        }
         SwingUtilities.invokeLater(() -> {
             revalidate();
             repaint();
         });
     }
 
-
-    private void toggleSidebarVisibility() {
-        if (sidebarCard.isVisible()) {
-            sidebarCard.setVisible(false);
-            sidebarVisible = false;
-            btnParticipants.setCustomFill(null);
-            btnChat.setCustomFill(null);
-            btnHidePanels.setText("Show Panels");
-        } else {
-            sidebarCard.setVisible(true);
-            sidebarVisible = true;
-            btnHidePanels.setText("Hide Panels");
-        }
-        
-        // Force proper cleanup and repaint to remove any visual artifacts
-        // Keep component in layout, just toggle visibility and repaint
-        Container centerPanel = sidebarCard.getParent();
-        if (centerPanel != null) {
-            centerPanel.revalidate();
-            centerPanel.repaint();
-        }
-        
-        // Also ensure stage card repaints to fill the space properly
-        if (stageCard != null) {
-            stageCard.revalidate();
-            stageCard.repaint();
-        }
-        
-        // Force full repaint of the entire page to clear any residue
-        SwingUtilities.invokeLater(() -> {
-            revalidate();
-            repaint();
+    private void attachSplitListeners(JSplitPane split) {
+        split.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, evt -> enforceSidebarBounds());
+        split.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                enforceSidebarBounds();
+            }
         });
+    }
+
+    private void enforceSidebarBounds() {
+        if (centerSplit == null || !sidebarCard.isVisible()) {
+            return;
+        }
+        int totalWidth = centerSplit.getWidth();
+        if (totalWidth <= 0) {
+            return;
+        }
+        int dividerLocation = centerSplit.getDividerLocation();
+        if (dividerLocation < 0) {
+            return;
+        }
+        int currentWidth = totalWidth - dividerLocation - centerSplit.getDividerSize();
+        int clamped = clampSidebarWidth(currentWidth, totalWidth);
+        if (clamped != currentWidth) {
+            setSidebarWidthInternal(clamped, totalWidth);
+        } else {
+            lastSidebarWidth = clamped;
+        }
     }
 
     // ---------------- Controls Bar ----------------
@@ -346,12 +470,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         bar.setLayout(new FlowLayout(FlowLayout.RIGHT, 12, 8)); // chat at bottom-right
 
         btnChat = new FrostedToolbarButton("Chat");
-        btnChat.addActionListener(evt -> {
-            openSidebarToTab("Chat");
-            sidebarCard.setVisible(true);
-            sidebarVisible = true;
-            btnHidePanels.setText("Hide Panels");
-        });
+        btnChat.addActionListener(evt -> openSidebarToTab("Chat"));
 
         btnMute = new FrostedToolbarButton("Mute");
         btnMute.addActionListener(evt -> {
@@ -489,6 +608,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
                     ThemeManager.getInstance().applyThemeRecursively(stageCard);
                     ThemeManager.getInstance().applyThemeRecursively(sidebarCard);
                     ThemeManager.getInstance().applyThemeRecursively(controlsBar);
+                    if (centerSplit != null) {
+                        centerSplit.setBackground(theme.getBackgroundColor());
+                    }
                 }
             }
         } catch (Throwable ignored) {}
