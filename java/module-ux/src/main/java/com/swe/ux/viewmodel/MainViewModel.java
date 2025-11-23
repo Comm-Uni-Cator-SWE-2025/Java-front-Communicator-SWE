@@ -1,3 +1,13 @@
+
+/*
+ * -----------------------------------------------------------------------------
+ *  File: MainViewModel.java
+ *  Owner: Aryan Mathur
+ *  Roll Number : 122201017
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
 package com.swe.ux.viewmodel;
 
 import com.swe.controller.Meeting.MeetingSession;
