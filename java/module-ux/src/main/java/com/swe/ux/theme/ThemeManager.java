@@ -28,8 +28,7 @@ import com.swe.ux.ui.ModernTabbedPaneUI;
 
 
 /**
- * Central theme controller. Handles global Swing UI defaults,
- * supports dynamic theme switching, and updates the main frame.
+ * Central theme controller.
  */
 public class ThemeManager {
     private final List<Runnable> themeListeners = new ArrayList<>();
@@ -45,7 +44,7 @@ public class ThemeManager {
 
     private Theme currentTheme;
     private JFrame mainFrame;   // root window
-    private App app;            // optional: for notifying the application
+    private App app;            
 
     private ThemeManager() {
         // default theme
@@ -74,7 +73,7 @@ public class ThemeManager {
     public void setApp(App app) {
         this.app = app;
     }
-    // recursively reapply custom tab UI to protect against LAF reset
+    // recursively reapplying custom tab UI to protect against LAF reset
     private void reapplyTabbedUIs(Container root) {
         if (root == null) return;
         for (Component c : root.getComponents()) {
@@ -94,7 +93,7 @@ public class ThemeManager {
     private void fixTabbedPanes(Container root) {
     for (Component c : root.getComponents()) {
         if (c instanceof JTabbedPane tp) {
-            tp.setUI(new ModernTabbedPaneUI());   // <-- Reapply modern UI
+            tp.setUI(new ModernTabbedPaneUI());  
             tp.revalidate();
             tp.repaint();
         }
@@ -115,10 +114,8 @@ public class ThemeManager {
         applyThemeToUIManager();
 
         if (mainFrame != null) {
-            // update Swing L&F (this recreates UI delegates)
             SwingUtilities.updateComponentTreeUI(mainFrame);
 
-            // ensure our custom tabbed UI is reapplied after the L&F pass
             SwingUtilities.invokeLater(() -> {
                 try {
                     reapplyTabbedUIs(mainFrame.getContentPane());
@@ -186,7 +183,7 @@ public class ThemeManager {
     }
 
     // ============================================================
-    // APPLY THEME TO A COMPONENT TREE (optional helper)
+    // APPLY THEME TO A COMPONENT TREE 
     // ============================================================
     public void applyThemeRecursively(JComponent root) {
         if (root == null) return;
