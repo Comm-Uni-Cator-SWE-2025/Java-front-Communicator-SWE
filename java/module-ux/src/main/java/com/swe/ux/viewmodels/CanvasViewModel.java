@@ -30,6 +30,9 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
 
+import com.swe.app.RPC;;
+import com.swe.app.RPCinterface.AbstractRPC;
+
 public class CanvasViewModel {
 
     private final ActionManager actionManager;
@@ -38,12 +41,15 @@ public class CanvasViewModel {
     private final ShapeFactory shapeFactory;
     private final String userId;
 
+
     public final ObjectProperty<ToolType> activeTool = new SimpleObjectProperty<>(ToolType.FREEHAND);
     public final ObjectProperty<Color> activeColor = new SimpleObjectProperty<>(Color.BLACK);
     public final DoubleProperty activeStrokeWidth = new SimpleDoubleProperty(2.0);
     public final ObjectProperty<ShapeId> selectedShapeId = new SimpleObjectProperty<>(null);
 
     private final List<Point> currentPoints = new ArrayList<>();
+
+    private AbstractRPC rpc;
 
     // Ghost Shape Logic
     private Shape transientShape = null;
@@ -64,6 +70,8 @@ public class CanvasViewModel {
         this.actionFactory = actionManager.getActionFactory();
         this.shapeFactory = new ShapeFactory();
     }
+
+    
 
     public CanvasState getCanvasState() {
         return canvasState;

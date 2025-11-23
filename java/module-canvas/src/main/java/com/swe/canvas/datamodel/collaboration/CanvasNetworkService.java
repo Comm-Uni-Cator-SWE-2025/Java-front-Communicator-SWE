@@ -10,6 +10,32 @@ public class CanvasNetworkService implements NetworkService {
     private NetworkFront network = NetworkFront.getInstance();
     private RPC rpc = null;
 
+    public CanvasNetworkService() {
+        this.rpc = RPC.getInstance();
+
+        rpc.subscribe("canvas:getHostIp", this::handleSubscribeRPC);
+    }
+
+    ClientNode deserializeClientNodee(byte[] data) {
+        String dataStr = new String(data);
+        String[] parts = dataStr.split(":");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid ClientNode data: " + dataStr);
+        }
+        String ip = parts[0];
+        int port = Integer.parseInt(parts[1]);
+        return new ClientNode(ip, port);
+    }
+
+    private ClientNode hostNode = null;
+
+    private byte[] handleSubscribeRPC(byte[] params) {
+        // throw new UnsupportedOperationException("Not supported yet.");
+        ClientNode hostNode = deserializeClientNodee(params);
+        this.hostNode = hostNode;
+
+        return params;
+    }
 
     @Override
     public void sendMessageToHost(NetworkMessage message) {
@@ -22,14 +48,8 @@ public class CanvasNetworkService implements NetworkService {
         ClientNode dest = null;
         rpc = RPC.getInstance();
 
-        byte[] res = new byte[0];
-        try {
-            res  = rpc.call("canvas/ipOfHost", new byte[0]).get();    
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         
-        dest = new ClientNode(new String(res), 6942);
+        dest = this.hostNode;
 
         ClientNode[] host = {dest};
 
