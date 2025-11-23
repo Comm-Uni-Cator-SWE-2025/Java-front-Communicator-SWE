@@ -1,3 +1,12 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: BindableProperty.java
+ *  Owner: Vaibhav yadav
+ *  Roll Number : 142201015
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
 package com.swe.ux.binding;
 
 import java.beans.PropertyChangeListener;
