@@ -25,11 +25,13 @@ public class CanvasPage extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final ActionManager actionManager;
+    private final String userId;
     private final JFXPanel fxPanel;
     private boolean initialized = false;
 
-    public CanvasPage(ActionManager actionManager) {
+    public CanvasPage(ActionManager actionManager, String userId) {
         this.actionManager = actionManager;
+        this.userId = userId;
         setLayout(new BorderLayout());
         setOpaque(false);
 
@@ -89,7 +91,7 @@ public class CanvasPage extends JPanel {
 
             // Initialize controller
             if (controller != null) {
-                controller.initModel(actionManager);
+                controller.initModel(actionManager, userId);
             }
 
             // Create scene with reasonable default size

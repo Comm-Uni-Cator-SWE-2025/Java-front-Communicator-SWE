@@ -28,13 +28,15 @@ public class CanvasPage extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final ActionManager actionManager;
+    private final String userId;
     private final JFXPanel fxPanel;
     private boolean initialized = false;
     private Scene scene;
     private Parent root;
 
-    public CanvasPage(ActionManager actionManager) {
+    public CanvasPage(ActionManager actionManager, String userId) {
         this.actionManager = actionManager;
+        this.userId = userId;
         
         // Match ScreenNVideo layout: BorderLayout with padding
         setLayout(new BorderLayout(10, 10));
@@ -110,7 +112,7 @@ public class CanvasPage extends JPanel {
 
             // Initialize controller
             if (controller != null) {
-                controller.initModel(actionManager);
+                controller.initModel(actionManager, userId);
             }
 
             // Calculate initial size based on available space

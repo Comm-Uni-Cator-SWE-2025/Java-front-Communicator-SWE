@@ -1,15 +1,15 @@
 package com.swe.canvas.datamodel.manager;
 
+import com.swe.app.RPCinterface.AbstractRPC;
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.collaboration.CanvasNetworkService;
 import com.swe.canvas.datamodel.collaboration.MessageType;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.collaboration.NetworkService;
-import com.swe.canvas.datamodel.serialization.DefaultActionDeserializer;
-import com.swe.canvas.datamodel.serialization.DefaultActionSerializer;
-import com.swe.canvas.datamodel.serialization.SerializedAction;
+import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 
 /**
@@ -26,19 +26,20 @@ public class ClientActionManager implements ActionManager {
     private final ActionFactory actionFactory;
     private final UndoRedoManager undoRedoManager;
     private final NetworkService networkService;
-    private final DefaultActionSerializer serializer;
-    private final DefaultActionDeserializer deserializer;
     private Runnable onUpdateCallback = () -> {}; // No-op default
 
-    public ClientActionManager(String userId, CanvasState canvasState, NetworkService networkService) {
+    public ClientActionManager(final String userId, final CanvasState canvasState, final NetworkService networkService) {
         this.userId = userId;
         this.canvasState = canvasState;
         this.networkService = networkService;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
-        this.serializer = new DefaultActionSerializer();
-        this.deserializer = new DefaultActionDeserializer();
-        this.networkService.registerClient(this);
+        this.networkService.registerClientHandler(this::processIncomingMessage);
+    }
+
+    public ClientActionManager(final String userId, final CanvasState canvasState,
+                               final AbstractRPC rpc) {
+        this(userId, canvasState, new CanvasNetworkService(rpc));
     }
 
     @Override
@@ -55,8 +56,8 @@ public class ClientActionManager implements ActionManager {
      */
     private void sendActionToHost(Action action, MessageType type) {
         try {
-            SerializedAction serializedAction = serializer.serialize(action);
-            NetworkMessage message = new NetworkMessage(type, serializedAction.getData());
+            String serializedAction = NetActionSerializer.serializeAction(action);
+            NetworkMessage message = new NetworkMessage(type, serializedAction.getBytes());
             networkService.sendMessageToHost(message);
         } catch (Exception e) {
             System.err.println("Client failed to send action: " + e.getMessage());
@@ -110,9 +111,12 @@ public class ClientActionManager implements ActionManager {
 
     @Override
     public void processIncomingMessage(NetworkMessage message) {
+        
+        
         System.out.println("[Client " + userId + "] Processing incoming message...");
         try {
-            Action action = deserializer.deserialize(new SerializedAction(message.getSerializedAction()));
+            String data = new String(message.getSerializedAction(), "UTF-8");
+            Action action = NetActionSerializer.deserializeAction(data);
             if (action == null) return;
 
             // This is the key logic from the prompt

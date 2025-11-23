@@ -23,6 +23,7 @@
     <module>module-app</module>
     <module>module-networking</module>
     <module>module-canvas</module>
+    <module>module-cloud</module>
   </modules>
 
   <!-- ===================================================== -->

@@ -49,7 +49,12 @@ public class MainViewModel extends BaseViewModel {
         } catch (Exception e) {
             System.err.println("MainViewModel: createMeeting RPC failed - " + e.getMessage());
         }
-        return null;
+
+        // Fall back to a local meeting so the instructor can still start the session
+        MeetingSession localSession = createLocalMeetingSession();
+        meetingCode.set(localSession.getMeetingId());
+        System.out.println("MainViewModel: Using locally generated meeting ID " + localSession.getMeetingId());
+        return localSession.getMeetingId();
     }
 
     public void joinMeeting(String meetingCode_) {

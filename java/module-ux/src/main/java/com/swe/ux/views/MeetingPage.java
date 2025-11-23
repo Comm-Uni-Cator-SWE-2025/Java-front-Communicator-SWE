@@ -1,7 +1,7 @@
 package com.swe.ux.views;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
-import com.swe.canvas.datamodel.collaboration.NetworkSimulator;
+import com.swe.canvas.datamodel.collaboration.CanvasNetworkService;
 import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.manager.ClientActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
@@ -196,27 +196,22 @@ public class MeetingPage extends FrostedBackgroundPanel {
         // content components (assume these exist in your project)
         ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
         
-        // Create ActionManager for canvas using ClientActionManager
-        // Set up network simulation (Host + Client pattern)
-        NetworkSimulator network = new NetworkSimulator();
-        CanvasState hostCanvasState = new CanvasState(); // Authoritative state
-        String userId = "user-" + System.nanoTime() % 10000;
-        
-        HostActionManager hostManager = null;
-        ClientActionManager clientManager = null;
-        CanvasPage canvasPage = null;
+        CanvasPage canvasPage;
+        String userId = meetingViewModel.currentUser != null
+                ? meetingViewModel.currentUser.getEmail()
+                : "user-" + System.nanoTime();
 
-        // Create Host (authoritative)
-        if (meetingViewModel.currentUser.getRole() == ParticipantRole.INSTRUCTOR){
-            hostManager = new HostActionManager("HOST", hostCanvasState, network);
-            canvasPage = new CanvasPage(hostManager);
-        }else {
-            CanvasState clientCanvasState = new CanvasState(); // Local mirror
-            clientManager = new ClientActionManager(userId, clientCanvasState, network);
-            canvasPage = new CanvasPage(clientManager);
+        if (meetingViewModel.currentUser.getRole() == ParticipantRole.INSTRUCTOR) {
+            CanvasState hostCanvasState = new CanvasState();
+            HostActionManager hostManager = new HostActionManager(userId, hostCanvasState,
+                    new CanvasNetworkService(meetingViewModel.rpc));
+            canvasPage = new CanvasPage(hostManager, userId);
+        } else {
+            CanvasState clientCanvasState = new CanvasState();
+            ClientActionManager clientManager = new ClientActionManager(userId, clientCanvasState,
+                    new CanvasNetworkService(meetingViewModel.rpc));
+            canvasPage = new CanvasPage(clientManager, userId);
         }
-        
-        // Use client manager for the UI
         
         SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel();
 
