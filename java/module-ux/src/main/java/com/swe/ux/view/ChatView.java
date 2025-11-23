@@ -4,14 +4,15 @@ import com.swe.chat.MessageVM;
 import com.swe.ux.viewmodel.ChatViewModel;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +32,8 @@ public class ChatView extends JPanel {
     private final JButton attachButton;
     private final JPanel attachmentPanel;
     private final JLabel attachmentLabel;
+
+    private JPopupMenu suggestionPopup;
 
     private final Map<String, Component> messageComponentMap = new HashMap<>();
 
@@ -165,7 +168,6 @@ public class ChatView extends JPanel {
             JOptionPane.showMessageDialog(this, message, "File Saved", JOptionPane.INFORMATION_MESSAGE);
         });
     }
-
     /**
      * This method contains the Swing logic for showing the "Select File" dialog.
      */
@@ -292,14 +294,47 @@ public class ChatView extends JPanel {
         if (messageVM.isFileMessage()) {
             return createFileBubble(messageVM);
         } else {
+            // ⭐ CHECK FOR AI MESSAGE
+            if (messageVM.username.equals("AI_Bot")) {
+                return createAiBubble(messageVM);
+            }
             return createTextBubble(messageVM);
         }
     }
 
     /**
-     * Factory for building a Text Message bubble.
+     * ⭐ AI Special Bubble (Distinct Look)
      */
-    // ✅ FIXED: Use MessageVM instead of ChatViewModel.MessageVM
+    private Component createAiBubble(MessageVM messageVM) {
+        JPanel bubble = new JPanel();
+        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
+        bubble.setBorder(new CompoundBorder(
+                BorderFactory.createLineBorder(new Color(0x6A, 0x0D, 0xAD), 1, true), // Purple Border
+                new EmptyBorder(8, 8, 8, 12)
+        ));
+        bubble.setMaximumSize(new Dimension(320, 9999)); // Slightly wider
+
+        // Header with Robot Icon
+        JLabel usernameLabel = new JLabel("✨ AI Assistant");
+        usernameLabel.setFont(new Font("Arial", Font.BOLD, 13));
+        usernameLabel.setForeground(new Color(0x4B, 0x00, 0x82)); // Indigo
+
+        JLabel contentLabel = new JLabel("<html><p style=\"width:240px; font-family:SansSerif;\">"
+                + messageVM.content + "</p></html>");
+        contentLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        contentLabel.setForeground(new Color(0x20, 0x20, 0x20));
+
+        JPanel footer = createFooterPanel(messageVM);
+
+        bubble.add(usernameLabel);
+        bubble.add(Box.createRigidArea(new Dimension(0, 4)));
+        bubble.add(contentLabel);
+        bubble.add(Box.createRigidArea(new Dimension(0, 5)));
+        bubble.add(footer);
+
+        return wrapBubble(bubble, usernameLabel, false, true); // True = Is AI
+    }
+
     private Component createTextBubble(MessageVM messageVM) {
         JPanel bubble = new JPanel();
         bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
@@ -307,7 +342,6 @@ public class ChatView extends JPanel {
         bubble.setMaximumSize(new Dimension(300, 9999));
 
         if (messageVM.hasQuote()) {
-            // Pass the ID here
             bubble.add(createQuotePanel(messageVM.quotedContent, messageVM.replyToId));
             bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         }
@@ -315,8 +349,21 @@ public class ChatView extends JPanel {
         JLabel usernameLabel = new JLabel(messageVM.username);
         usernameLabel.setFont(new Font("Arial", Font.BOLD, 13));
 
+        // Highlight my questions to AI
+        boolean isQuestionToAi = messageVM.content.trim().startsWith("@AI");
+        if (isQuestionToAi) {
+            usernameLabel.setText(messageVM.username + " (Asking AI)");
+            usernameLabel.setForeground(new Color(0x00, 0x00, 0x8B)); // Dark Blue
+        }
+
         JLabel contentLabel = new JLabel("<html><p style=\"width:220px;\">" + messageVM.content + "</p></html>");
         contentLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        // Italicize the @AI part if it's a question
+        if (isQuestionToAi) {
+            contentLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+        }
+
         contentLabel.setForeground(Color.BLACK);
 
         JPanel footer = createFooterPanel(messageVM);
@@ -327,7 +374,7 @@ public class ChatView extends JPanel {
         bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         bubble.add(footer);
 
-        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe);
+        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe, false);
     }
 
     /**
@@ -413,7 +460,7 @@ public class ChatView extends JPanel {
         bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         bubble.add(footer);
 
-        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe);
+        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe,false);
     }
 
     /**
@@ -520,17 +567,21 @@ public class ChatView extends JPanel {
     /**
      * Reusable UI Helper - Wrap Bubble (align left/right based on sender)
      */
-    private Component wrapBubble(JPanel bubble, JLabel usernameLabel, boolean isSentByMe) {
+    private Component wrapBubble(JPanel bubble, JLabel usernameLabel, boolean isSentByMe, boolean isAi) {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBackground(Color.WHITE);
         wrapper.setBorder(new EmptyBorder(3, 0, 3, 0));
 
-        if (isSentByMe) {
-            bubble.setBackground(new Color(0xE1, 0xF5, 0xFE));
+        if (isAi) {
+            // ⭐ AI Messages: Centered or Left, Distinct Color
+            bubble.setBackground(new Color(0xF5, 0xF0, 0xFF)); // Light Purple
+            wrapper.add(bubble, BorderLayout.WEST);
+        } else if (isSentByMe) {
+            bubble.setBackground(new Color(0xE1, 0xF5, 0xFE)); // Light Blue
             usernameLabel.setForeground(new Color(0x00, 0x5A, 0x9E));
             wrapper.add(bubble, BorderLayout.EAST);
         } else {
-            bubble.setBackground(new Color(0xF1, 0xF1, 0xF1));
+            bubble.setBackground(new Color(0xF1, 0xF1, 0xF1)); // Gray
             usernameLabel.setForeground(new Color(0x00, 0x7B, 0xFF));
             wrapper.add(bubble, BorderLayout.WEST);
         }
