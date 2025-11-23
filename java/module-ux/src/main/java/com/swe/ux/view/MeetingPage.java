@@ -1,15 +1,14 @@
 package com.swe.ux.view;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
+import com.swe.controller.Meeting.MeetingSession;
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.App;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.ui.*;
-import com.swe.ux.viewmodel.CanvasViewModel;
-import com.swe.ux.viewmodel.ChatViewModel;
-import com.swe.ux.viewmodel.MeetingViewModel;
-import com.swe.ux.viewmodel.ParticipantsViewModel;
+import com.swe.ux.viewmodel.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -231,7 +230,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
             return panel;
         }
 
-        ChatViewModel chatViewModel = new ChatViewModel(meetingViewModel.rpc);
+        ChatViewModel chatViewModel = new ChatViewModel(meetingViewModel.rpc, meetingViewModel.currentUser);
         ChatView chatView = new ChatView(chatViewModel);
         panel.add(chatView, BorderLayout.CENTER);
         return panel;
