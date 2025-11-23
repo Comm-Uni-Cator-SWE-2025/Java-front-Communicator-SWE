@@ -39,7 +39,7 @@ public class MainViewModel extends BaseViewModel {
     
     /**
      * Sets the current user and updates the UI accordingly.
-     * @param user The current user, or null if logged out
+     *  The current user, or null if logged out
      */
     public void setCurrentUser(UserProfile user) {
         this.currentUser.set(user);
