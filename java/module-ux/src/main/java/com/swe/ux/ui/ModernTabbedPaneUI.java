@@ -1,3 +1,14 @@
+
+/*
+ * -----------------------------------------------------------------------------
+ *  File: ModernTabbedPaneUI.java
+ *  Owner: Aryan Mathur
+ *  Roll Number : 122201017
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.ux.ui;
 
 import java.awt.BasicStroke;
