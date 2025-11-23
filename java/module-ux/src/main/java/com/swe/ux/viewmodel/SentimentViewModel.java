@@ -1,5 +1,10 @@
+/**
+ *  Contributed by Jyoti & Kishore.
+ */
+
 package com.swe.ux.viewmodel;
 
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.model.analytics.SentimentPoint;
 import com.swe.ux.service.SentimentDataService;
 import javafx.beans.property.BooleanProperty;
@@ -27,8 +32,10 @@ public class SentimentViewModel {
     private final DoubleProperty maxY;
     private final IntegerProperty lowerBound;
     private final IntegerProperty upperBound;
+    private final AbstractRPC rpc;
 
-    public SentimentViewModel() {
+    public SentimentViewModel(AbstractRPC rpc) {
+        this.rpc = rpc;
         this.dataService = new SentimentDataService();
         this.allData = FXCollections.observableArrayList();
         this.currentStartIndex = new SimpleIntegerProperty(0);
@@ -42,9 +49,10 @@ public class SentimentViewModel {
     }
 
     public void fetchAndUpdateData() {
-        String json = dataService.fetchNextData();
+        String json = dataService.fetchNextData(rpc);
         
         if (!json.isEmpty()) {
+            System.out.println("Updating Sentiment Data with: " + json);
             updateData(json);
             autoMode.set(true);
         }

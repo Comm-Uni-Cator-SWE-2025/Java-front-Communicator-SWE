@@ -1,3 +1,7 @@
+/**
+ *  Contributed by Kishore.
+ */
+
 package com.swe.ux.model.analytics;
 
 public class SentimentPoint {
