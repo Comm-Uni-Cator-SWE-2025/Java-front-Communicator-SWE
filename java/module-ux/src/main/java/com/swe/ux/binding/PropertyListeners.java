@@ -1,3 +1,12 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: binding.java
+ *  Owner: Aryan Mathur
+ *  Roll Number : 122201017
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
 package com.swe.ux.binding;
 
 import com.swe.controller.Meeting.UserProfile;
