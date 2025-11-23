@@ -1,13 +1,13 @@
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\CloudPostTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\CloudTestBase.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\cosmosoperations\DbConnectorFactoryTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\CloudGetTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\cosmosoperations\CosmosOperationsTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\CloudUpdateTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\crashhandler\CrashHandlerTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionlibrary\CloudFunctionLibraryTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\cosmosoperations\MockDbConnectorTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\FakeResponseBuilder.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\CloudDeleteTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\CloudHelperTest.java
-D:\sem\sem7\software engineering\Group Project\Actual_repo\Frontend\Java\Java-front-Communicator-SWE\java\module-cloud\src\test\java\com\swe\cloud\functionapp\CloudCreateTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/CloudGetTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/CloudHelperTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/cosmosoperations/CosmosOperationsTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/CloudDeleteTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/cosmosoperations/DbConnectorFactoryTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/cosmosoperations/MockDbConnectorTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/FakeResponseBuilder.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/crashhandler/CrashHandlerTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionlibrary/CloudFunctionLibraryTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/CloudUpdateTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/CloudTestBase.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/CloudCreateTest.java
+/Users/vaibhav.yadav/Desktop/canvasintegr/Java-Front-Communicator-SWE/java/module-cloud/src/test/java/com/swe/cloud/functionapp/CloudPostTest.java

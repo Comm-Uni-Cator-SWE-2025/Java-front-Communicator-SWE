@@ -14,11 +14,12 @@ import javax.swing.UIManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swe.ux.App;
+import com.swe.ux.ui.ModernTabbedPaneUI;
+
 import datastructures.Entity;
 import datastructures.TimeRange;
 import functionlibrary.CloudFunctionLibrary;
-import com.swe.ux.App;
-import com.swe.ux.ui.ModernTabbedPaneUI;
 
 public class ThemeManager {
 
@@ -52,17 +53,34 @@ public class ThemeManager {
         if (app == null || app.getCurrentUser() == null) return;
 
         String username = app.getCurrentUser().getEmail();
-        System.out.println("Username: " + username);
+        System.out.println("Loading theme for user: " + username);
         if (username == null || username.isEmpty()) return;
 
         Entity req = new Entity(THEME_CONTAINER, THEME_TYPE, username, THEME_KEY, -1, new TimeRange(0, 0), null);
         cloudLibrary.cloudGet(req).thenAccept(res -> {
-            System.out.println("Response: " + res);
-            JsonNode dataNode = res.data();
-            String themeStr = dataNode.isTextual() ? dataNode.asText() : dataNode.get(THEME_KEY).asText();
-
-            currentTheme = "dark".equalsIgnoreCase(themeStr) ? new DarkTheme() : new LightTheme();
-            SwingUtilities.invokeLater(this::applyThemeToUI);
+            System.out.println("Theme fetch response: " + res);
+            if (res.data() != null) {
+                try {
+                    JsonNode dataNode = res.data();
+                    String themeStr = dataNode.isTextual() ? dataNode.asText() : dataNode.get(THEME_KEY).asText();
+                    
+                    currentTheme = "dark".equalsIgnoreCase(themeStr) ? new DarkTheme() : new LightTheme();
+                    System.out.println("Theme loaded from cloud: " + themeStr);
+                    SwingUtilities.invokeLater(this::applyThemeToUI);
+                } catch (Exception e) {
+                    System.err.println("Error parsing theme data: " + e.getMessage());
+                    // Keep current theme as default
+                }
+            } else {
+                System.out.println("No theme found in cloud, using default");
+                // First time login - save current theme to cloud
+                saveThemeToCloud();
+            }
+        }).exceptionally(ex -> {
+            System.err.println("Failed to load theme from cloud: " + ex.getMessage());
+            // Keep current theme as default and try to save it
+            saveThemeToCloud();
+            return null;
         });
     }
 
@@ -78,9 +96,23 @@ public class ThemeManager {
             JsonNode dataNode = mapper.createObjectNode().put(THEME_KEY, themeValue);
 
             Entity req = new Entity(THEME_CONTAINER, THEME_TYPE, username, THEME_KEY, -1, new TimeRange(0, 0), dataNode);
-            cloudLibrary.cloudPost(req);
-            System.out.println("Theme saved to cloud: " + themeValue);
-        } catch (Exception ignored) {}
+            
+            // Try to update first, if it fails (doesn't exist), then create it
+            cloudLibrary.cloudUpdate(req).thenAccept(response -> {
+                System.out.println("Theme updated in cloud: " + themeValue);
+            }).exceptionally(ex -> {
+                // If update fails, try to post (create new)
+                cloudLibrary.cloudPost(req).thenAccept(response -> {
+                    System.out.println("Theme created in cloud: " + themeValue);
+                }).exceptionally(createEx -> {
+                    System.err.println("Failed to save theme to cloud: " + createEx.getMessage());
+                    return null;
+                });
+                return null;
+            });
+        } catch (Exception e) {
+            System.err.println("Exception saving theme: " + e.getMessage());
+        }
     }
 
 
