@@ -79,6 +79,7 @@ public class SentimentViewPane extends StackPane {
     }
 
     private void buildLayout() {
+        System.out.println("Building Sentiment View Pane Layout...");
         root = new GridPane();
         root.setHgap(5);
         root.setVgap(5);

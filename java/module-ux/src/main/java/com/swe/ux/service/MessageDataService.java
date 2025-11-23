@@ -20,19 +20,19 @@ public class MessageDataService {
         String data = null;
         try {
             System.out.println("Fetching Message Data from Core Module...");
-            byte[] json = rpc.call("core/AiSentiment", new byte[0]).get();
+            byte[] json = rpc.call("core/AiAction", new byte[0]).get();
             System.out.println("Received Message Data: " + new String(json));
-            if(json != null){
+            if (json != null) {
                 data = DataSerializer.deserialize(json, String.class);
             }
         } catch (InterruptedException | ExecutionException | JsonProcessingException e) {
             e.printStackTrace();
         }
 
-        if(data == null || data.isEmpty()) {
+        if (data == null || data.isEmpty()) {
             return "";
         }
-        
+
         jsonList.add(data);
         String response = jsonList.get(currentIndex);
         currentIndex = (currentIndex + 1) % jsonList.size();
@@ -41,7 +41,7 @@ public class MessageDataService {
 
     public List<String> parseJson(String json) {
         List<String> messages = new ArrayList<>();
-        
+
         try {
             // Remove brackets and split by quotes
             String cleaned = json.trim();
@@ -51,10 +51,10 @@ public class MessageDataService {
             if (cleaned.endsWith("]")) {
                 cleaned = cleaned.substring(0, cleaned.length() - 1);
             }
-            
+
             // Split by "," pattern (quote-comma-quote)
             String[] parts = cleaned.split("\",\\s*\"");
-            
+
             for (String part : parts) {
                 String message = part.trim();
                 // Remove leading/trailing quotes
@@ -64,7 +64,7 @@ public class MessageDataService {
                 if (message.endsWith("\"")) {
                     message = message.substring(0, message.length() - 1);
                 }
-                
+
                 if (!message.isEmpty()) {
                     messages.add(message);
                 }
@@ -72,7 +72,7 @@ public class MessageDataService {
         } catch (Exception e) {
             System.out.println("Error parsing messages: " + e.getMessage());
         }
-        
+
         return messages;
     }
 }
