@@ -1,7 +1,7 @@
 
 /*
  * -----------------------------------------------------------------------------
- *  File: LightTheme.java
+ *  File: AnalogClockPanel.java
  *  Owner: Aryan Mathur
  *  Roll Number : 122201017
  *  Module : UX
