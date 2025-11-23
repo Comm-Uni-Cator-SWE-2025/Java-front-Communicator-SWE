@@ -1,3 +1,13 @@
+
+/*
+ * -----------------------------------------------------------------------------
+ *  File: MainPage.java
+ *  Owner: Aryan Mathur
+ *  Roll Number : 122201017
+ *  Module : UX
+ *
+ * -----------------------------------------------------------------------------
+ */
 package com.swe.ux.view;
 
 import com.swe.controller.Meeting.UserProfile;
