@@ -1,5 +1,6 @@
 package com.swe.ux.view;
 
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.theme.ThemeManager;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -17,7 +18,7 @@ public class SentimentInsightsPanel extends JPanel {
 
     private final JFXPanel fxPanel;
 
-    public SentimentInsightsPanel() {
+    public SentimentInsightsPanel(AbstractRPC rpc) {
         setLayout(new BorderLayout());
         setOpaque(false);
 
@@ -26,7 +27,7 @@ public class SentimentInsightsPanel extends JPanel {
 
         Platform.setImplicitExit(false);
         Platform.runLater(() -> {
-            SentimentViewPane pane = new SentimentViewPane();
+            SentimentViewPane pane = new SentimentViewPane(rpc);
             Scene scene = new Scene(pane);
             fxPanel.setScene(scene);
         });

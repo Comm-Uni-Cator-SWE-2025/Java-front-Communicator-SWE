@@ -1,5 +1,5 @@
 /**
- *  Contributed by Sandeep Kumar.
+ *  Contributed by Pushti Vasoya.
  */
 package com.swe.ux.view;
 
@@ -23,9 +23,10 @@ public class ParticipantsView extends JPanel {
     private JLabel countLabel;
     private JPanel participantsListPanel;
     private JScrollPane scrollPane;
-    
+
     /**
      * Creates a new ParticipantsView.
+     * 
      * @param viewModel The ParticipantsViewModel to use
      */
     public ParticipantsView(ParticipantsViewModel viewModel) {
@@ -34,34 +35,34 @@ public class ParticipantsView extends JPanel {
         setupBindings();
         applyTheme();
     }
-    
+
     /**
      * Initializes the UI components.
      */
     private void initializeUI() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
-        
+
         // Header with participant count
         JPanel headerPanel = new JPanel(new BorderLayout());
         countLabel = new JLabel("Participants (0)", JLabel.LEFT);
         countLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         headerPanel.add(countLabel, BorderLayout.WEST);
         add(headerPanel, BorderLayout.NORTH);
-        
+
         // Participants list
         participantsListPanel = new JPanel();
         participantsListPanel.setLayout(new BoxLayout(participantsListPanel, BoxLayout.Y_AXIS));
         participantsListPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
-        
+
         scrollPane = new JScrollPane(participantsListPanel);
         scrollPane.setBorder(null);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        
+
         add(scrollPane, BorderLayout.CENTER);
     }
-    
+
     /**
      * Sets up bindings between ViewModel and UI components.
      */
@@ -73,14 +74,14 @@ public class ParticipantsView extends JPanel {
                 countLabel.setText("Participants (" + count + ")");
             });
         });
-        
+
         // Listen to participant list changes
         viewModel.participants.addListener(PropertyListeners.onListChanged((List<UserProfile> participants) -> {
             SwingUtilities.invokeLater(() -> {
                 updateParticipantsList(participants);
             });
         }));
-        
+
         // Initial update
         SwingUtilities.invokeLater(() -> {
             int count = viewModel.participantCount.get();
@@ -88,14 +89,15 @@ public class ParticipantsView extends JPanel {
             updateParticipantsList(viewModel.getParticipants());
         });
     }
-    
+
     /**
      * Updates the participants list display.
+     * 
      * @param participants The list of participants to display
      */
     private void updateParticipantsList(List<UserProfile> participants) {
         participantsListPanel.removeAll();
-        
+
         if (participants == null || participants.isEmpty()) {
             JLabel emptyLabel = new JLabel("No participants", JLabel.CENTER);
             emptyLabel.setFont(new Font("Segoe UI", Font.ITALIC, 14));
@@ -108,13 +110,14 @@ public class ParticipantsView extends JPanel {
                 participantsListPanel.add(Box.createVerticalStrut(8));
             }
         }
-        
+
         participantsListPanel.revalidate();
         participantsListPanel.repaint();
     }
-    
+
     /**
      * Creates a panel for a single participant item.
+     * 
      * @param participant The participant user
      * @return A JPanel displaying the participant information
      */
@@ -122,36 +125,36 @@ public class ParticipantsView extends JPanel {
         JPanel itemPanel = new JPanel(new BorderLayout(10, 5));
         itemPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
         itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        
+
         // Participant name
         String displayName = participant.getDisplayName();
         String name = displayName != null && !displayName.isEmpty() ? displayName : participant.getEmail();
         JLabel nameLabel = new JLabel(name);
         nameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         itemPanel.add(nameLabel, BorderLayout.WEST);
-        
+
         // Online indicator (small circle)
         JPanel indicatorPanel = new JPanel();
         indicatorPanel.setPreferredSize(new Dimension(10, 10));
         indicatorPanel.setOpaque(true);
         indicatorPanel.setBackground(new Color(76, 175, 80)); // Green for online
         itemPanel.add(indicatorPanel, BorderLayout.EAST);
-        
+
         return itemPanel;
     }
-    
+
     /**
      * Applies the current theme to the component.
      */
     private void applyTheme() {
         ThemeManager themeManager = ThemeManager.getInstance();
         Theme theme = themeManager.getCurrentTheme();
-        
+
         setBackground(theme.getBackgroundColor());
         countLabel.setForeground(theme.getTextColor());
         participantsListPanel.setBackground(theme.getBackgroundColor());
         scrollPane.getViewport().setBackground(theme.getBackgroundColor());
-        
+
         // Apply theme to all participant items
         for (Component comp : participantsListPanel.getComponents()) {
             if (comp instanceof JPanel itemPanel) {
@@ -165,4 +168,3 @@ public class ParticipantsView extends JPanel {
         }
     }
 }
-

@@ -172,7 +172,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
         CanvasViewModel canvasVM = new CanvasViewModel(new CanvasState());
         CanvasPage canvasPage = new CanvasPage(canvasVM);
-        SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel();
+        SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel(meetingViewModel.rpc);
 
         stageTabs.addTab("  Screen & Video  ", wrap(screenNVideo));
         stageTabs.addTab("  Canvas  ", wrap(canvasPage));

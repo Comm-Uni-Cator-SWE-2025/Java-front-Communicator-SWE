@@ -1,6 +1,11 @@
+/**
+ *  Contributed by Kishore & Jyoti.
+ */
+
 package com.swe.ux.view;
 
 import com.swe.ux.model.analytics.ShapeCount;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.model.analytics.SentimentPoint;
 import com.swe.ux.service.MessageDataService;
 import com.swe.ux.viewmodel.ShapeViewModel;
@@ -34,7 +39,8 @@ import java.util.TimerTask;
 
 /**
  * JavaFX pane that renders the Sentiment + Shape analytics dashboard.
- * Extracted from the standalone SentimentView application so it can be embedded in Swing.
+ * Extracted from the standalone SentimentView application so it can be embedded
+ * in Swing.
  */
 public class SentimentViewPane extends StackPane {
     private final SentimentViewModel viewModel;
@@ -55,9 +61,11 @@ public class SentimentViewPane extends StackPane {
     private BarChart<String, Number> barChart;
     private CategoryAxis categoryAxis;
     private NumberAxis barYAxis;
+    AbstractRPC rpc;
 
-    public SentimentViewPane() {
-        this.viewModel = new SentimentViewModel();
+    public SentimentViewPane(AbstractRPC rpc) {
+        this.rpc = rpc;
+        this.viewModel = new SentimentViewModel(rpc);
         this.shapeViewModel = new ShapeViewModel();
         this.messageDataService = new MessageDataService();
         this.allMessages = new ArrayList<>();
@@ -211,7 +219,7 @@ public class SentimentViewPane extends StackPane {
     }
 
     private void updateMessages() {
-        String json = messageDataService.fetchNextData();
+        String json = messageDataService.fetchNextData(rpc);
         List<String> messages = messageDataService.parseJson(json);
 
         for (int i = messages.size() - 1; i >= 0; i--) {
@@ -242,12 +250,11 @@ public class SentimentViewPane extends StackPane {
         VBox box = new VBox(5);
         box.setPadding(new Insets(10));
         box.setStyle(
-            "-fx-background-color: " + getColorByIndex(index) + ";" +
-            "-fx-background-radius: 5;" +
-            "-fx-border-color: #cccccc;" +
-            "-fx-border-radius: 5;" +
-            "-fx-border-width: 1;"
-        );
+                "-fx-background-color: " + getColorByIndex(index) + ";" +
+                        "-fx-background-radius: 5;" +
+                        "-fx-border-color: #cccccc;" +
+                        "-fx-border-radius: 5;" +
+                        "-fx-border-width: 1;");
         box.setMaxWidth(Double.MAX_VALUE);
 
         Label messageLabel = new Label(message);
@@ -262,10 +269,10 @@ public class SentimentViewPane extends StackPane {
 
     private String getColorByIndex(int index) {
         String[] colors = {
-            "#E3F2FD",
-            "#F3E5F5",
-            "#E8F5E9",
-            "#FFF3E0"
+                "#E3F2FD",
+                "#F3E5F5",
+                "#E8F5E9",
+                "#FFF3E0"
         };
         return colors[index % 4];
     }
@@ -336,12 +343,11 @@ public class SentimentViewPane extends StackPane {
         }
 
         barChart.getData().addAll(
-            freeHandSeries,
-            straightLineSeries,
-            rectangleSeries,
-            ellipseSeries,
-            triangleSeries
-        );
+                freeHandSeries,
+                straightLineSeries,
+                rectangleSeries,
+                ellipseSeries,
+                triangleSeries);
 
         applyBarColors();
 
@@ -353,11 +359,11 @@ public class SentimentViewPane extends StackPane {
     private void applyBarColors() {
         Platform.runLater(() -> {
             String[] colors = {
-                "#3498db",
-                "#e74c3c",
-                "#2ecc71",
-                "#f39c12",
-                "#9b59b6"
+                    "#3498db",
+                    "#e74c3c",
+                    "#2ecc71",
+                    "#f39c12",
+                    "#9b59b6"
             };
 
             for (int i = 0; i < barChart.getData().size() && i < colors.length; i++) {

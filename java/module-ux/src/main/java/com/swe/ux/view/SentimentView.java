@@ -1,3 +1,7 @@
+/**
+ *  Contributed by Jyoti.
+ */
+
 package com.swe.ux.view;
 
 import javafx.application.Application;
@@ -6,7 +10,8 @@ import javafx.stage.Stage;
 
 /**
  * Standalone launcher for the Sentiment analytics dashboard.
- * Delegates all UI construction to SentimentViewPane so it can be reused elsewhere.
+ * Delegates all UI construction to SentimentViewPane so it can be reused
+ * elsewhere.
  */
 public class SentimentView extends Application {
 

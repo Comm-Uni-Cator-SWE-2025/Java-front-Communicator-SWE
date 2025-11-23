@@ -1,3 +1,7 @@
+/**
+ *  Contributed by Ram Charan.
+ */
+
 package com.swe.ux.viewmodel;
 
 import com.swe.ux.model.analytics.ShapeCount;
@@ -26,19 +30,19 @@ public class ShapeViewModel {
 
     public void fetchAndUpdateData() {
         String json = dataService.fetchNextData();
-        
+
         if (!json.isEmpty()) {
             ShapeCount newData = dataService.parseJson(json);
             allData.add(newData);
             autoMode.set(true);
         }
-        
+
         calculateViewBounds();
     }
 
     private void calculateViewBounds() {
         int n = allData.size();
-        
+
         if (autoMode.get()) {
             // Show last 3 snapshots
             currentStartIndex.set(Math.max(0, n - windowSize.get()));
@@ -62,11 +66,11 @@ public class ShapeViewModel {
     public ObservableList<ShapeCount> getWindowData() {
         int start = currentStartIndex.get();
         int end = Math.min(start + windowSize.get(), allData.size());
-        
+
         if (start >= allData.size()) {
             return FXCollections.observableArrayList();
         }
-        
+
         return FXCollections.observableArrayList(allData.subList(start, end));
     }
 
