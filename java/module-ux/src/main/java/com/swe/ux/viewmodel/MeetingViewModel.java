@@ -13,7 +13,7 @@ import com.swe.ux.model.Meeting;
  * ViewModel for managing meeting-related business logic and state.
  */
 public class MeetingViewModel extends BaseViewModel {
-    private final UserProfile currentUser;
+    public final UserProfile currentUser;
     private Meeting currentMeeting = new Meeting("Meeting");
     public AbstractRPC rpc;
     

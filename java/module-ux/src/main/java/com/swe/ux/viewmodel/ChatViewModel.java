@@ -2,6 +2,7 @@ package com.swe.ux.viewmodel;
 
 import com.swe.chat.FileMessageSerializer;
 import com.swe.chat.MessageVM;
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.RPC;
 import com.swe.ux.model.ChatMessage;
@@ -30,8 +31,8 @@ public class ChatViewModel {
     private static ChatViewModel INSTANCE;
     private final AbstractRPC rpc;
     // TODO: In a real app, get this from your AuthService
-    private final String currentUserId = "user-" + UUID.randomUUID().toString().substring(0, 8);
-    private final String currentDisplayName = "A";
+    private final String userEmail;
+    private final String userDisplayName;
 
 //    private static final long MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
@@ -49,8 +50,10 @@ public class ChatViewModel {
     private Consumer<String> onShowSuccessDialog;
 
     // --- Constructor (Dependency Injection) ---
-    public ChatViewModel(AbstractRPC RPC) {
+    public ChatViewModel(AbstractRPC RPC, UserProfile userProfile) {
         this.rpc = RPC;
+        this.userEmail = userProfile.getEmail();
+        this.userDisplayName = userProfile.getDisplayName();
         // Subscribe to incoming messages broadcast from the Core
         this.rpc.subscribe("chat:new-message", this::handleBackendTextMessage);
         this.rpc.subscribe("chat:file-metadata-received", this::handleBackendFileMetadata);
@@ -250,8 +253,8 @@ public class ChatViewModel {
         final String messageId = UUID.randomUUID().toString();
         final ChatMessage messageToSend = new ChatMessage(
                 messageId,
-                this.currentUserId,
-                this.currentDisplayName,
+                this.userEmail,
+                this.userDisplayName,
                 messageText,
                 this.currentReplyId
         );
@@ -295,8 +298,8 @@ public class ChatViewModel {
         // Create PATH-MODE FileMessage
         final FileMessage messageToSend = new FileMessage(
                 messageId,
-                this.currentUserId,
-                this.currentDisplayName,
+                this.userEmail,
+                this.userDisplayName,
                 caption,
                 file.getName(),
                 cleanPath,  //  PATH, not bytes
@@ -353,7 +356,7 @@ public class ChatViewModel {
     }
 
     private void handleIncomingMessage(
-            String messageId, String userId, String senderDisplayName,
+            String messageId, String userEmail, String senderDisplayName,
             String formattedTime, String replyToId,
             String content,              // Text or Caption
             String fileName,             // File name
@@ -365,7 +368,7 @@ public class ChatViewModel {
             return;
         }
 
-        final boolean isSentByMe = userId.equals(this.currentUserId);
+        final boolean isSentByMe = userEmail.equals(this.userEmail);
         final String username = isSentByMe ? "You" : senderDisplayName;
 
         String quotedContent = null;
