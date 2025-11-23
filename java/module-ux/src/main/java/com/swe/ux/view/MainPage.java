@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Simplified Main Page: small header, large insights pane, and 
+ * Main Page: small header, large insights pane, and 
  * meeting join/start controls left-aligned.
  */
 public class MainPage extends FrostedBackgroundPanel {
@@ -63,9 +63,8 @@ public class MainPage extends FrostedBackgroundPanel {
         startClock();
         applyTheme();
     }
-    /**
- * Enables or disables the Start Meeting button and related UI controls.
- */
+
+
 /**
  * Enables or disables the Start Meeting button and related UI controls.
  */
@@ -99,7 +98,7 @@ public void setJoinControlsEnabled(boolean enabled) {
         setBorder(new EmptyBorder(20, 30, 30, 30));
 
         // ------------------------------------------------------
-        // SMALL HEADER
+        //  HEADER
         // ------------------------------------------------------
         headerCard = new SoftCardPanel(24);
         headerCard.setCornerRadius(24);
@@ -150,12 +149,8 @@ public void setJoinControlsEnabled(boolean enabled) {
 
         add(headerCard, BorderLayout.NORTH);
 
-        // Replace meetingCodeField definition:
-
-        // Inside initializeUI(), REPLACE your joinPanel block with this:
-
-        // ------------------------------------------------------
-        // JOIN / START MEETING BAR (centered UNDER HEADER)
+//-----------------
+        // JOIN / START MEETING BAR ( UNDER HEADER)
         // ------------------------------------------------------
         JPanel joinPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
         joinPanel.setOpaque(false);
