@@ -12,15 +12,30 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
 
+/**
+ * Service for fetching and parsing message data from the core module.
+ */
 public class MessageDataService {
-    private static final List<String> jsonList = new ArrayList<>();
+    /**
+     * List of JSON message strings.
+     */
+    private static final List<String> JSON_LIST = new ArrayList<>();
+    /**
+     * Current index for cycling through messages.
+     */
     private int currentIndex = 0;
 
-    public String fetchNextData(AbstractRPC rpc) {
+    /**
+     * Fetches the next message data from the core module.
+     *
+     * @param rpc the RPC interface to communicate with core
+     * @return the message data string
+     */
+    public String fetchNextData(final AbstractRPC rpc) {
         String data = null;
         try {
             System.out.println("Fetching Message Data from Core Module...");
-            byte[] json = rpc.call("core/AiAction", new byte[0]).get();
+            final byte[] json = rpc.call("core/AiAction", new byte[0]).get();
             System.out.println("Received Message Data: " + new String(json));
             if (json != null) {
                 data = DataSerializer.deserialize(json, String.class);
@@ -33,14 +48,20 @@ public class MessageDataService {
             return "";
         }
 
-        jsonList.add(data);
-        String response = jsonList.get(currentIndex);
-        currentIndex = (currentIndex + 1) % jsonList.size();
+        JSON_LIST.add(data);
+        final String response = JSON_LIST.get(currentIndex);
+        currentIndex = (currentIndex + 1) % JSON_LIST.size();
         return response;
     }
 
-    public List<String> parseJson(String json) {
-        List<String> messages = new ArrayList<>();
+    /**
+     * Parses JSON string to extract list of messages.
+     *
+     * @param json the JSON string to parse
+     * @return list of parsed messages
+     */
+    public List<String> parseJson(final String json) {
+        final List<String> messages = new ArrayList<>();
 
         try {
             // Remove brackets and split by quotes
@@ -53,7 +74,7 @@ public class MessageDataService {
             }
 
             // Split by "," pattern (quote-comma-quote)
-            String[] parts = cleaned.split("\",\\s*\"");
+            final String[] parts = cleaned.split("\",\\s*\"");
 
             for (String part : parts) {
                 String message = part.trim();

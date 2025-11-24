@@ -4,8 +4,10 @@
  * <p>This package includes:
  * <ul>
  * <li>{@link com.swe.canvas.datamodel.shape.Shape}: An abstract base class for all shapes.</li>
- * <li>Concrete shape implementations (e.g., {@link com.swe.canvas.datamodel.shape.RectangleShape}).</li>
- * <li>Supporting classes like {@link com.swe.canvas.datamodel.shape.Point} and {@link com.swe.canvas.datamodel.shape.ShapeId}.</li>
+ * <li>Concrete shape implementations 
+ * (e.g., {@link com.swe.canvas.datamodel.shape.RectangleShape}).</li>
+ * <li>Supporting classes like {@link com.swe.canvas.datamodel.shape.Point} 
+ * and {@link com.swe.canvas.datamodel.shape.ShapeId}.</li>
  * <li>A {@link com.swe.canvas.datamodel.shape.ShapeFactory} for object creation.</li>
  * </ul>
  *

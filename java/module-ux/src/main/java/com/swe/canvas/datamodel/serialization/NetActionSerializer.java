@@ -10,7 +10,21 @@ import com.swe.canvas.datamodel.action.ResurrectShapeAction;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.ShapeId;
 
-public class NetActionSerializer {
+/**
+ * Serializer for Action objects in network messages.
+ *
+ * <p>Provides manual JSON serialization and deserialization for Action objects
+ * to support network transmission.</p>
+ *
+ * @author Canvas Team
+ */
+public final class NetActionSerializer {
+
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private NetActionSerializer() {
+    }
     // =========================================================================
     // Action Serialization/Deserialization
     // =========================================================================
@@ -30,8 +44,10 @@ public class NetActionSerializer {
         sb.append("{");
 
         // 1. Core Metadata Fields
-        sb.append(JsonUtils.jsonEscape("ActionId")).append(":").append(JsonUtils.jsonEscape(action.getActionId())).append(",");
-        sb.append(JsonUtils.jsonEscape("ActionType")).append(":").append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
+        sb.append(JsonUtils.jsonEscape("ActionId")).append(":")
+                .append(JsonUtils.jsonEscape(action.getActionId())).append(",");
+        sb.append(JsonUtils.jsonEscape("ActionType")).append(":")
+                .append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
         
         
 
@@ -63,8 +79,11 @@ public class NetActionSerializer {
     /**
      * Manually deserializes a JSON string back into a concrete Action object.
      *
-     * IMPORTANT: This method must use the Action subclass constructors
-     * (e.g., CreateShapeAction, ModifyShapeAction) for correct object creation.
+     * <p>IMPORTANT: This method must use the Action subclass constructors
+     * (e.g., CreateShapeAction, ModifyShapeAction) for correct object creation.</p>
+     *
+     * @param json The JSON string to deserialize.
+     * @return The deserialized Action object.
      */
     public static Action deserializeAction(final String json) {
         if (json == null || json.isEmpty() || "null".equals(json)) {
@@ -112,7 +131,7 @@ public class NetActionSerializer {
                     throw new SerializationException("Unknown action type: " + actionType);
             }
 
-        } catch (SerializationException e) {
+        } catch (final SerializationException e) {
             throw new SerializationException("Failed to manually deserialize Action: " + e.getMessage(), e);
         }
     }

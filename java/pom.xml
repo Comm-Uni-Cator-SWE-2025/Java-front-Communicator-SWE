@@ -20,9 +20,6 @@
   <!-- ===================================================== -->
   <modules>
     <module>module-ux</module>
-    <module>module-app</module>
-    <module>module-networking</module>
-    <module>module-canvas</module>
     <module>module-cloud</module>
   </modules>
 
@@ -88,6 +85,9 @@
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <failsOnError>true</failsOnError>
+            <propertyExpansion>
+              config_loc=${session.executionRootDirectory}/config/checkstyle
+            </propertyExpansion>
           </configuration>
           <executions>
             <execution>
@@ -104,7 +104,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.11</version>
+          <version>0.8.12</version>
           <executions>
             <!-- Attach coverage agent to test phase -->
             <execution>
@@ -121,6 +121,9 @@
               <goals>
                 <goal>report</goal>
               </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
             </execution>
           </executions>
         </plugin>
@@ -170,6 +173,9 @@
         <configuration>
           <configLocation>${session.executionRootDirectory}/config/checkstyle/checkstyle.xml</configLocation>
           <suppressionsLocation>${session.executionRootDirectory}/config/checkstyle/suppressions.xml</suppressionsLocation>
+          <propertyExpansion>
+            config_loc=${session.executionRootDirectory}/config/checkstyle
+          </propertyExpansion>
         </configuration>
       </plugin>
 

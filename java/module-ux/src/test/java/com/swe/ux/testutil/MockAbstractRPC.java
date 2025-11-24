@@ -18,18 +18,18 @@ public class MockAbstractRPC implements AbstractRPC {
     private final Map<String, Function<byte[], byte[]>> subscriptions = new HashMap<>();
 
     @Override
-    public void subscribe(String methodName, Function<byte[], byte[]> method) {
+    public void subscribe(final String methodName, final Function<byte[], byte[]> method) {
         subscriptions.put(methodName, method);
     }
 
     @Override
-    public Thread connect(int portNumber) throws IOException, InterruptedException, ExecutionException {
+    public Thread connect(final int portNumber) throws IOException, InterruptedException, ExecutionException {
         return new Thread();
     }
 
     @Override
-    public CompletableFuture<byte[]> call(String methodName, byte[] data) {
-        Function<byte[], CompletableFuture<byte[]>> handler = methodHandlers.get(methodName);
+    public CompletableFuture<byte[]> call(final String methodName, final byte[] data) {
+        final Function<byte[], CompletableFuture<byte[]>> handler = methodHandlers.get(methodName);
         if (handler != null) {
             return handler.apply(data);
         }
@@ -37,20 +37,36 @@ public class MockAbstractRPC implements AbstractRPC {
         return CompletableFuture.completedFuture(new byte[0]);
     }
 
-    // Helper method for tests to register mock responses
-    public void registerHandler(String methodName, Function<byte[], CompletableFuture<byte[]>> handler) {
+    /**
+     * Helper method for tests to register mock responses.
+     *
+     * @param methodName the method name
+     * @param handler the handler function
+     */
+    public void registerHandler(final String methodName,
+                                final Function<byte[], CompletableFuture<byte[]>> handler) {
         methodHandlers.put(methodName, handler);
     }
 
-    // Helper method for tests to register simple responses
-    public void registerResponse(String methodName, byte[] response) {
+    /**
+     * Helper method for tests to register simple responses.
+     *
+     * @param methodName the method name
+     * @param response the response data
+     */
+    public void registerResponse(final String methodName, final byte[] response) {
         methodHandlers.put(methodName, data -> CompletableFuture.completedFuture(response));
     }
 
-    // Helper method for tests to register exceptions
-    public void registerException(String methodName, Exception exception) {
+    /**
+     * Helper method for tests to register exceptions.
+     *
+     * @param methodName the method name
+     * @param exception the exception to throw
+     */
+    public void registerException(final String methodName, final Exception exception) {
         methodHandlers.put(methodName, data -> {
-            CompletableFuture<byte[]> future = new CompletableFuture<>();
+            final CompletableFuture<byte[]> future = new CompletableFuture<>();
             future.completeExceptionally(exception);
             return future;
         });

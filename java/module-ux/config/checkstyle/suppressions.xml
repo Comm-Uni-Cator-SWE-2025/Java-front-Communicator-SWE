@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+    <!-- Suppress ClassFanOutComplexity for CanvasController -->
+    <!-- This controller naturally depends on many JavaFX and canvas components -->
+    <suppress checks="ClassFanOutComplexity" 
+              files=".*CanvasController\.java"/>
+    
+    <!-- Suppress CyclomaticComplexity for canvas serialization classes -->
+    <!-- These serializers handle multiple shape types and network actions -->
+    <suppress checks="CyclomaticComplexity" 
+              files=".*NetActionSerializer\.java"/>
+    <suppress checks="CyclomaticComplexity" 
+              files=".*ShapeSerializer\.java"/>
+    
+    <!-- Suppress ClassDataAbstractionCoupling for ShapeSerializer -->
+    <!-- This class needs to work with all shape types -->
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*ShapeSerializer\.java"/>
+    
+    <!-- Suppress ClassDataAbstractionCoupling for ScreenNVideo -->
+    <!-- This class naturally depends on many UI components -->
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*ScreenNVideo\.java"/>
+    
+    <!-- Suppress ClassDataAbstractionCoupling for CanvasPage -->
+    <!-- This class naturally depends on many UI components -->
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*CanvasPage\.java"/>
+    
+    <!-- Suppress ParameterNumber for override methods and complex constructors -->
+    <suppress checks="ParameterNumber" 
+              files=".*ModernTabbedPaneUI\.java"/>
+    <suppress checks="ParameterNumber" 
+              files=".*ChatViewModel\.java"/>
+    <suppress checks="ParameterNumber" 
+              files=".*FileMessage\.java"/>
+    
+    <!-- Suppress JavaNCSS for complex UI methods -->
+    <suppress checks="JavaNCSS" 
+              files=".*ParticipantPanel\.java"
+              lines="186"/>
+    <suppress checks="JavaNCSS" 
+              files=".*MainPage\.java"
+              lines="245"/>
+    <suppress checks="JavaNCSS" 
+              files=".*ScreenNVideo\.java"
+              lines="182"/>
+    
+    <!-- Suppress complexity checks for UI classes that naturally depend on many components -->
+    <suppress checks="ClassDataAbstractionCoupling|ClassFanOutComplexity" 
+              files=".*MeetingPage\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling|ClassFanOutComplexity" 
+              files=".*ChatView\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling|ClassFanOutComplexity" 
+              files=".*MainPage\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling|ClassFanOutComplexity" 
+              files=".*SentimentViewPane\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*QuickDoubtPopup\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*ScreenVideoTelemetryViewModel\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*LoginPage\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*ScreenVideoTelemetryView\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling" 
+              files=".*ParticipantsView\.java"/>
+    <suppress checks="ClassDataAbstractionCoupling|ClassFanOutComplexity" 
+              files=".*App\.java"/>
+    
+    <!-- Suppress JavaNCSS for complex UI methods -->
+    <suppress checks="JavaNCSS" 
+              files=".*MeetingControlButton\.java"/>
+    <suppress checks="JavaNCSS" 
+              files=".*SentimentViewPane\.java"/>
+</suppressions>

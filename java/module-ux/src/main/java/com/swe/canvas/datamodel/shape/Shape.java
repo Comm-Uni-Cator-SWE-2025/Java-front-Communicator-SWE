@@ -28,47 +28,48 @@ public abstract class Shape implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** Unique identifier for this shape. */
-    protected final ShapeId shapeId;
+    private final ShapeId shapeId;
 
     /** List of defining points for the shape (e.g., corners or control points). */
-    protected List<Point> points;
+    private List<Point> points;
 
-    /** Thickness of the shape’s outline. */
-    protected double thickness;
+    /** Thickness of the shape's outline. */
+    private double thickness;
 
     /** Color used to render the shape. */
-    protected Color color;
+    private Color color;
 
     /** Identifier of the user who created this shape. */
-    protected final String createdBy;
+    private final String createdBy;
 
     /** Identifier of the user who last modified this shape. */
-    protected String lastUpdatedBy;
+    private String lastUpdatedBy;
 
     /** Type of the shape (e.g., RECTANGLE, LINE, CIRCLE). */
-    protected final ShapeType shapeType;
+    private final ShapeType shapeType;
 
     /**
      * Constructs a new {@code Shape} instance with the given properties.
      *
-     * @param shapeId_       The unique shape identifier (non-null).
-     * @param shapeType_     The shape type enumeration (non-null).
-     * @param points_        The list of defining points (non-null).
-     * @param thickness_     The line thickness.
-     * @param color_         The color used to render the shape (non-null).
-     * @param createdBy_     The identifier of the user who created this shape (non-null).
-     * @param lastUpdatedBy_ The identifier of the user who last modified this shape (non-null).
+     * @param shapeIdParam       The unique shape identifier (non-null).
+     * @param shapeTypeParam     The shape type enumeration (non-null).
+     * @param pointsParam        The list of defining points (non-null).
+     * @param thicknessParam     The line thickness.
+     * @param colorParam         The color used to render the shape (non-null).
+     * @param createdByParam     The identifier of the user who created this shape (non-null).
+     * @param lastUpdatedByParam The identifier of the user who last modified this shape (non-null).
      * @throws NullPointerException if any required argument is {@code null}.
      */
-    protected Shape(final ShapeId shapeId_, final ShapeType shapeType_, final List<Point> points_,
-                    final double thickness_, final Color color_, final String createdBy_, final String lastUpdatedBy_) {
-        this.shapeId = Objects.requireNonNull(shapeId_, "shapeId cannot be null");
-        this.shapeType = Objects.requireNonNull(shapeType_, "shapeType cannot be null");
-        this.points = Objects.requireNonNull(points_, "points list cannot be null");
-        this.thickness = Objects.requireNonNull(thickness_, "thickness cannot be null");
-        this.color = Objects.requireNonNull(color_, "color cannot be null");
-        this.createdBy = Objects.requireNonNull(createdBy_, "createdBy cannot be null");
-        this.lastUpdatedBy = Objects.requireNonNull(lastUpdatedBy_, "lastUpdatedBy cannot be null");
+    protected Shape(final ShapeId shapeIdParam, final ShapeType shapeTypeParam, final List<Point> pointsParam,
+                    final double thicknessParam, final Color colorParam, final String createdByParam, 
+                    final String lastUpdatedByParam) {
+        this.shapeId = Objects.requireNonNull(shapeIdParam, "shapeId cannot be null");
+        this.shapeType = Objects.requireNonNull(shapeTypeParam, "shapeType cannot be null");
+        this.points = Objects.requireNonNull(pointsParam, "points list cannot be null");
+        this.thickness = Objects.requireNonNull(thicknessParam, "thickness cannot be null");
+        this.color = Objects.requireNonNull(colorParam, "color cannot be null");
+        this.createdBy = Objects.requireNonNull(createdByParam, "createdBy cannot be null");
+        this.lastUpdatedBy = Objects.requireNonNull(lastUpdatedByParam, "lastUpdatedBy cannot be null");
     }
 
     /**
@@ -82,8 +83,8 @@ public abstract class Shape implements Serializable {
      * @param dy The vertical displacement.
      */
     public void translate(final double dx, final double dy) {
-        List<Point> newPoints = new ArrayList<>(points.size());
-        for (Point p : points) {
+        final List<Point> newPoints = new ArrayList<>(points.size());
+        for (final Point p : points) {
             newPoints.add(new Point(p.getX() + dx, p.getY() + dy));
         }
         this.points = newPoints;
@@ -158,38 +159,39 @@ public abstract class Shape implements Serializable {
     /**
      * Updates the defining points of this shape.
      *
-     * Updates the defining points of this shape.
-     * @param points_ The new list of points.
+     * <p>Updates the defining points of this shape.</p>
+     *
+     * @param pointsParam The new list of points.
      */
-    public void setPoints(final List<Point> points_) {
-        this.points = points_;
+    public void setPoints(final List<Point> pointsParam) {
+        this.points = pointsParam;
     }
 
     /**
-     * Updates the thickness of the shape’s outline.
+     * Updates the thickness of the shape's outline.
      *
-     * @param thickness_ The new line thickness.
+     * @param thicknessParam The new line thickness.
      */
-    public void setThickness(final double thickness_) {
-        this.thickness = thickness_;
+    public void setThickness(final double thicknessParam) {
+        this.thickness = thicknessParam;
     }
 
     /**
      * Updates the color used to render this shape.
      *
-     * @param color_ The new color.
+     * @param colorParam The new color.
      */
-    public void setColor(final Color color_) {
-        this.color = color_;
+    public void setColor(final Color colorParam) {
+        this.color = colorParam;
     }
 
     /**
      * Updates the user who last modified this shape.
      *
-     * @param lastUpdatedBy_ The last updating user ID.
+     * @param lastUpdatedByParam The last updating user ID.
      */
-    public void setLastUpdatedBy(final String lastUpdatedBy_) {
-        this.lastUpdatedBy = lastUpdatedBy_;
+    public void setLastUpdatedBy(final String lastUpdatedByParam) {
+        this.lastUpdatedBy = lastUpdatedByParam;
     }
 
     /**
@@ -213,12 +215,12 @@ public abstract class Shape implements Serializable {
             
         final Shape shape = (Shape) o;
         return Double.compare(shape.thickness, thickness) == 0 
-        && shapeId.equals(shape.shapeId)
-        && points.equals(shape.points) 
-        && color.equals(shape.color) 
-        && createdBy.equals(shape.createdBy) 
-        && lastUpdatedBy.equals(shape.lastUpdatedBy) 
-        && shapeType == shape.shapeType;
+                && shapeId.equals(shape.shapeId)
+                && points.equals(shape.points) 
+                && color.equals(shape.color) 
+                && createdBy.equals(shape.createdBy) 
+                && lastUpdatedBy.equals(shape.lastUpdatedBy) 
+                && shapeType == shape.shapeType;
     }
 
     /**
@@ -231,6 +233,7 @@ public abstract class Shape implements Serializable {
         return Objects.hash(shapeId, points, thickness, color, createdBy, lastUpdatedBy, shapeType);
     }
 
+    /** Length of the shape ID substring used in string representation. */
     private static final int SUBSTRING_LENGTH = 8;
 
     /**

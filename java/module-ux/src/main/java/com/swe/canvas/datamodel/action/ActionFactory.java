@@ -1,11 +1,11 @@
 package com.swe.canvas.datamodel.action;
 
+import java.util.UUID;
+
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
-
-import java.util.UUID;
 
 /**
  * Factory for creating concrete {@link Action} instances.
@@ -164,9 +164,9 @@ public class ActionFactory {
             case CREATE:
                 // Inverse of Create is Delete
                 // The new state for the delete must have an updated timestamp and user
-                Shape shapeCopy = originalNewState.getShape().copy();
-                shapeCopy.setLastUpdatedBy(userId);
-                inverseNewState = new ShapeState(shapeCopy, true, timestamp);
+                final Shape shapeCopyCreate = originalNewState.getShape().copy();
+                shapeCopyCreate.setLastUpdatedBy(userId);
+                inverseNewState = new ShapeState(shapeCopyCreate, true, timestamp);
 
                 return new DeleteShapeAction(
                         newActionId(), userId, timestamp,
@@ -178,9 +178,9 @@ public class ActionFactory {
             case DELETE:
                 // Inverse of Delete is Resurrect
                 // The resurrected shape needs its 'lastUpdatedBy' set back
-                shapeCopy = originalPrevState.getShape().copy();
-                shapeCopy.setLastUpdatedBy(userId); // User who resurrected it
-                inverseNewState = new ShapeState(shapeCopy, false, timestamp);
+                final Shape shapeCopyDelete = originalPrevState.getShape().copy();
+                shapeCopyDelete.setLastUpdatedBy(userId); // User who resurrected it
+                inverseNewState = new ShapeState(shapeCopyDelete, false, timestamp);
 
                 return new ResurrectShapeAction(
                         newActionId(), userId, timestamp,
@@ -191,9 +191,9 @@ public class ActionFactory {
 
             case MODIFY:
                 // Inverse of Modify is another Modify, swapping prev/new states
-                shapeCopy = originalPrevState.getShape().copy();
-                shapeCopy.setLastUpdatedBy(userId);
-                inverseNewState = new ShapeState(shapeCopy, false, timestamp);
+                final Shape shapeCopyModify = originalPrevState.getShape().copy();
+                shapeCopyModify.setLastUpdatedBy(userId);
+                inverseNewState = new ShapeState(shapeCopyModify, false, timestamp);
 
                 return new ModifyShapeAction(
                         newActionId(), userId, timestamp,
@@ -204,9 +204,9 @@ public class ActionFactory {
 
             case RESURRECT:
                 // Inverse of Resurrect is Delete
-                shapeCopy = originalNewState.getShape().copy();
-                shapeCopy.setLastUpdatedBy(userId);
-                inverseNewState = new ShapeState(shapeCopy, true, timestamp);
+                final Shape shapeCopyResurrect = originalNewState.getShape().copy();
+                shapeCopyResurrect.setLastUpdatedBy(userId);
+                inverseNewState = new ShapeState(shapeCopyResurrect, true, timestamp);
 
                 return new DeleteShapeAction(
                         newActionId(), userId, timestamp,

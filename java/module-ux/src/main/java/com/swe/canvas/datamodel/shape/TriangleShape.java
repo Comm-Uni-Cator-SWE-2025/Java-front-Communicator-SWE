@@ -50,12 +50,12 @@ public class TriangleShape extends Shape {
     @Override
     public Shape copy() {
         return new TriangleShape(
-                this.shapeId,
-                new ArrayList<>(this.points), // Deep copy
-                this.thickness,
-                this.color,
-                this.createdBy,
-                this.lastUpdatedBy
+                this.getShapeId(),
+                new ArrayList<>(this.getPoints()), // Deep copy
+                this.getThickness(),
+                this.getColor(),
+                this.getCreatedBy(),
+                this.getLastUpdatedBy()
         );
     }
 }

@@ -78,36 +78,28 @@ public abstract class Action implements Serializable {
      */
     private final ShapeState newState;
 
-
-    /**
-     * Action ID
-     * prevState
-     * newState
-     * actionType
-     * required for serialization/deserialization
-     */
-
     /**
      * Constructs a new Action.
      *
-     * @param actionId_   A unique ID for this action.
-     * @param userId_     The user performing the action.
-     * @param timestamp_  The time of action creation.
-     * @param actionType_ The type of action.
-     * @param shapeId_    The target shape's ID.
-     * @param prevState_  The state before the action (null for CREATE).
-     * @param newState_   The state after the action.
+     * @param actionIdParam   A unique ID for this action.
+     * @param userIdParam     The user performing the action.
+     * @param timestampParam  The time of action creation.
+     * @param actionTypeParam The type of action.
+     * @param shapeIdParam    The target shape's ID.
+     * @param prevStateParam  The state before the action (null for CREATE).
+     * @param newStateParam   The state after the action.
      */
-    protected Action(final String actionId_, final String userId_, final long timestamp_, final ActionType actionType_,
-                     final ShapeId shapeId_, final ShapeState prevState_, final ShapeState newState_) {
-        this.actionId = Objects.requireNonNull(actionId_, "actionId cannot be null");
-        this.userId = Objects.requireNonNull(userId_, "userId cannot be null");
-        this.timestamp = timestamp_;
-        this.actionType = Objects.requireNonNull(actionType_, "actionType cannot be null");
-        this.shapeId = Objects.requireNonNull(shapeId_, "shapeId cannot be null");
+    protected Action(final String actionIdParam, final String userIdParam, final long timestampParam, 
+                     final ActionType actionTypeParam, final ShapeId shapeIdParam, final ShapeState prevStateParam, 
+                     final ShapeState newStateParam) {
+        this.actionId = Objects.requireNonNull(actionIdParam, "actionId cannot be null");
+        this.userId = Objects.requireNonNull(userIdParam, "userId cannot be null");
+        this.timestamp = timestampParam;
+        this.actionType = Objects.requireNonNull(actionTypeParam, "actionType cannot be null");
+        this.shapeId = Objects.requireNonNull(shapeIdParam, "shapeId cannot be null");
         // prevState can be null (for CREATE), but newState cannot
-        this.prevState = prevState_;
-        this.newState = Objects.requireNonNull(newState_, "newState cannot be null");
+        this.prevState = prevStateParam;
+        this.newState = Objects.requireNonNull(newStateParam, "newState cannot be null");
     }
 
     // --- Getters ---
@@ -168,6 +160,7 @@ public abstract class Action implements Serializable {
         return newState;
     }
 
+    /** Length of ID substring used in string representation. */
     private static final int SUBSTRING_LENGTH = 8;
 
     @Override

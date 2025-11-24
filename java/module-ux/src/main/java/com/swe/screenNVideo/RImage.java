@@ -1,9 +1,8 @@
-/**
- *  Contributed by Sandeep Kumar.
- */
 package com.swe.screenNVideo;
 
-
+/*
+ * Contributed by Sandeep Kumar.
+ */
 
 import java.nio.ByteBuffer;
 
@@ -22,10 +21,17 @@ public class RImage {
     private final String ip;
 
     /**
-     * Data rate
+     * Data rate.
      */
     private final long dataRate;
 
+    /**
+     * Private constructor for creating RImage instances.
+     *
+     * @param imageArgs the image data
+     * @param ipArgs the IP address
+     * @param dataRateArgs the data rate
+     */
     private RImage(final int[][] imageArgs, final String ipArgs, final long dataRateArgs) {
         ip = ipArgs;
         image = imageArgs;
@@ -34,8 +40,9 @@ public class RImage {
 
     /**
      * Deserializes the image.
+     *
      * @param data the byte array to be deserialized
-     * @return the image.
+     * @return the image
      */
     public static RImage deserialize(final byte[] data) {
         final ByteBuffer buffer = ByteBuffer.wrap(data);
@@ -70,14 +77,29 @@ public class RImage {
         return new RImage(image, ip, dataRate);
     }
 
+    /**
+     * Gets the image data.
+     *
+     * @return the image as a 2D array
+     */
     public int[][] getImage() {
         return image;
     }
 
+    /**
+     * Gets the IP address.
+     *
+     * @return the IP address
+     */
     public String getIp() {
         return ip;
     }
 
+    /**
+     * Gets the data rate.
+     *
+     * @return the data rate
+     */
     public long getDataRate() {
         return dataRate;
     }

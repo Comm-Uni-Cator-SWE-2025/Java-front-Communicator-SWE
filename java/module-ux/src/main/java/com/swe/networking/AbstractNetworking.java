@@ -34,11 +34,9 @@ public interface AbstractNetworking {
     void subscribe(int name, MessageListener function);
 
     /**
-     * Functiont to remove from subscription.
+     * Function to remove from subscription.
      *
      * @param name the name of the module
      */
     void removeSubscription(int name);
-
-    
 }

@@ -19,9 +19,20 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -30,30 +41,167 @@ import java.util.Date;
  * meeting join/start controls left-aligned.
  */
 public class MainPage extends FrostedBackgroundPanel {
+    /**
+     * Default spacing value.
+     */
+    private static final int DEFAULT_SPACING = 20;
+    /**
+     * Default padding value.
+     */
+    private static final int DEFAULT_PADDING = 30;
+    /**
+     * Header height.
+     */
+    private static final int HEADER_HEIGHT = 150;
+    /**
+     * Header corner radius.
+     */
+    private static final int HEADER_CORNER_RADIUS = 24;
+    /**
+     * Insights corner radius.
+     */
+    private static final int INSIGHTS_CORNER_RADIUS = 32;
+    /**
+     * Widget corner radius.
+     */
+    private static final int WIDGET_CORNER_RADIUS = 20;
+    /**
+     * Clock card size.
+     */
+    private static final int CLOCK_CARD_SIZE = 260;
+    /**
+     * Calendar card height.
+     */
+    private static final int CALENDAR_CARD_HEIGHT = 280;
+    /**
+     * Button width.
+     */
+    private static final int BUTTON_WIDTH = 130;
+    /**
+     * Button height.
+     */
+    private static final int BUTTON_HEIGHT = 50;
+    /**
+     * Field width.
+     */
+    private static final int FIELD_WIDTH = 280;
+    /**
+     * Field padding top.
+     */
+    private static final int FIELD_PADDING_TOP = 12;
+    /**
+     * Field padding left.
+     */
+    private static final int FIELD_PADDING_LEFT = 14;
+    /**
+     * Field padding bottom.
+     */
+    private static final int FIELD_PADDING_BOTTOM = 12;
+    /**
+     * Field padding right.
+     */
+    private static final int FIELD_PADDING_RIGHT = 14;
+    /**
+     * Welcome font size.
+     */
+    private static final int WELCOME_FONT_SIZE = 22;
+    /**
+     * Subtitle font size.
+     */
+    private static final int SUBTITLE_FONT_SIZE = 13;
+    /**
+     * Date font size.
+     */
+    private static final int DATE_FONT_SIZE = 12;
+    /**
+     * Field font size.
+     */
+    private static final int FIELD_FONT_SIZE = 16;
+    /**
+     * Vertical strut size 4.
+     */
+    private static final int VERTICAL_STRUT_4 = 4;
+    /**
+     * Vertical strut size 6.
+     */
+    private static final int VERTICAL_STRUT_6 = 6;
+    /**
+     * Header vertical gap.
+     */
+    private static final int HEADER_VERTICAL_GAP = 10;
+    /**
+     * Timer delay in milliseconds.
+     */
+    private static final int TIMER_DELAY_MS = 60000;
 
+    /**
+     * ViewModel for main page.
+     */
     private final MainViewModel viewModel;
-
+    /**
+     * Header card panel.
+     */
     private SoftCardPanel headerCard;
+    /**
+     * Insights card panel.
+     */
     private SoftCardPanel insightsCard;
+    /**
+     * Dashboard JavaFX panel.
+     */
     private JFXPanel dashboardFxPanel;
-
+    /**
+     * Welcome label.
+     */
     private JLabel welcomeLabel;
+    /**
+     * Subtitle label.
+     */
     private JLabel subtitleLabel;
+    /**
+     * Date label.
+     */
     private JLabel dateLabel;
+    /**
+     * Location label.
+     */
     private JLabel locationLabel;
-
+    /**
+     * Meeting code input field.
+     */
     private JTextField meetingCodeField;
-
+    /**
+     * Join meeting button.
+     */
     private FrostedToolbarButton joinMeetingButton;
+    /**
+     * Create meeting button.
+     */
     private FrostedToolbarButton createMeetingButton;
+    /**
+     * Logout button.
+     */
     private FrostedToolbarButton logoutButton;
-
+    /**
+     * Timer for updating clock.
+     */
     private Timer minuteTimer;
+    /**
+     * Whether UI has been created.
+     */
     private boolean uiCreated = false;
+    /**
+     * Dashboard view model.
+     */
     private final DashboardViewModel dashboardViewModel;
 
-    public MainPage(MainViewModel viewModel) {
-        this.viewModel = viewModel;
+    /**
+     * Creates a new MainPage.
+     *
+     * @param mainViewModel the main view model
+     */
+    public MainPage(final MainViewModel mainViewModel) {
+        this.viewModel = mainViewModel;
         this.dashboardViewModel = new DashboardViewModel();
         initializeUI();
         uiCreated = true;
@@ -64,11 +212,10 @@ public class MainPage extends FrostedBackgroundPanel {
 
     /**
      * Enables or disables the Start Meeting button and related UI controls.
+     *
+     * @param enabled whether to enable the controls
      */
-    /**
-     * Enables or disables the Start Meeting button and related UI controls.
-     */
-    public void setStartControlsEnabled(boolean enabled) {
+    public void setStartControlsEnabled(final boolean enabled) {
         try {
             if (this.createMeetingButton != null) {
                 this.createMeetingButton.setEnabled(enabled);
@@ -79,8 +226,10 @@ public class MainPage extends FrostedBackgroundPanel {
 
     /**
      * Enables or disables the Join Meeting button and related UI controls.
+     *
+     * @param enabled whether to enable the controls
      */
-    public void setJoinControlsEnabled(boolean enabled) {
+    public void setJoinControlsEnabled(final boolean enabled) {
         try {
             if (this.joinMeetingButton != null) {
                 this.joinMeetingButton.setEnabled(enabled);
@@ -92,51 +241,52 @@ public class MainPage extends FrostedBackgroundPanel {
         }
     }
 
+    // CHECKSTYLE:OFF: JavaNCSS - Complex UI initialization method
     private void initializeUI() {
-
-        setLayout(new BorderLayout(20, 20));
-        setBorder(new EmptyBorder(20, 30, 30, 30));
+        // CHECKSTYLE:ON: JavaNCSS
+        setLayout(new BorderLayout(DEFAULT_SPACING, DEFAULT_SPACING));
+        setBorder(new EmptyBorder(DEFAULT_SPACING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING));
 
         // ------------------------------------------------------
         // SMALL HEADER
         // ------------------------------------------------------
-        headerCard = new SoftCardPanel(24);
-        headerCard.setCornerRadius(24);
-        headerCard.setLayout(new BorderLayout(20, 10));
-        headerCard.setPreferredSize(new Dimension(0, 150)); // 🔥 SMALL HEIGHT
+        headerCard = new SoftCardPanel(HEADER_CORNER_RADIUS);
+        headerCard.setCornerRadius(HEADER_CORNER_RADIUS);
+        headerCard.setLayout(new BorderLayout(DEFAULT_SPACING, HEADER_VERTICAL_GAP));
+        headerCard.setPreferredSize(new Dimension(0, HEADER_HEIGHT));
 
-        JPanel textStack = new JPanel();
+        final JPanel textStack = new JPanel();
         textStack.setOpaque(false);
         textStack.setLayout(new BoxLayout(textStack, BoxLayout.Y_AXIS));
 
         welcomeLabel = new JLabel("Welcome");
-        welcomeLabel.setFont(FontUtil.getJetBrainsMono(22f, Font.BOLD));
+        welcomeLabel.setFont(FontUtil.getJetBrainsMono(WELCOME_FONT_SIZE, Font.BOLD));
 
         subtitleLabel = new JLabel("A quick meeting can solve a lot!");
-        subtitleLabel.setFont(FontUtil.getJetBrainsMono(13f, Font.PLAIN));
+        subtitleLabel.setFont(FontUtil.getJetBrainsMono(SUBTITLE_FONT_SIZE, Font.PLAIN));
 
         textStack.add(welcomeLabel);
-        textStack.add(Box.createVerticalStrut(4));
+        textStack.add(Box.createVerticalStrut(VERTICAL_STRUT_4));
         textStack.add(subtitleLabel);
 
-        JPanel metaRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        final JPanel metaRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         metaRow.setOpaque(false);
 
         dateLabel = new JLabel(formatDate(new Date()));
-        dateLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        dateLabel.setFont(FontUtil.getJetBrainsMono(DATE_FONT_SIZE, Font.PLAIN));
 
         locationLabel = new JLabel("Start or Join one now");
-        locationLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        locationLabel.setFont(FontUtil.getJetBrainsMono(DATE_FONT_SIZE, Font.PLAIN));
 
         metaRow.add(dateLabel);
         metaRow.add(new FrostedBadgeLabel("Campus"));
         metaRow.add(locationLabel);
 
-        textStack.add(Box.createVerticalStrut(6));
+        textStack.add(Box.createVerticalStrut(VERTICAL_STRUT_6));
         textStack.add(metaRow);
 
         // Right side: theme toggle + logout
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        final JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.add(new ThemeToggleButton());
 
@@ -156,31 +306,32 @@ public class MainPage extends FrostedBackgroundPanel {
         // ------------------------------------------------------
         // JOIN / START MEETING BAR (centered UNDER HEADER)
         // ------------------------------------------------------
-        JPanel joinPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
+        final JPanel joinPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, DEFAULT_SPACING, 5));
         joinPanel.setOpaque(false);
 
         // Placeholder text field
         meetingCodeField = new PlaceholderTextField("Meeting ID");
-        meetingCodeField.setPreferredSize(new Dimension(280, 50));
-        meetingCodeField.setFont(FontUtil.getJetBrainsMono(16f, Font.PLAIN));
+        meetingCodeField.setPreferredSize(new Dimension(FIELD_WIDTH, BUTTON_HEIGHT));
+        meetingCodeField.setFont(FontUtil.getJetBrainsMono(FIELD_FONT_SIZE, Font.PLAIN));
 
-        meetingCodeField.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
-        meetingCodeField.setPreferredSize(new Dimension(280, 50)); // wider + taller
+        meetingCodeField.setBorder(BorderFactory.createEmptyBorder(FIELD_PADDING_TOP, FIELD_PADDING_LEFT,
+                FIELD_PADDING_BOTTOM, FIELD_PADDING_RIGHT));
+        meetingCodeField.setPreferredSize(new Dimension(FIELD_WIDTH, BUTTON_HEIGHT));
         joinPanel.add(meetingCodeField);
 
         // Join button
         joinMeetingButton = new FrostedToolbarButton("Join");
-        joinMeetingButton.setPreferredSize(new Dimension(130, 50)); // 🔥 wider pill
+        joinMeetingButton.setPreferredSize(new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT));
         joinMeetingButton.addActionListener(e -> {
-            viewModel.meetingCode.set(meetingCodeField.getText());
-            viewModel.joinMeetingRequested.set(true);
+            viewModel.getMeetingCode().set(meetingCodeField.getText());
+            viewModel.getJoinMeetingRequested().set(true);
         });
         joinPanel.add(joinMeetingButton);
 
         // Start button
         createMeetingButton = new FrostedToolbarButton("Start");
-        createMeetingButton.setPreferredSize(new Dimension(130, 50)); // 🔥 wider pill
-        createMeetingButton.addActionListener(e -> viewModel.startMeetingRequested.set(true));
+        createMeetingButton.setPreferredSize(new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT));
+        createMeetingButton.addActionListener(e -> viewModel.getStartMeetingRequested().set(true));
         joinPanel.add(createMeetingButton);
 
         // Place it ABOVE insights
@@ -189,36 +340,36 @@ public class MainPage extends FrostedBackgroundPanel {
         // CONTENT AREA
         // ------------------------------------------------------
 
-        JPanel mainArea = new JPanel(new BorderLayout(20, 20));
+        final JPanel mainArea = new JPanel(new BorderLayout(DEFAULT_SPACING, DEFAULT_SPACING));
         mainArea.setOpaque(false);
         mainArea.add(joinPanel, BorderLayout.NORTH);
 
         // Big insights panel
-        insightsCard = new SoftCardPanel(32);
+        insightsCard = new SoftCardPanel(INSIGHTS_CORNER_RADIUS);
         insightsCard.setLayout(new BorderLayout());
         initializeDashboardInsights();
 
         mainArea.add(insightsCard, BorderLayout.CENTER);
 
         // Sidebar widgets (clock + calendar)
-        JPanel sideColumn = new JPanel();
+        final JPanel sideColumn = new JPanel();
         sideColumn.setOpaque(false);
         sideColumn.setLayout(new BoxLayout(sideColumn, BoxLayout.Y_AXIS));
 
-        SoftCardPanel clockCard = new SoftCardPanel(20);
+        final SoftCardPanel clockCard = new SoftCardPanel(WIDGET_CORNER_RADIUS);
         clockCard.setLayout(new BorderLayout());
         clockCard.add(new AnalogClockPanel(), BorderLayout.CENTER);
-        clockCard.setMaximumSize(new Dimension(260, 260));
+        clockCard.setMaximumSize(new Dimension(CLOCK_CARD_SIZE, CLOCK_CARD_SIZE));
         clockCard.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        SoftCardPanel calendarCard = new SoftCardPanel(20);
+        final SoftCardPanel calendarCard = new SoftCardPanel(WIDGET_CORNER_RADIUS);
         calendarCard.setLayout(new BorderLayout());
         calendarCard.add(new MiniCalendarPanel(), BorderLayout.CENTER);
-        calendarCard.setMaximumSize(new Dimension(260, 280));
+        calendarCard.setMaximumSize(new Dimension(CLOCK_CARD_SIZE, CALENDAR_CARD_HEIGHT));
         calendarCard.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         sideColumn.add(clockCard);
-        sideColumn.add(Box.createVerticalStrut(20));
+        sideColumn.add(Box.createVerticalStrut(DEFAULT_SPACING));
         sideColumn.add(calendarCard);
 
         mainArea.add(sideColumn, BorderLayout.EAST);
@@ -230,36 +381,44 @@ public class MainPage extends FrostedBackgroundPanel {
     // Bindings, updates, clock and theme logic
     // ----------------------------------------------------------
     private void setupBindings() {
-        viewModel.currentUser.addListener(evt -> SwingUtilities.invokeLater(this::updateUserInfo));
+        viewModel.getCurrentUser().addListener(evt -> SwingUtilities.invokeLater(this::updateUserInfo));
         updateUserInfo();
     }
 
     private void updateUserInfo() {
-        UserProfile user = viewModel.currentUser.get();
-        welcomeLabel.setText(
-                user != null ? "Welcome, " + user.getDisplayName() : "Welcome");
+        final UserProfile user = viewModel.getCurrentUser().get();
+        final String welcomeText;
+        if (user != null) {
+            welcomeText = "Welcome, " + user.getDisplayName();
+        } else {
+            welcomeText = "Welcome";
+        }
+        welcomeLabel.setText(welcomeText);
     }
 
     private void startClock() {
-        if (minuteTimer != null)
+        if (minuteTimer != null) {
             minuteTimer.stop();
+        }
 
-        minuteTimer = new Timer(60_000, e -> dateLabel.setText(formatDate(new Date())));
+        minuteTimer = new Timer(TIMER_DELAY_MS, e -> dateLabel.setText(formatDate(new Date())));
         minuteTimer.setInitialDelay(0);
         minuteTimer.start();
     }
 
-    private String formatDate(Date date) {
+    private String formatDate(final Date date) {
         return new SimpleDateFormat("EEE, MMM d • hh:mm a").format(date);
     }
 
     private void applyTheme() {
-        if (!uiCreated)
+        if (!uiCreated) {
             return;
+        }
 
-        Theme theme = ThemeManager.getInstance().getCurrentTheme();
-        if (theme == null)
+        final Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        if (theme == null) {
             return;
+        }
 
         setBackground(theme.getBackgroundColor());
 
@@ -285,15 +444,15 @@ public class MainPage extends FrostedBackgroundPanel {
 
         Platform.setImplicitExit(false);
         Platform.runLater(() -> {
-            DashboardView dashboardView = new DashboardView();
+            final DashboardView dashboardView = new DashboardView();
             dashboardView.setViewModel(dashboardViewModel);
-            Scene scene = new Scene(dashboardView);
+            final Scene scene = new Scene(dashboardView);
             dashboardFxPanel.setScene(scene);
         });
     }
 
     @Override
-    public void setVisible(boolean visible) {
+    public void setVisible(final boolean visible) {
         super.setVisible(visible);
         if (visible) {
             updateUserInfo();
