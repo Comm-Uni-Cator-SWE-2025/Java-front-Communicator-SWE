@@ -112,7 +112,7 @@ public class CanvasPage extends JPanel {
 
             // Initialize controller
             if (controller != null) {
-                controller.initModel(actionManager, userId);
+                controller.initModel(actionManager);
             }
 
             // Calculate initial size based on available space

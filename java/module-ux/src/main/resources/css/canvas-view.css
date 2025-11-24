@@ -1,4 +1,14 @@
 /*
+ * -----------------------------------------------------------------------------
+ *  File: Canvas-view.css
+ *  Owner: Darla Manohar
+ *  Roll Number: 112201034
+ *  Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
+/*
  * Updated CSS to match the style of MainWindow.xaml
  * - New toolbar style
  * - New button styles (icon + label, icon-only)
@@ -52,15 +62,11 @@
 }
 
 /* --- Style for Icon-Only Buttons (Undo, Redo, Delete) --- */
-.toolbar-icon-button {
+.toolbar-icon-button,
+.menu-button {
     -fx-pref-width: 40;
     -fx-pref-height: 26;
     -fx-padding: 2;
-}
-
-/* --- Style for Size Slider --- */
-.slider {
-    -fx-pref-height: 20;
 }
 
 /* --- Style for the SVG Icons --- */
@@ -89,32 +95,6 @@
     -fx-pref-width: 0;
 }
 
-
-/* --- Responsive Layout --- */
-/* BorderPane automatically handles layout - no special sizing needed */
-/* The center StackPane will automatically fill remaining space after toolbar */
-
-/* Ensure BorderPane fills available space */
-BorderPane {
-    -fx-min-width: 0;
-    -fx-min-height: 0;
-    -fx-max-width: Infinity;
-    -fx-max-height: Infinity;
-}
-
-/* Ensure canvas container fills available space */
-#canvasContainer {
-    -fx-min-width: 0;
-    -fx-min-height: 0;
-    -fx-max-width: Infinity;
-    -fx-max-height: Infinity;
-}
-
-/* Canvas holder should scale with container */
-#canvasHolder {
-    -fx-min-width: 0;
-    -fx-min-height: 0;
-}
 
 /* --- Removed Old Styles --- */
 /*

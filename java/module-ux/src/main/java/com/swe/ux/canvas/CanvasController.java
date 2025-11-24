@@ -1,20 +1,22 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: CanvasController.java
+ *  Owner: Darla Manohar
+ *  Roll Number: 112201034
+ *  Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.ux.canvas;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.manager.ActionManager;
-import com.swe.canvas.datamodel.shape.Point;
-import com.swe.canvas.datamodel.shape.Shape;
-import com.swe.canvas.datamodel.shape.ShapeFactory;
-import com.swe.canvas.datamodel.shape.ShapeId;
-import com.swe.canvas.datamodel.shape.ShapeType;
-import com.swe.canvas.mvvm.ToolType;
-import com.swe.ux.canvas.util.ColorConverter;
-import com.swe.ux.canvas.util.GeometryUtils;
+// Need to import HostActionManager to check type (or add an isHost() method to interface)
+import com.swe.canvas.datamodel.manager.HostActionManager;
+import com.swe.canvas.ui.util.ColorConverter;
+import com.swe.ux.viewmodels.CanvasViewModel;
+import com.swe.ux.viewmodels.ToolType;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -25,6 +27,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
@@ -33,77 +37,145 @@ import javafx.scene.paint.Color;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.WritableImage;
+import javafx.stage.FileChooser;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
 /**
- * JavaFX controller driving the collaborative canvas embedded inside Swing.
- * It converts UI gestures into {@link ActionManager} operations backed by the
- * shared canvas data model from module-canvas.
+ * Controller for the fxml view.
+ * Includes logic for Drawing, Pan/Zoom, and Host-specific Save/Restore.
  */
 public class CanvasController {
 
-    // FXML bindings
+    // --- FXML Control References ---
     @FXML private ToggleButton selectBtn;
     @FXML private ToggleButton freehandBtn;
     @FXML private ToggleButton rectBtn;
     @FXML private ToggleButton ellipseBtn;
     @FXML private ToggleButton lineBtn;
     @FXML private ToggleButton triangleBtn;
+
     @FXML private Slider sizeSlider;
     @FXML private ColorPicker colorPicker;
+
     @FXML private Button deleteBtn;
+    @FXML private Button regularizeBtn;
     @FXML private Button undoBtn;
     @FXML private Button redoBtn;
+    @FXML private Button captureBtn;
+
+    // --- NEW BUTTONS ---
+    @FXML private Button saveBtn;
+    @FXML private Button restoreBtn;
+
     @FXML private Canvas canvas;
     @FXML private StackPane canvasContainer;
     @FXML private StackPane canvasHolder;
 
+    private CanvasViewModel viewModel;
     private ActionManager actionManager;
     private CanvasRenderer renderer;
-    private CanvasState canvasState;
-    private final ShapeFactory shapeFactory = new ShapeFactory();
-    private String userId = "user-" + UUID.randomUUID();
+    private boolean isUpdatingUI = false;
 
-    private ToolType activeTool = ToolType.SELECT;
-    private ShapeId selectedShapeId;
-    private Shape transientShape;
-
-    // Pan/zoom helpers
+    // --- Pan and Zoom State ---
     private Translate canvasTranslate;
     private Scale canvasScale;
     private boolean isPanning = false;
-    private double panStartX;
-    private double panStartY;
+    private double panStartX, panStartY;
+
     private static final double ZOOM_FACTOR = 1.1;
     private static final double MAX_ZOOM = 5.0;
     private static final double MIN_ZOOM = 0.5;
 
-    private boolean updatingSelection = false;
-
-    public void initModel(final ActionManager manager) {
-        initModel(manager, "user-" + UUID.randomUUID());
-    }
-
-    public void initModel(final ActionManager manager, final String userId) {
+    public void initModel(ActionManager manager) {
         this.actionManager = manager;
-        this.canvasState = manager.getCanvasState();
-        this.userId = userId != null ? userId : this.userId;
+        this.viewModel = new CanvasViewModel("user-" + System.nanoTime() % 10000, manager);
+
         initializeControls();
+
+        // --- Host vs Client UI Logic ---
+        // If we are the Host, show Save/Restore buttons
+        if (manager instanceof HostActionManager) {
+            saveBtn.setVisible(true);
+            saveBtn.setManaged(true);
+            restoreBtn.setVisible(true);
+            restoreBtn.setManaged(true);
+        } else {
+            saveBtn.setVisible(false);
+            saveBtn.setManaged(false);
+            restoreBtn.setVisible(false);
+            restoreBtn.setManaged(false);
+        }
     }
 
     @FXML
     public void initialize() {
-        // FXML lifecycle hook – initialization happens in initModel
+        // Logic moved to initModel/initializeControls
     }
 
     private void initializeControls() {
         renderer = new CanvasRenderer(canvas);
 
+        // --- Setup Transforms for Pan and Zoom ---
         canvasTranslate = new Translate();
         canvasScale = new Scale();
         canvasHolder.getTransforms().addAll(canvasTranslate, canvasScale);
 
-        sizeSlider.setValue(5);
-        colorPicker.setValue(Color.BLACK);
+        // --- Initialize Controls ---
+        sizeSlider.setValue(viewModel.activeStrokeWidth.get());
+        colorPicker.setValue(viewModel.activeColor.get());
 
+        // --- Bindings & Listeners ---
+        sizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (isUpdatingUI) return;
+            final double thickness = newVal.doubleValue();
+            viewModel.activeStrokeWidth.set(thickness);
+            if (viewModel.selectedShapeId.get() != null) {
+                viewModel.updateSelectedShapeThickness(thickness);
+            }
+        });
+
+        deleteBtn.disableProperty().bind(viewModel.selectedShapeId.isNull());
+        regularizeBtn.disableProperty().bind(viewModel.selectedShapeId.isNull());
+
+        viewModel.selectedShapeId.addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                ShapeState state = viewModel.getCanvasState().getShapeState(newVal);
+                if (state != null && !state.isDeleted()) {
+                    isUpdatingUI = true;
+                    try {
+                        colorPicker.setValue(ColorConverter.toFx(state.getShape().getColor()));
+                        sizeSlider.setValue(state.getShape().getThickness());
+                        viewModel.activeColor.set(colorPicker.getValue());
+                        viewModel.activeStrokeWidth.set(sizeSlider.getValue());
+                    } finally {
+                        isUpdatingUI = false;
+                    }
+                }
+            }
+            redraw();
+        });
+
+        // --- Standard Setup ---
+        canvas.setFocusTraversable(true);
+        canvasContainer.setOnMouseClicked(e -> canvas.requestFocus());
+        canvasContainer.setOnKeyPressed(this::onKeyPressed);
+
+        this.actionManager.setOnUpdate(() -> {
+            Platform.runLater(() -> {
+                if (viewModel != null) {
+                    viewModel.handleValidatedUpdate();
+                }
+                redraw();
+            });
+        });
+
+        // Set UserData for tool selection
         freehandBtn.setUserData(ToolType.FREEHAND);
         selectBtn.setUserData(ToolType.SELECT);
         rectBtn.setUserData(ToolType.RECTANGLE);
@@ -111,251 +183,202 @@ public class CanvasController {
         lineBtn.setUserData(ToolType.LINE);
         triangleBtn.setUserData(ToolType.TRIANGLE);
 
-        sizeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (updatingSelection || selectedShapeId == null) {
-                return;
-            }
-            ShapeState prev = canvasState.getShapeState(selectedShapeId);
-            if (prev != null) {
-                Shape modified = prev.getShape().copy();
-                modified.setThickness(newVal.doubleValue());
-                actionManager.requestModify(prev, modified);
-            }
-        });
-
-        colorPicker.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (updatingSelection || selectedShapeId == null) {
-                return;
-            }
-            ShapeState prev = canvasState.getShapeState(selectedShapeId);
-            if (prev != null && newVal != null) {
-                Shape modified = prev.getShape().copy();
-                modified.setColor(ColorConverter.toAwt(newVal));
-                actionManager.requestModify(prev, modified);
-            }
-        });
-
-        actionManager.setOnUpdate(() -> Platform.runLater(this::redraw));
-        canvasState.setOnUpdate(() -> Platform.runLater(this::redraw));
-
         redraw();
     }
 
     private void redraw() {
-        if (renderer != null) {
-            renderer.render(canvasState, transientShape, selectedShapeId, false);
-        }
+        Platform.runLater(() -> {
+            if (renderer != null && viewModel != null) {
+                renderer.render(viewModel.getCanvasState(), viewModel.getTransientShape(), viewModel.selectedShapeId.get(), viewModel.isDraggingSelection);
+            }
+        });
     }
 
-    // === Tool selection ===
-    @FXML
-    private void onToolSelected(ActionEvent event) {
-        ToggleButton btn = (ToggleButton) event.getSource();
-        activeTool = (ToolType) btn.getUserData();
-        if (activeTool != ToolType.SELECT) {
-            selectedShapeId = null;
-        }
-        redraw();
-    }
-
-    // === Color button -> handled via listener ===
-
-    // === Pan / Zoom ===
+    // =========================================================================
+    // --- Pan and Zoom Handlers ---
+    // =========================================================================
     @FXML
     private void onScroll(ScrollEvent event) {
         event.consume();
-        double factor = event.getDeltaY() > 0 ? ZOOM_FACTOR : (1.0 / ZOOM_FACTOR);
-        double newScale = canvasScale.getX() * factor;
-        newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
-        Point2D pivot = canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
-        canvasScale.setPivotX(pivot.getX());
-        canvasScale.setPivotY(pivot.getY());
+        double delta = event.getDeltaY();
+        if (delta == 0) return;
+        double zoomFactor = (delta > 0) ? ZOOM_FACTOR : (1.0 / ZOOM_FACTOR);
+        double newScale = canvasScale.getX() * zoomFactor;
+        newScale = Math.max(MIN_ZOOM, Math.min(newScale, MAX_ZOOM));
+        Point2D mouseLogicalCoords = canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+        canvasScale.setPivotX(mouseLogicalCoords.getX());
+        canvasScale.setPivotY(mouseLogicalCoords.getY());
         canvasScale.setX(newScale);
         canvasScale.setY(newScale);
     }
 
     @FXML
-    private void onViewportMousePressed(MouseEvent e) {
-        if (e.isSecondaryButtonDown()) {
+    private void onViewportMousePressed(MouseEvent event) {
+        if (event.isSecondaryButtonDown()) {
             isPanning = true;
-            panStartX = e.getSceneX();
-            panStartY = e.getSceneY();
+            panStartX = event.getSceneX();
+            panStartY = event.getSceneY();
+            event.consume();
         }
     }
 
     @FXML
-    private void onViewportMouseDragged(MouseEvent e) {
-        if (isPanning && e.isSecondaryButtonDown()) {
-            canvasTranslate.setX(canvasTranslate.getX() + (e.getSceneX() - panStartX));
-            canvasTranslate.setY(canvasTranslate.getY() + (e.getSceneY() - panStartY));
-            panStartX = e.getSceneX();
-            panStartY = e.getSceneY();
+    private void onViewportMouseDragged(MouseEvent event) {
+        if (isPanning && event.isSecondaryButtonDown()) {
+            double dx = event.getSceneX() - panStartX;
+            double dy = event.getSceneY() - panStartY;
+            canvasTranslate.setX(canvasTranslate.getX() + dx);
+            canvasTranslate.setY(canvasTranslate.getY() + dy);
+            panStartX = event.getSceneX();
+            panStartY = event.getSceneY();
+            event.consume();
         }
     }
 
     @FXML
-    private void onViewportMouseReleased(MouseEvent e) {
-        if (e.getButton() == MouseButton.SECONDARY) {
+    private void onViewportMouseReleased(MouseEvent event) {
+        if (event.getButton() == MouseButton.SECONDARY) {
             isPanning = false;
+            event.consume();
         }
     }
 
-    // === Drawing ===
-    @FXML
-    private void onCanvasMousePressed(MouseEvent e) {
-        if (!e.isPrimaryButtonDown()) {
-            return;
-        }
-        Point2D logical = canvas.sceneToLocal(e.getSceneX(), e.getSceneY());
+    // =========================================================================
+    // --- Drawing Handlers ---
+    // =========================================================================
+    private Point2D getLogicalCoords(MouseEvent event) {
+        return canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+    }
 
-        if (activeTool == ToolType.SELECT) {
-            selectShapeAt(logical);
-        } else {
-            transientShape = createTransientShape(logical);
+    @FXML
+    private void onCanvasMousePressed(final MouseEvent e) {
+        if (e.isPrimaryButtonDown()) {
+            Point2D logicalCoords = getLogicalCoords(e);
+            viewModel.onMousePressed(logicalCoords.getX(), logicalCoords.getY());
+            redraw();
+            e.consume();
+        }
+    }
+
+    @FXML
+    private void onCanvasMouseDragged(final MouseEvent e) {
+        if (e.isPrimaryButtonDown()) {
+            Point2D logicalCoords = getLogicalCoords(e);
+            viewModel.onMouseDragged(logicalCoords.getX(), logicalCoords.getY());
+            redraw();
+            e.consume();
+        }
+    }
+
+    @FXML
+    private void onCanvasMouseReleased(final MouseEvent e) {
+        if (e.getButton() == MouseButton.PRIMARY) {
+            Point2D logicalCoords = getLogicalCoords(e);
+            viewModel.onMouseReleased(logicalCoords.getX(), logicalCoords.getY());
+            redraw();
+            e.consume();
+        }
+    }
+
+    // =========================================================================
+    // --- Toolbar Button Handlers ---
+    // =========================================================================
+    @FXML
+    private void onColorSelected(final ActionEvent event) {
+        if (isUpdatingUI) return;
+        final Color selectedColor = colorPicker.getValue();
+        viewModel.activeColor.set(selectedColor);
+        if (viewModel.selectedShapeId.get() != null) {
+            viewModel.updateSelectedShapeColor(selectedColor);
         }
         redraw();
     }
 
     @FXML
-    private void onCanvasMouseDragged(MouseEvent e) {
-        if (!e.isPrimaryButtonDown() || transientShape == null) {
-            return;
-        }
-        Point2D logical = canvas.sceneToLocal(e.getSceneX(), e.getSceneY());
-        updateTransientShape(logical);
-        redraw();
-    }
-
-    @FXML
-    private void onCanvasMouseReleased(MouseEvent e) {
-        if (!e.isPrimaryButtonDown()) {
-            return;
-        }
-        if (transientShape != null) {
-            actionManager.requestCreate(transientShape.copy());
-            selectedShapeId = transientShape.getShapeId();
-            transientShape = null;
-        }
-        redraw();
-    }
-
-    // === Toolbar actions ===
-    @FXML
-    private void onDelete() {
-        if (selectedShapeId == null) {
-            return;
-        }
-        ShapeState prev = canvasState.getShapeState(selectedShapeId);
-        if (prev != null) {
-            actionManager.requestDelete(prev);
-            selectedShapeId = null;
-        }
-        redraw();
-    }
-
-    @FXML
-    private void onUndo() {
-        actionManager.requestUndo();
-    }
-
-    @FXML
-    private void onRedo() {
-        actionManager.requestRedo();
-    }
-
-    @FXML
-    private void onColorSelected(ActionEvent event) {
-        // Selection listener handles the actual update; this keeps the FXML action happy.
-    }
-
-    @FXML
-    private void onRegularize() {
-        if (selectedShapeId == null) {
-            return;
-        }
-        ShapeState prev = canvasState.getShapeState(selectedShapeId);
-        if (prev == null) {
-            return;
-        }
-        Shape shape = prev.getShape().copy();
-        if (shape.getPoints().size() < 2) {
-            return;
-        }
-        Point anchor = shape.getPoints().get(0);
-        Point current = shape.getPoints().get(shape.getPoints().size() - 1);
-        double dx = current.getX() - anchor.getX();
-        double dy = current.getY() - anchor.getY();
-        double size = Math.max(Math.abs(dx), Math.abs(dy));
-        double adjustedX = anchor.getX() + Math.copySign(size, dx == 0 ? 1 : dx);
-        double adjustedY = anchor.getY() + Math.copySign(size, dy == 0 ? 1 : dy);
-
-        List<Point> updated = new ArrayList<>(shape.getPoints());
-        updated.set(updated.size() - 1, new Point(adjustedX, adjustedY));
-        shape.setPoints(updated);
-        actionManager.requestModify(prev, shape);
-    }
-
-    // === Helpers ===
-    private void selectShapeAt(Point2D p) {
-        selectedShapeId = canvasState.getVisibleShapes().stream()
-                .filter(shape -> GeometryUtils.getBounds(shape).contains(p.getX(), p.getY()))
-                .map(Shape::getShapeId)
-                .findFirst()
-                .orElse(null);
-
-        if (selectedShapeId != null) {
-            ShapeState state = canvasState.getShapeState(selectedShapeId);
-            if (state != null) {
-                updatingSelection = true;
-                colorPicker.setValue(ColorConverter.toFx(state.getShape().getColor()));
-                sizeSlider.setValue(state.getShape().getThickness());
-                updatingSelection = false;
+    private void onToolSelected(final ActionEvent event) {
+        final ToggleButton source = (ToggleButton) event.getSource();
+        if (source.getUserData() != null) {
+            viewModel.activeTool.set((ToolType) source.getUserData());
+            if (viewModel.activeTool.get() != ToolType.SELECT) {
+                viewModel.selectedShapeId.set(null);
             }
-        } else {
-            updatingSelection = true;
-            colorPicker.setValue(Color.BLACK);
-            sizeSlider.setValue(5);
-            updatingSelection = false;
+            redraw();
         }
     }
 
-    private Shape createTransientShape(Point2D start) {
-        ShapeType type = switch (activeTool) {
-            case FREEHAND -> ShapeType.FREEHAND;
-            case RECTANGLE -> ShapeType.RECTANGLE;
-            case ELLIPSE -> ShapeType.ELLIPSE;
-            case LINE -> ShapeType.LINE;
-            case TRIANGLE -> ShapeType.TRIANGLE;
-            case SELECT, REGULARIZE -> ShapeType.FREEHAND;
-        };
+    @FXML private void onDelete() { viewModel.deleteSelectedShape(); }
+    @FXML private void onUndo() { viewModel.undo(); }
+    @FXML private void onRedo() { viewModel.redo(); }
+    @FXML private void onRegularize() { System.out.println("Regularize button clicked (no logic assigned)."); }
 
-        List<Point> points = new ArrayList<>();
-        points.add(new Point(start.getX(), start.getY()));
-        points.add(new Point(start.getX(), start.getY()));
-
-        return shapeFactory.createShape(
-                type,
-                ShapeId.randomId(),
-                points,
-                sizeSlider.getValue(),
-                ColorConverter.toAwt(colorPicker.getValue()),
-                userId);
+    private void onKeyPressed(KeyEvent event) {
+        if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
+            viewModel.deleteSelectedShape();
+        }
     }
 
-    private void updateTransientShape(Point2D p) {
-        List<Point> points = new ArrayList<>(transientShape.getPoints());
-        if (transientShape.getShapeType() == ShapeType.FREEHAND) {
-            points.add(new Point(p.getX(), p.getY()));
-        } else if (!points.isEmpty()) {
-            if (points.size() == 1) {
-                points.add(new Point(p.getX(), p.getY()));
-            } else {
-                points.set(points.size() - 1, new Point(p.getX(), p.getY()));
+    @FXML
+    private void onCapture() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Canvas as PNG");
+        fileChooser.setInitialFileName("canvas-capture.png");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG files (*.png)", "*.png"));
+        File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
+        if (file != null) {
+            try {
+                WritableImage writableImage = new WritableImage((int) canvas.getWidth(), (int) canvas.getHeight());
+                canvas.snapshot(null, writableImage);
+                BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
+                ImageIO.write(bufferedImage, "png", file);
+                System.out.println("Canvas captured and saved to: " + file.getAbsolutePath());
+            } catch (IOException ex) {
+                System.err.println("Error capturing or saving canvas: " + ex.getMessage());
             }
-        } else {
-            points.add(new Point(p.getX(), p.getY()));
         }
-        transientShape.setPoints(points);
-        transientShape.setLastUpdatedBy(userId);
+    }
+
+    // =========================================================================
+    // --- HOST ONLY: SAVE & RESTORE ---
+    // =========================================================================
+
+    @FXML
+    private void onSave() {
+        if (actionManager == null) return;
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Canvas State");
+        fileChooser.setInitialFileName("canvas-state.json");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json"));
+        File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
+
+        if (file != null) {
+            try {
+                String json = actionManager.saveMap();
+                Files.writeString(file.toPath(), json);
+                System.out.println("State saved to: " + file.getAbsolutePath());
+            } catch (Exception ex) {
+                System.err.println("Error saving state: " + ex.getMessage());
+            }
+        }
+    }
+
+    @FXML
+    private void onRestore() {
+        if (actionManager == null) return;
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Restore Canvas State");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json"));
+        File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
+
+        if (file != null) {
+            try {
+                String json = Files.readString(file.toPath());
+                actionManager.restoreMap(json);
+                System.out.println("State restored from: " + file.getAbsolutePath());
+            } catch (Exception ex) {
+                System.err.println("Error restoring state: " + ex.getMessage());
+            }
+        }
     }
 }

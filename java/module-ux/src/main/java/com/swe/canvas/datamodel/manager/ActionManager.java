@@ -1,3 +1,12 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: ActionManager.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module: Canvas
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.manager;
 
 import com.swe.canvas.datamodel.action.ActionFactory;
@@ -7,45 +16,91 @@ import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.shape.Shape;
 
 /**
- * Interface defining the core operations for managing actions.
- * This will be implemented by ClientActionManager, HostActionManager,
- * and the existing StandaloneActionManager.
+ * Interface defining the contract for managing canvas actions.
+ *
+ * <p>This interface abstracts the differences between Host and Client behaviors
+ * regarding action creation, application, and network propagation.</p>
  */
 public interface ActionManager {
 
     /**
-     * Gets the central ActionFactory.
+     * Gets the factory used to create actions.
+     *
+     * @return The ActionFactory instance.
      */
     ActionFactory getActionFactory();
 
     /**
-     * Gets the local CanvasState (mirror for client, authority for host).
+     * Gets the current state of the canvas.
+     *
+     * @return The CanvasState instance.
      */
     CanvasState getCanvasState();
-    
+
     /**
-     * Gets the local UndoRedoManager.
+     * Gets the manager responsible for Undo/Redo history.
+     *
+     * @return The UndoRedoManager instance.
      */
     UndoRedoManager getUndoRedoManager();
 
     /**
-     * Sets the callback to trigger a UI redraw.
+     * Sets a callback to be executed whenever the canvas state changes.
+     *
+     * @param callback The Runnable to execute on update.
      */
     void setOnUpdate(Runnable callback);
 
-    // --- Local User Action Requests ---
-
+    /**
+     * Requests the creation of a new shape.
+     *
+     * @param newShape The shape object to create.
+     */
     void requestCreate(Shape newShape);
-    void requestModify(ShapeState prevState, Shape modifiedShape);
-    void requestDelete(ShapeState shapeToDelete);
-    void requestUndo();
-    void requestRedo();
-
-    // --- Network-facing Method ---
 
     /**
-     * Processes an incoming message from the network.
-     * This is the ProcessIncomingMessage() function you requested.
+     * Requests the modification of an existing shape.
+     *
+     * @param prevState     The state of the shape before modification.
+     * @param modifiedShape The shape object containing the new properties.
+     */
+    void requestModify(ShapeState prevState, Shape modifiedShape);
+
+    /**
+     * Requests the deletion of a shape.
+     *
+     * @param shapeToDelete The state of the shape to delete.
+     */
+    void requestDelete(ShapeState shapeToDelete);
+
+    /**
+     * Requests to undo the last action.
+     */
+    void requestUndo();
+
+    /**
+     * Requests to redo the last undone action.
+     */
+    void requestRedo();
+
+    /**
+     * Serializes the current canvas state to a JSON string.
+     *
+     * @return A JSON string representing the entire canvas map.
+     */
+    String saveMap();
+
+    /**
+     * Restores the canvas state from a JSON string.
+     *
+     * @param json The JSON string to restore from.
+     */
+    void restoreMap(String json);
+
+    /**
+     * Processes a message received from the network layer.
+     *
+     * @param message The network message containing the action or command.
      */
     void processIncomingMessage(NetworkMessage message);
 }

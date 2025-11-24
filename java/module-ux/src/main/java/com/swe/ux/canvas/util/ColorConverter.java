@@ -1,3 +1,13 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: ColorConverter.java
+ *  Owner: Darla Manohar
+ *  Roll Number: 112201034
+ *  Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.ux.canvas.util;
 
 /**
@@ -30,5 +40,3 @@ public class ColorConverter {
                 (float) fxColor.getOpacity());
     }
 }
-
-

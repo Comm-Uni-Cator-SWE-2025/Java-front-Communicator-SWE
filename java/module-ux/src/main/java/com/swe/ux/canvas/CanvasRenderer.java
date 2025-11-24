@@ -7,8 +7,8 @@ import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
-import com.swe.ux.canvas.util.ColorConverter;
-import com.swe.ux.canvas.util.GeometryUtils;
+import com.swe.canvas.ui.util.ColorConverter;
+import com.swe.canvas.ui.util.GeometryUtils;
 
 import javafx.geometry.Bounds;
 import javafx.scene.canvas.Canvas;
@@ -16,6 +16,10 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
+
+/**
+ * @author Gajula Sri Siva Sai Shashank
+ */
 
 public class CanvasRenderer {
 
@@ -145,5 +149,3 @@ public class CanvasRenderer {
                 new double[] { minY, maxY, maxY }, 3);
     }
 }
-
-

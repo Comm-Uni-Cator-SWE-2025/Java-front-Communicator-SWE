@@ -1,15 +1,24 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: Point.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module : Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.shape;
 
 /**
  * Enumerates the concrete types of shapes available.
  *
- * <p>This is used for serialization and by the {@link ShapeFactory}
+ * <p>
+ * This is used for serialization and by the {@link ShapeFactory}
  * to identify which shape type to create.
  * </p>
  *
- * @author Gajjala Bhavani Shankar
- 
- 
+ * @author Gajjala Bhavani Shankar 
  */
 public enum ShapeType {
     /**
@@ -35,5 +44,10 @@ public enum ShapeType {
     /**
      * A straight line defined by two endpoints.
      */
-    LINE
+    LINE,
+
+    /**
+     * Unknown Shape.
+     */
+    UNKNOWN
 }

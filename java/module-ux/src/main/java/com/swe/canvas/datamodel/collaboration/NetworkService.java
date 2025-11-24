@@ -1,36 +1,40 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: NetworkService.java
+ * Owner: B S S Krishna
+ * Roll Number: 112201013
+ * Module: Canvas
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.collaboration;
 
-import java.util.function.Consumer;
+import com.swe.canvas.datamodel.manager.ActionManager;
 
 /**
- * Abstraction for the canvas collaboration transport.
- * Implementations can be real network bridges, RPC shims, or simple in-memory simulators.
+ * Abstract interface for the network layer.
+ *
+ * <p>
+ * This interface defines the contract for sending messages between the
+ * Client and the Host. It abstracts the underlying transport mechanism
+ * (e.g., sockets, WebSockets, or in-memory simulation).
+ * </p>
  */
 public interface NetworkService {
 
     /**
-     * A Client sends a message to the Host.
+     * Sends a message from a Client to the Host.
+     *
+     * @param message The message to send.
      */
     void sendMessageToHost(NetworkMessage message);
 
     /**
-     * The Host broadcasts a message to all Clients.
+     * Broadcasts a message from the Host to all connected Clients.
+     *
+     * @param message The message to broadcast.
      */
     void broadcastMessage(NetworkMessage message);
 
-    /**
-     * Allows implementations to register the host-side message handler.
-     * Default no-op so existing remote transports can ignore it.
-     */
-    default void registerHostHandler(Consumer<NetworkMessage> handler) {
-        // no-op by default
-    }
-
-    /**
-     * Allows implementations to register client-side message listeners.
-     * Default no-op so remote transports can ignore it.
-     */
-    default void registerClientHandler(Consumer<NetworkMessage> handler) {
-        // no-op by default
-    }
+    
 }
