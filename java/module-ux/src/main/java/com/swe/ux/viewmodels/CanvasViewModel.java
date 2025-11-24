@@ -6,15 +6,18 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 
+import com.swe.app.RPC;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
+import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeFactory;
 import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.datamodel.shape.ShapeType;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.canvas.util.ColorConverter;
 import com.swe.ux.canvas.util.GeometryUtils;
 
@@ -25,7 +28,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
 
-public class CanvasViewModel {
+public class  {
 
     private final ActionManager actionManager;
     private final CanvasState canvasState;
@@ -52,12 +55,25 @@ public class CanvasViewModel {
     public boolean isDraggingSelection = false;
     private ShapeState originalShapeForDrag = null;
 
+    private AbstractRPC rpc;
     public CanvasViewModel(String userId, ActionManager actionManager) {
+        this.rpc = RPC.getInstance();
+        
         this.userId = userId;
         this.actionManager = actionManager;
         this.canvasState = actionManager.getCanvasState();
         this.actionFactory = actionManager.getActionFactory();
         this.shapeFactory = new ShapeFactory();
+
+        rpc.subscribe("canvas:update", this::handleUpdate);
+    }
+
+    private byte[] handleUpdate(byte[] data){
+        String json = data.toString();
+        NetworkMessage message = NetworkMessage.deserialize(json);
+
+        this.actionManager.processIncomingMessage(message);
+        return new byte[0];
     }
 
     public CanvasState getCanvasState() {

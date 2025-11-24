@@ -14,6 +14,8 @@ public class RPC implements AbstractRPC {
 
     private SocketryServer socketryServer;
 
+    private static RPC instance = null;
+
     public RPC() {
         methods = new HashMap<>();
     }
