@@ -248,9 +248,9 @@ public class ChatView extends JPanel {
     private void addMessageToView(MessageVM messageVM) {
         SwingUtilities.invokeLater(() -> {
             // 1. Check if we already have a component for this message ID
-            if (messageComponentMap.containsKey(messageVM.messageId)) {
+            if (messageComponentMap.containsKey(messageVM.getMessageId())) {
                 // --- UPDATE LOGIC ---
-                Component oldComponent = messageComponentMap.get(messageVM.messageId);
+                Component oldComponent = messageComponentMap.get(messageVM.getMessageId());
 
                 // Find the index of the old component
                 int index = -1;
@@ -269,7 +269,7 @@ public class ChatView extends JPanel {
                     Component newComponent = createMessageComponent(messageVM);
 
                     messageContainer.add(newComponent, index); // Add new at SAME index
-                    messageComponentMap.put(messageVM.messageId, newComponent); // Update map
+                    messageComponentMap.put(messageVM.getMessageId(), newComponent); // Update map
 
                     messageContainer.revalidate();
                     messageContainer.repaint();
@@ -277,7 +277,7 @@ public class ChatView extends JPanel {
             } else {
                 // --- ADD NEW LOGIC (Original) ---
                 Component messageComponent = createMessageComponent(messageVM);
-                messageComponentMap.put(messageVM.messageId, messageComponent);
+                messageComponentMap.put(messageVM.getMessageId(), messageComponent);
                 messageContainer.add(messageComponent);
 
                 messageContainer.revalidate();
@@ -295,7 +295,7 @@ public class ChatView extends JPanel {
             return createFileBubble(messageVM);
         } else {
             // ⭐ CHECK FOR AI MESSAGE
-            if (messageVM.username.equals("AI_Bot")) {
+            if (messageVM.getUsername().equals("AI_Bot")) {
                 return createAiBubble(messageVM);
             }
             return createTextBubble(messageVM);
@@ -320,7 +320,7 @@ public class ChatView extends JPanel {
         usernameLabel.setForeground(new Color(0x4B, 0x00, 0x82)); // Indigo
 
         JLabel contentLabel = new JLabel("<html><p style=\"width:240px; font-family:SansSerif;\">"
-                + messageVM.content + "</p></html>");
+                + messageVM.getContent() + "</p></html>");
         contentLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         contentLabel.setForeground(new Color(0x20, 0x20, 0x20));
 
@@ -342,21 +342,21 @@ public class ChatView extends JPanel {
         bubble.setMaximumSize(new Dimension(300, 9999));
 
         if (messageVM.hasQuote()) {
-            bubble.add(createQuotePanel(messageVM.quotedContent, messageVM.replyToId));
+            bubble.add(createQuotePanel(messageVM.getQuotedContent(), messageVM.getReplyToId()));
             bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
-        JLabel usernameLabel = new JLabel(messageVM.username);
+        JLabel usernameLabel = new JLabel(messageVM.getUsername());
         usernameLabel.setFont(new Font("Arial", Font.BOLD, 13));
 
         // Highlight my questions to AI
-        boolean isQuestionToAi = messageVM.content.trim().startsWith("@AI");
+        boolean isQuestionToAi = messageVM.getContent().trim().startsWith("@AI");
         if (isQuestionToAi) {
-            usernameLabel.setText(messageVM.username + " (Asking AI)");
+            usernameLabel.setText(messageVM.getUsername() + " (Asking AI)");
             usernameLabel.setForeground(new Color(0x00, 0x00, 0x8B)); // Dark Blue
         }
 
-        JLabel contentLabel = new JLabel("<html><p style=\"width:220px;\">" + messageVM.content + "</p></html>");
+        JLabel contentLabel = new JLabel("<html><p style=\"width:220px;\">" + messageVM.getContent() + "</p></html>");
         contentLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
         // Italicize the @AI part if it's a question
@@ -374,7 +374,7 @@ public class ChatView extends JPanel {
         bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         bubble.add(footer);
 
-        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe, false);
+        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe(), false);
     }
 
     /**
@@ -388,11 +388,11 @@ public class ChatView extends JPanel {
 
         if (messageVM.hasQuote()) {
             // Pass the ID here
-            bubble.add(createQuotePanel(messageVM.quotedContent, messageVM.replyToId));
+            bubble.add(createQuotePanel(messageVM.getQuotedContent(), messageVM.getReplyToId()));
             bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
-        JLabel usernameLabel = new JLabel(messageVM.username);
+        JLabel usernameLabel = new JLabel(messageVM.getUsername());
         usernameLabel.setFont(new Font("Arial", Font.BOLD, 13));
 
         JPanel filePanel = new JPanel(new BorderLayout(10, 0));
@@ -409,14 +409,14 @@ public class ChatView extends JPanel {
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel fileNameLabel = new JLabel(messageVM.fileName);
+        JLabel fileNameLabel = new JLabel(messageVM.getFileName());
         fileNameLabel.setFont(new Font("Arial", Font.BOLD, 14));
         fileNameLabel.setForeground(Color.BLACK);
         infoPanel.add(fileNameLabel);
 
         // ⭐ Display compressed size from metadata
-        String sizeDisplay = messageVM.compressedFileSize > 0
-                ? formatFileSize(messageVM.compressedFileSize) + " (compressed)"
+        String sizeDisplay = messageVM.getCompressedFileSize() > 0
+                ? formatFileSize(messageVM.getCompressedFileSize()) + " (compressed)"
                 : "Size unknown";
         JLabel sizeLabel = new JLabel(sizeDisplay);
         sizeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -426,7 +426,7 @@ public class ChatView extends JPanel {
         filePanel.add(infoPanel, BorderLayout.CENTER);
 
         // Save button for received files only
-        if (!messageVM.isSentByMe) {
+        if (!messageVM.isSentByMe()) {
             infoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
             JButton saveButton = new JButton("Save File");
             saveButton.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -446,10 +446,10 @@ public class ChatView extends JPanel {
         bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         bubble.add(filePanel);
 
-        if (messageVM.content != null && !messageVM.content.trim().isEmpty()) {
+        if (messageVM.getContent() != null && !messageVM.getContent().trim().isEmpty()) {
             bubble.add(Box.createRigidArea(new Dimension(0, 8)));
             JLabel captionLabel = new JLabel(
-                    "<html><p style=\"width:220px;\">" + messageVM.content + "</p></html>"
+                    "<html><p style=\"width:220px;\">" + messageVM.getContent() + "</p></html>"
             );
             captionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
             captionLabel.setForeground(Color.BLACK);
@@ -460,7 +460,7 @@ public class ChatView extends JPanel {
         bubble.add(Box.createRigidArea(new Dimension(0, 5)));
         bubble.add(footer);
 
-        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe,false);
+        return wrapBubble(bubble, usernameLabel, messageVM.isSentByMe(), false);
     }
 
     /**
@@ -510,15 +510,15 @@ public class ChatView extends JPanel {
         footer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // 1. Always show the timestamp
-        JLabel timeLabel = new JLabel(messageVM.timestamp);
+        JLabel timeLabel = new JLabel(messageVM.getTimestamp());
         timeLabel.setFont(new Font("Arial", Font.PLAIN, 10));
         timeLabel.setForeground(Color.GRAY);
         footer.add(timeLabel, BorderLayout.WEST);
 
         // 2. CHECK IF MESSAGE IS DELETED
         // We check if the content contains the specific text we set in the ViewModel
-        boolean isDeleted = messageVM.content != null &&
-                messageVM.content.contains("This message was deleted");
+        boolean isDeleted = messageVM.getContent() != null &&
+                messageVM.getContent().contains("This message was deleted");
 
         // 3. ONLY ADD BUTTONS IF THE MESSAGE IS NOT DELETED
         if (!isDeleted) {
@@ -539,7 +539,7 @@ public class ChatView extends JPanel {
             buttonPanel.add(replyBtn);
 
             // --- Delete Button (Only if sent by me) ---
-            if (messageVM.isSentByMe) {
+            if (messageVM.isSentByMe()) {
                 JButton deleteBtn = new JButton("Delete");
                 deleteBtn.setFont(new Font("Arial", Font.PLAIN, 10));
                 deleteBtn.setBorderPainted(false);

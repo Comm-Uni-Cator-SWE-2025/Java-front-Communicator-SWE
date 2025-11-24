@@ -39,8 +39,9 @@ public class CanvasState {
     /**
      * Sets the callback function to be triggered when the state changes.
      * This is set by the ActionManager.
+     * @param onUpdate The callback to invoke when state changes.
      */
-    public void setOnUpdate(Runnable onUpdate) {
+    public void setOnUpdate(final Runnable onUpdate) {
         if (onUpdate != null) {
             this.onUpdateCallback = onUpdate;
         } else {

@@ -124,6 +124,7 @@ public final class ShapeSerializer {
             final ShapeId id = new ShapeId(shapeId);
 
             final Shape newShape;
+            final long zeroL = 0L;
             switch (shapeType) {
                 case FREEHAND:
                     newShape = new FreehandShape(id, points, thickness, color, createdBy, lastModifiedBy);
@@ -145,9 +146,9 @@ public final class ShapeSerializer {
             }
 
             // Use 0L for lastModified since the value is not included in the payload.
-            return new ShapeState(newShape, isDeleted, 0L);
+            return new ShapeState(newShape, isDeleted, zeroL);
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SerializationException("Failed to manually deserialize ShapeState: " + e.getMessage(), e);
         }
     }
@@ -247,18 +248,24 @@ public final class ShapeSerializer {
                     throw new SerializationException("Unknown action type: " + actionType);
             }
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new SerializationException("Failed to manually deserialize Action: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Test helper to serialize a shape without a ShapeState.
+     * @param shape The shape to serialize.
+     * @return The serialized JSON string.
+     */
     public static String testSerializeShapeOnly(final Shape shape) {
         if (shape == null) {
             return "{}";
         }
         // Since we need ShapeState for the isDeleted flag, we mock a ShapeState for serialization.
         // We know that for a newly drawn shape, isDeleted is false and timestamp is irrelevant for the payload structure.
-        final ShapeState tempState = new ShapeState(shape, false, 0L);
+        final long zeroL = 0L;
+        final ShapeState tempState = new ShapeState(shape, false, zeroL);
         return serializeShape(tempState);
     }
 }

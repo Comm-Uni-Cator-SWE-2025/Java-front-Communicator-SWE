@@ -1,10 +1,9 @@
 package com.swe.controller.Meeting;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.Objects;
 
 /**
  * Represents a user's core, permanent profile in the system.
@@ -153,6 +152,11 @@ public class UserProfile {
                 && Objects.equals(role, that.role);
     }
 
+    /**
+     * Generates a hash code for this UserProfile.
+     *
+     * @return the hash code
+     */
     @Override
     public int hashCode() {
         return Objects.hash(email, displayName, role);

@@ -1,35 +1,68 @@
-/**
- *  Contributed by Pushti Vasoya.
+package com.swe.controller.serialize;
+
+/*
+ * Contributed by Pushti Vasoya.
  */
 
-package com.swe.controller.serialize;
+import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.nio.charset.StandardCharsets;
-
+/**
+ * Utility class for serializing and deserializing data objects.
+ */
 public class DataSerializer {
 
-    static ObjectMapper objectMapper = new ObjectMapper();
+    /** The Jackson ObjectMapper for JSON serialization. */
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public static byte[] serialize(Object participant) throws JsonProcessingException {
-        objectMapper.registerModule(new ClientNodeModule());
-        String data = objectMapper.writeValueAsString(participant);
+    /**
+     * Serializes an object to a byte array.
+     *
+     * @param participant the object to serialize
+     * @return the serialized byte array
+     * @throws JsonProcessingException if serialization fails
+     */
+    public static byte[] serialize(final Object participant)
+            throws JsonProcessingException {
+        OBJECT_MAPPER.registerModule(new ClientNodeModule());
+        final String data = OBJECT_MAPPER.writeValueAsString(participant);
 
         return data.getBytes(StandardCharsets.UTF_8);
     }
 
-    public static <T> T deserialize(byte[] data, Class<T> datatype) throws JsonProcessingException {
-        String json = new String(data, StandardCharsets.UTF_8);
+    /**
+     * Deserializes a byte array to an object.
+     *
+     * @param data the byte array to deserialize
+     * @param datatype the target class type
+     * @param <T> the type parameter
+     * @return the deserialized object
+     * @throws JsonProcessingException if deserialization fails
+     */
+    public static <T> T deserialize(final byte[] data, final Class<T> datatype)
+            throws JsonProcessingException {
+        final String json = new String(data, StandardCharsets.UTF_8);
 
-        return objectMapper.readValue(json, datatype);
+        return OBJECT_MAPPER.readValue(json, datatype);
     }
 
-    public static <T> T deserialize(byte[] data, TypeReference<T> typeReference) throws JsonProcessingException {
-        String json = new String(data, StandardCharsets.UTF_8);
-        objectMapper.registerModule(new ClientNodeModule());
-        return objectMapper.readValue(json, typeReference);
+    /**
+     * Deserializes a byte array to an object using a type reference.
+     *
+     * @param data the byte array to deserialize
+     * @param typeReference the type reference
+     * @param <T> the type parameter
+     * @return the deserialized object
+     * @throws JsonProcessingException if deserialization fails
+     */
+    public static <T> T deserialize(final byte[] data,
+                                    final TypeReference<T> typeReference)
+            throws JsonProcessingException {
+        final String json = new String(data, StandardCharsets.UTF_8);
+        OBJECT_MAPPER.registerModule(new ClientNodeModule());
+        return OBJECT_MAPPER.readValue(json, typeReference);
     }
 }

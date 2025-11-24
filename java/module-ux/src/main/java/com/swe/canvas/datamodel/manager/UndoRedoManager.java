@@ -9,6 +9,8 @@ import com.swe.canvas.datamodel.action.Action;
  * Replaces UndoRedoStack.
  * Manages the undo/redo history using an ArrayList and a "pointer" (currentIndex).
  * This matches the "linked list" concept from the prompt.
+ *
+ * @author Canvas Team
  */
 public class UndoRedoManager {
 
@@ -24,8 +26,9 @@ public class UndoRedoManager {
      * Pushes a new action onto the history stack.
      * This is called when a user's *own* action is confirmed by the host.
      * It clears all "redo" history.
+     * @param action The action to push onto the history stack.
      */
-    public synchronized void push(Action action) {
+    public synchronized void push(final Action action) {
         // If we have "undone" actions, clear them
         while (history.size() - 1 > currentIndex) {
             history.remove(history.size() - 1);
@@ -40,7 +43,7 @@ public class UndoRedoManager {
      */
     public synchronized Action getActionToUndo() {
         if (canUndo()) {
-            Action actionToUndo = history.get(currentIndex);
+            final Action actionToUndo = history.get(currentIndex);
             // We just move the pointer. The *host* will confirm.
             // We return the action so the manager can create an inverse.
             return actionToUndo;
@@ -55,7 +58,7 @@ public class UndoRedoManager {
     public synchronized Action getActionToRedo() {
         if (canRedo()) {
             // We return the *next* action in the stack.
-            Action actionToRedo = history.get(currentIndex + 1);
+            final Action actionToRedo = history.get(currentIndex + 1);
             return actionToRedo;
         }
         return null;
@@ -84,14 +87,25 @@ public class UndoRedoManager {
         }
     }
 
+    /**
+     * Checks if an undo operation is possible.
+     * @return true if undo is possible, false otherwise.
+     */
     public synchronized boolean canUndo() {
         return currentIndex > -1;
     }
 
+    /**
+     * Checks if a redo operation is possible.
+     * @return true if redo is possible, false otherwise.
+     */
     public synchronized boolean canRedo() {
         return currentIndex < history.size() - 1;
     }
     
+    /**
+     * Clears all undo/redo history.
+     */
     public synchronized void clear() {
         history.clear();
         currentIndex = -1;

@@ -40,7 +40,6 @@ class MainPageViewModelIntegrationTest {
         testUser = new UserProfile(
             "test@example.com",
             "Test User",
-            "http://example.com/logo.png",
             ParticipantRole.STUDENT
         );
         

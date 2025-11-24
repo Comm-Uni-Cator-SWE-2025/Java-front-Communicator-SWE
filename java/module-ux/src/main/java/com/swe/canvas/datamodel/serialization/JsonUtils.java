@@ -54,71 +54,96 @@ public final class JsonUtils {
 
     /**
      * Converts an ARGB hex string to a java.awt.Color.
+     * @param hexString The hex string to convert.
+     * @return The Color object.
      */
     public static Color hexToColor(final String hexString) {
-        if (hexString == null || hexString.length() != 9 || !hexString.startsWith("#")) {
+        final int expectedLength = 9;
+        if (hexString == null || hexString.length() != expectedLength || !hexString.startsWith("#")) {
             return Color.BLACK;
         }
         try {
+            final int sixteen = 16;
             // Long.parseLong handles the parsing, using 'true' for alpha
-            return new Color((int) Long.parseLong(hexString.substring(1), 16), true);
-        } catch (NumberFormatException e) {
+            return new Color((int) Long.parseLong(hexString.substring(1), sixteen), true);
+        } catch (final NumberFormatException e) {
             return Color.BLACK;
         }
     }
 
     /**
      * Extracts a string value associated with a key from the content.
+     * @param content The JSON content.
+     * @param key The key to extract.
+     * @return The extracted string value.
      */
     public static String extractString(final String content, final String key) {
         // Pattern: "key":"value" or "key":value (if value is 'null')
         final Pattern pattern = Pattern.compile(Pattern.quote("\"" + key + "\"") + ":\"(.*?)\"");
         final Matcher matcher = pattern.matcher(content);
-        return matcher.find() ? matcher.group(1) : null;
+        final int one = 1;
+        return matcher.find() ? matcher.group(one) : null;
     }
 
     /**
      * Extracts a double value associated with a key from the content.
+     * @param content The JSON content.
+     * @param key The key to extract.
+     * @return The extracted double value.
      */
     public static double extractDouble(final String content, final String key) {
         // Pattern: "key":number (Handles numbers like 2.0, 15, or 0.5)
         final Pattern pattern = Pattern.compile(Pattern.quote("\"" + key + "\"") + ":([\\-0-9\\.]+)");
         final Matcher matcher = pattern.matcher(content);
+        final double defaultValue = 0.0;
         
         if (matcher.find()) {
             try {
+                final int one = 1;
                 // Group 1 contains the numeric string (e.g., "2.0")
-                return Double.parseDouble(matcher.group(1));
-            } catch (NumberFormatException e) {
-                System.err.println("Error parsing double for key " + key + ": " + matcher.group(1));
-                return 0.0;
+                return Double.parseDouble(matcher.group(one));
+            } catch (final NumberFormatException e) {
+                final int one = 1;
+                System.err.println("Error parsing double for key " + key + ": " + matcher.group(one));
+                return defaultValue;
             }
         }
-        return 0.0;
+        return defaultValue;
     }
 
     /**
      * Extracts a long value associated with a key from the content.
+     * @param content The JSON content.
+     * @param key The key to extract.
+     * @return The extracted long value.
      */
     public static long extractLong(final String content, final String key) {
         // Pattern: "key":number
         final Pattern pattern = Pattern.compile(Pattern.quote("\"" + key + "\"") + ":(\\d+)");
         final Matcher matcher = pattern.matcher(content);
-        return matcher.find() ? Long.parseLong(matcher.group(1)) : 0L;
+        final int one = 1;
+        final long zeroL = 0L;
+        return matcher.find() ? Long.parseLong(matcher.group(one)) : zeroL;
     }
 
     /**
      * Extracts a boolean value associated with a key from the content.
+     * @param content The JSON content.
+     * @param key The key to extract.
+     * @return The extracted boolean value.
      */
     public static boolean extractBoolean(final String content, final String key) {
         // Pattern: "key":true|false
         final Pattern pattern = Pattern.compile(Pattern.quote("\"" + key + "\"") + ":(true|false)");
         final Matcher matcher = pattern.matcher(content);
-        return matcher.find() && Boolean.parseBoolean(matcher.group(1));
+        final int one = 1;
+        return matcher.find() && Boolean.parseBoolean(matcher.group(one));
     }
 
     /**
      * Extracts the Points array content.
+     * @param content The JSON content.
+     * @return The list of extracted points.
      */
     public static List<Point> extractPoints(final String content) {
         final List<Point> points = new ArrayList<>();
@@ -127,14 +152,16 @@ public final class JsonUtils {
         final Matcher arrayMatcher = arrayPattern.matcher(content);
 
         if (arrayMatcher.find()) {
-            final String pointsArrayContent = arrayMatcher.group(1);
+            final int one = 1;
+            final int two = 2;
+            final String pointsArrayContent = arrayMatcher.group(one);
             // Pattern for individual points: {"X":123.0,"Y":456.0}
             final Pattern pointPattern = Pattern.compile("\\{\"X\":([\\-0-9\\.]+),\"Y\":([\\-0-9\\.]+)\\}");
             final Matcher pointMatcher = pointPattern.matcher(pointsArrayContent);
 
             while (pointMatcher.find()) {
-                final double x = Double.parseDouble(pointMatcher.group(1));
-                final double y = Double.parseDouble(pointMatcher.group(2));
+                final double x = Double.parseDouble(pointMatcher.group(one));
+                final double y = Double.parseDouble(pointMatcher.group(two));
                 points.add(new Point(x, y));
             }
         }
@@ -145,47 +172,54 @@ public final class JsonUtils {
      * Extracts a nested JSON object string from the content.
      * Searches for "key":{...} or "key":null.
      * This method is complex as it has to handle JSON nesting manually (curly brace counting).
+     * @param content The JSON content.
+     * @param key The key to extract.
+     * @return The extracted nested JSON string.
      */
     public static String extractNestedJson(final String content, final String key) {
         final String searchKey = "\"" + key + "\":";
         int startIndex = content.indexOf(searchKey);
+        final int minusOne = -1;
+        final int zero = 0;
+        final int four = 4;
+        final int one = 1;
 
-        if (startIndex == -1) {
+        if (startIndex == minusOne) {
             return null;
         }
 
         startIndex += searchKey.length();
 
         // Check for 'null' value
-        if (content.regionMatches(startIndex, "null", 0, 4)) {
+        if (content.regionMatches(startIndex, "null", zero, four)) {
             return "null";
         }
 
         // Must be an object, find start '{'
         int objectStart = content.indexOf('{', startIndex);
-        if (objectStart == -1) {
+        if (objectStart == minusOne) {
             return null;
         }
 
-        int balance = 0;
-        int objectEnd = -1;
+        int balance = zero;
+        int objectEnd = minusOne;
 
         for (int i = objectStart; i < content.length(); i++) {
-            char c = content.charAt(i);
+            final char c = content.charAt(i);
             if (c == '{') {
                 balance++;
             } else if (c == '}') {
                 balance--;
-                if (balance == 0) {
+                if (balance == zero) {
                     objectEnd = i;
                     break;
                 }
             }
         }
 
-        if (objectEnd != -1) {
+        if (objectEnd != minusOne) {
             // Return the object content including the outermost braces
-            return content.substring(objectStart, objectEnd + 1);
+            return content.substring(objectStart, objectEnd + one);
         }
 
         return null;

@@ -84,20 +84,20 @@ public class ChatViewModel {
             // Iterate over every message in the map
             messageHistory.values().forEach(vm -> {
                 System.out.println("------------------------------------------------");
-                System.out.println("ID        : " + vm.messageId);
-                System.out.println("Time      : " + vm.timestamp);
-                System.out.println("Sender    : " + vm.username + (vm.isSentByMe ? " (Me)" : ""));
+                System.out.println("ID        : " + vm.getMessageId());
+                System.out.println("Time      : " + vm.getTimestamp());
+                System.out.println("Sender    : " + vm.getUsername() + (vm.isSentByMe() ? " (Me)" : ""));
 
                 if (vm.isFileMessage()) {
                     System.out.println("Type      : FILE");
-                    System.out.println("File Name : " + vm.fileName);
-                    System.out.println("Caption   : " + vm.content);
+                    System.out.println("File Name : " + vm.getFileName());
+                    System.out.println("Caption   : " + vm.getContent());
                 } else {
                     System.out.println("Type      : TEXT");
-                    System.out.println("Content   : " + vm.content);
+                    System.out.println("Content   : " + vm.getContent());
                 }
 
-                System.out.println("ReplyToID : " + vm.replyToId);
+                System.out.println("ReplyToID : " + vm.getReplyToId());
             });
         }
         System.out.println("============================================================\n");
@@ -206,14 +206,14 @@ public class ChatViewModel {
             if (oldMsg != null) {
                 // 4. Create the "Deleted" replacement
                 MessageVM deletedMsg = new MessageVM(
-                        oldMsg.messageId,
-                        oldMsg.username,
+                        oldMsg.getMessageId(),
+                        oldMsg.getUsername(),
                         "<i>This message was deleted</i>", // The specific text your View looks for
                         null,           // Clear filename
                         0,              // Clear size
                         null,           // Clear file content
-                        oldMsg.timestamp,
-                        oldMsg.isSentByMe,
+                        oldMsg.getTimestamp(),
+                        oldMsg.isSentByMe(),
                         null,           // Remove quote
                         null            // Remove reply ID
                 );
@@ -335,7 +335,7 @@ public class ChatViewModel {
 
         System.out.println("[FRONT] User clicked 'Save'. Requesting backend to decompress and save.");
 
-        byte[] messageIdBytes = fileMessage.messageId.getBytes(StandardCharsets.UTF_8);
+        byte[] messageIdBytes = fileMessage.getMessageId().getBytes(StandardCharsets.UTF_8);
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -376,10 +376,10 @@ public class ChatViewModel {
         if (replyToId != null) {
             final MessageVM repliedTo = messageHistory.get(replyToId);
             if (repliedTo != null) {
-                String sender = repliedTo.isSentByMe ? "You" : repliedTo.username;
+                String sender = repliedTo.isSentByMe() ? "You" : repliedTo.getUsername();
                 String contentSnippet = repliedTo.isFileMessage() ?
-                        "File: " + repliedTo.fileName :
-                        repliedTo.content.substring(0, Math.min(repliedTo.content.length(), 20)) + "...";
+                        "File: " + repliedTo.getFileName() :
+                        repliedTo.getContent().substring(0, Math.min(repliedTo.getContent().length(), 20)) + "...";
                 quotedContent = "Replying to " + sender + ": " + contentSnippet;
             } else {
                 quotedContent = "Reply to unavailable message";
@@ -399,7 +399,7 @@ public class ChatViewModel {
                 replyToId
         );
 
-        messageHistory.put(vm.messageId, vm);
+        messageHistory.put(vm.getMessageId(), vm);
         if (onMessageAdded != null) {
             onMessageAdded.accept(vm);
         }
@@ -432,29 +432,29 @@ public class ChatViewModel {
     // In ChatViewModel.java
 
     public void deleteMessage(MessageVM messageToDelete) {
-        if (messageToDelete == null || !messageToDelete.isSentByMe) return;
+        if (messageToDelete == null || !messageToDelete.isSentByMe()) return;
 
         // 1. Send RPC to backend (keep this)
-        byte[] messageIdBytes = messageToDelete.messageId.getBytes(StandardCharsets.UTF_8);
+        byte[] messageIdBytes = messageToDelete.getMessageId().getBytes(StandardCharsets.UTF_8);
         sendRpc("chat:delete-message", messageIdBytes);
 
         // 2. CREATE THE "DELETED" VERSION OF THE MESSAGE
         // We convert the file or text message into a simple text message with italics
         MessageVM deletedMsg = new MessageVM(
-                messageToDelete.messageId,
-                messageToDelete.username,
+                messageToDelete.getMessageId(),
+                messageToDelete.getUsername(),
                 "<i>This message was deleted</i>", // HTML italics for styling
                 null,           // FileName is gone
                 0,              // Size is 0
                 null,           // Content is null
-                messageToDelete.timestamp,
-                messageToDelete.isSentByMe,
+                messageToDelete.getTimestamp(),
+                messageToDelete.isSentByMe(),
                 null,
                 null// Remove any quoted reply content
         );
 
         // 3. UPDATE THE HISTORY (Do not remove!)
-        messageHistory.put(messageToDelete.messageId, deletedMsg);
+        messageHistory.put(messageToDelete.getMessageId(), deletedMsg);
 
         // 4. NOTIFY VIEW TO UPDATE (Use onMessageAdded, NOT onMessageRemoved)
         // Your View logic already handles updating if the ID exists
@@ -463,7 +463,7 @@ public class ChatViewModel {
         }
 
         // 5. Handle Reply cancellation logic
-        if (this.currentReplyId != null && this.currentReplyId.equals(messageToDelete.messageId)) {
+        if (this.currentReplyId != null && this.currentReplyId.equals(messageToDelete.getMessageId())) {
             cancelReply();
         }
     }
@@ -503,12 +503,12 @@ public class ChatViewModel {
     // --- User Actions ---
 
     public void startReply(MessageVM messageToReply) {
-        this.currentReplyId = messageToReply.messageId;
+        this.currentReplyId = messageToReply.getMessageId();
         if (onReplyStateChange != null) {
             String quoteText = messageToReply.isFileMessage() ?
-                    "Replying to file: " + messageToReply.fileName :
-                    "Replying to " + messageToReply.username + ": " +
-                            messageToReply.content.substring(0, Math.min(messageToReply.content.length(), 20)) + "...";
+                    "Replying to file: " + messageToReply.getFileName() :
+                    "Replying to " + messageToReply.getUsername() + ": " +
+                            messageToReply.getContent().substring(0, Math.min(messageToReply.getContent().length(), 20)) + "...";
             onReplyStateChange.accept(quoteText);
         }
     }

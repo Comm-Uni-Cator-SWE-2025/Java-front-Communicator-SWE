@@ -135,7 +135,6 @@ class PropertyListenersTest {
         UserProfile newUser = new UserProfile(
             "test@example.com",
             "Test User",
-            null,
             ParticipantRole.STUDENT
         );
 
