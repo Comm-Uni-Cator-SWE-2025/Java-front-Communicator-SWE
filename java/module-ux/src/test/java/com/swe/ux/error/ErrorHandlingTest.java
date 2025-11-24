@@ -40,7 +40,6 @@ class ErrorHandlingTest {
         testUser = new UserProfile(
             "test@example.com",
             "Test User",
-            "http://example.com/logo.png",
             ParticipantRole.STUDENT
         );
         meetingViewModel = new MeetingViewModel(testUser, mockRpc);
@@ -272,7 +271,6 @@ class ErrorHandlingTest {
         UserProfile notInMeeting = new UserProfile(
             "other@example.com",
             "Other",
-            null,
             ParticipantRole.STUDENT
         );
 

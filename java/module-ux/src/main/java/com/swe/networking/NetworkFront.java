@@ -16,31 +16,41 @@ public class NetworkFront implements AbstractController, AbstractNetworking {
     /**
      * Variable to store the function mappings.
      */
-    private HashMap<Integer, MessageListener> listeners;
-
-    /**
-     * Variable to track the number of functions.
-     */
-    private int functionCount = 1;
+    private final HashMap<Integer, MessageListener> listeners;
     /**
      * Variable to store the RPC.
      */
     private AbstractRPC moduleRPC = null;
 
-
+    /**
+     * Singleton instance of NetworkFront.
+     */
     private static NetworkFront instance = null;
-    
-    private NetworkFront(){
-        listeners = new HashMap<>();    
+
+    /**
+     * Creates a new NetworkFront instance.
+     */
+    private NetworkFront() {
+        listeners = new HashMap<>();
     }
 
-    public static NetworkFront getInstance(){
-        if(instance == null){
+    /**
+     * Gets the singleton instance of NetworkFront.
+     *
+     * @return the NetworkFront instance
+     */
+    public static NetworkFront getInstance() {
+        if (instance == null) {
             instance = new NetworkFront();
         }
         return instance;
     }
 
+    /**
+     * Checks if the NetworkFront is ready to use.
+     *
+     * @return true if RPC is initialized, false otherwise
+     */
     public boolean isReady() {
         return moduleRPC != null;
     }

@@ -10,7 +10,21 @@ import com.swe.canvas.datamodel.action.ResurrectShapeAction;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.ShapeId;
 
-public class NetActionSerializer {
+/**
+ * Serializer for Action objects in network messages.
+ *
+ * <p>Provides manual JSON serialization and deserialization for Action objects
+ * to support network transmission.</p>
+ *
+ * @author Canvas Team
+ */
+public final class NetActionSerializer {
+
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private NetActionSerializer() {
+    }
     // =========================================================================
     // Action Serialization/Deserialization
     // =========================================================================
@@ -112,7 +126,7 @@ public class NetActionSerializer {
                     throw new SerializationException("Unknown action type: " + actionType);
             }
 
-        } catch (SerializationException e) {
+        } catch (final SerializationException e) {
             throw new SerializationException("Failed to manually deserialize Action: " + e.getMessage(), e);
         }
     }

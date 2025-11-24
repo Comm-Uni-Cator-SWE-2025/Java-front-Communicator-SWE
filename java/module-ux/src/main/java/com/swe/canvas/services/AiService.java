@@ -7,6 +7,14 @@ import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeType;
 
+/**
+ * Service for AI-powered canvas operations such as shape regularization.
+ *
+ * <p>This class provides static utility methods to enhance user-drawn shapes
+ * with machine learning or algorithmic refinements.</p>
+ *
+ * @author AI Service Team
+ */
 public class AiService {
     /**
      * Regularize a freehand shape into a polygonal or smoothed Shape.

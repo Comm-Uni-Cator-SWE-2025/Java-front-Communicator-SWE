@@ -1,17 +1,23 @@
 package com.swe.ux.binding;
 
-import com.swe.controller.Meeting.UserProfile;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.swe.controller.Meeting.UserProfile;
+
 /**
  * Utility class for creating property change listeners with lambda expressions.
  */
-public class PropertyListeners {
+public final class PropertyListeners {
+    
+    /**
+     * Private constructor to prevent instantiation of utility class.
+     */
+    private PropertyListeners() {
+    }
     
     /**
      * Creates a property change listener that calls the given consumer with old and new values.
@@ -20,10 +26,10 @@ public class PropertyListeners {
      * @return A PropertyChangeListener
      */
     @SuppressWarnings("unchecked")
-    public static <T> PropertyChangeListener of(BiConsumer<T, T> consumer) {
-        return (PropertyChangeEvent evt) -> {
-            T oldValue = (T) evt.getOldValue();
-            T newValue = (T) evt.getNewValue();
+    public static <T> PropertyChangeListener of(final BiConsumer<T, T> consumer) {
+        return (final PropertyChangeEvent evt) -> {
+            final T oldValue = (T) evt.getOldValue();
+            final T newValue = (T) evt.getNewValue();
             consumer.accept(oldValue, newValue);
         };
     }
@@ -35,9 +41,9 @@ public class PropertyListeners {
      * @return A PropertyChangeListener
      */
     @SuppressWarnings("unchecked")
-    public static <T> PropertyChangeListener onChanged(Consumer<T> consumer) {
-        return (PropertyChangeEvent evt) -> {
-            T newValue = (T) evt.getNewValue();
+    public static <T> PropertyChangeListener onChanged(final Consumer<T> consumer) {
+        return (final PropertyChangeEvent evt) -> {
+            final T newValue = (T) evt.getNewValue();
             consumer.accept(newValue);
         };
     }
@@ -47,7 +53,7 @@ public class PropertyListeners {
      * @param consumer The consumer to call with the new boolean value when the property changes
      * @return A PropertyChangeListener
      */
-    public static PropertyChangeListener onBooleanChanged(Consumer<Boolean> consumer) {
+    public static PropertyChangeListener onBooleanChanged(final Consumer<Boolean> consumer) {
         return onChanged(consumer);
     }
     
@@ -56,7 +62,7 @@ public class PropertyListeners {
      * @param consumer The consumer to call with the new string value when the property changes
      * @return A PropertyChangeListener
      */
-    public static PropertyChangeListener onStringChanged(Consumer<String> consumer) {
+    public static PropertyChangeListener onStringChanged(final Consumer<String> consumer) {
         return onChanged(consumer);
     }
     
@@ -67,7 +73,7 @@ public class PropertyListeners {
      * @return A PropertyChangeListener
      */
     @SuppressWarnings("unchecked")
-    public static <T> PropertyChangeListener onListChanged(Consumer<List<T>> consumer) {
+    public static <T> PropertyChangeListener onListChanged(final Consumer<List<T>> consumer) {
         return onChanged(consumer);
     }
     
@@ -76,7 +82,7 @@ public class PropertyListeners {
      * @param consumer The consumer to call with the new UserProfile value when the property changes
      * @return A PropertyChangeListener
      */
-    public static PropertyChangeListener onUserProfileChanged(Consumer<UserProfile> consumer) {
+    public static PropertyChangeListener onUserProfileChanged(final Consumer<UserProfile> consumer) {
         return onChanged(consumer);
     }
     
@@ -85,7 +91,7 @@ public class PropertyListeners {
      * @param runnable The runnable to call when the property changes
      * @return A PropertyChangeListener
      */
-    public static PropertyChangeListener onChanged(Runnable runnable) {
-        return (PropertyChangeEvent evt) -> runnable.run();
+    public static PropertyChangeListener onChanged(final Runnable runnable) {
+        return (final PropertyChangeEvent evt) -> runnable.run();
     }
 }

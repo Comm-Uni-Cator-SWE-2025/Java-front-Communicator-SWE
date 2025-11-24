@@ -60,7 +60,6 @@ class LoginPageViewModelIntegrationTest {
         UserProfile testUser = new UserProfile(
             "test@example.com",
             "Test User",
-            "http://example.com/logo.png",
             ParticipantRole.STUDENT
         );
         byte[] serializedUser = DataSerializer.serialize(testUser);
@@ -134,7 +133,6 @@ class LoginPageViewModelIntegrationTest {
             viewModel.currentUser.set(new UserProfile(
                 "test@example.com",
                 "Test",
-                null,
                 ParticipantRole.STUDENT
             ));
 

@@ -82,8 +82,8 @@ public abstract class Shape implements Serializable {
      * @param dy The vertical displacement.
      */
     public void translate(final double dx, final double dy) {
-        List<Point> newPoints = new ArrayList<>(points.size());
-        for (Point p : points) {
+        final List<Point> newPoints = new ArrayList<>(points.size());
+        for (final Point p : points) {
             newPoints.add(new Point(p.getX() + dx, p.getY() + dy));
         }
         this.points = newPoints;
