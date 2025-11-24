@@ -429,3 +429,6 @@ FodyWeavers.xsd
 tokens/
 
 .idea/
+
+# Local Maven repo inside project workspace
+java/.m2-local/
