@@ -9,15 +9,18 @@ import java.util.Objects;
 public final class UIImage {
     private final BufferedImage image;
     private final String ip;
+    private final long dataRate;
     private byte isSuccess;
 
     public UIImage(
         BufferedImage image,
         String ip,
+        long dataRate,
         byte isSuccess
     ) {
         this.image = image;
         this.ip = ip;
+        this.dataRate = dataRate;
         this.isSuccess = isSuccess;
     }
 
@@ -31,6 +34,10 @@ public final class UIImage {
 
     public String ip() {
         return ip;
+    }
+
+    public long dataRate() {
+        return dataRate;
     }
 
     public byte isSuccess() {

@@ -21,6 +21,7 @@ import com.swe.ux.viewmodel.MeetingViewModel;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
@@ -128,7 +129,7 @@ public class App extends JFrame {
         mainViewModel = new MainViewModel(rpc);
         System.out.println("Meeting");
 
-        final UserProfile newUser = new UserProfile(Utils.getSelfIP(), "You", ParticipantRole.STUDENT);
+        final UserProfile newUser = new UserProfile("", "You", ParticipantRole.STUDENT);
         // Will be set when user joins a meeting
         MeetingViewModel meetingViewModel = new MeetingViewModel(newUser, rpc);
 
@@ -185,6 +186,7 @@ public class App extends JFrame {
                 System.out.println("App: participantsMap: " + participantsMap);
                 participantsMap.forEach((clientNode, userProfile) -> {
                     System.out.println("App: clientNode: " + clientNode + " userProfile: " + userProfile);
+                    activeMeetingViewModelRef[0].ipToMail.put(userProfile.getEmail(), clientNode.hostName());
                     // Use the currently active meeting view model
                     activeMeetingViewModelRef[0].addParticipant(userProfile);
                     System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
