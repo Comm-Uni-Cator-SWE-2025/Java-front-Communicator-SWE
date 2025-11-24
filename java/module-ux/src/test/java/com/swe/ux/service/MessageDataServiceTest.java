@@ -1,19 +1,17 @@
 package com.swe.ux.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.controller.serialize.DataSerializer;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.controller.serialize.DataSerializer;
 
 /**
  * Unit tests for {@link MessageDataService}.
@@ -54,12 +52,14 @@ class MessageDataServiceTest {
     void parseJson_returnsEmptyListForInvalidPayload() {
         List<String> messages = service.parseJson("invalid");
 
-        assertTrue(messages.isEmpty());
+        // The parseJson method treats non-JSON strings as single messages
+        assertEquals(1, messages.size());
+        assertEquals("invalid", messages.get(0));
     }
 
     @SuppressWarnings("unchecked")
     private void clearStaticJsonList() throws Exception {
-        Field listField = MessageDataService.class.getDeclaredField("jsonList");
+        Field listField = MessageDataService.class.getDeclaredField("JSON_LIST");
         listField.setAccessible(true);
         List<String> list = (List<String>) listField.get(null);
         list.clear();

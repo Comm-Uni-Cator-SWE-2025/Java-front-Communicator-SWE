@@ -1,14 +1,5 @@
 package com.swe.ux.viewmodels;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.controller.serialize.DataSerializer;
-import com.swe.ux.model.analytics.SentimentPoint;
-import com.swe.ux.service.SentimentDataService;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -16,8 +7,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.controller.serialize.DataSerializer;
+import com.swe.ux.model.analytics.SentimentPoint;
+import com.swe.ux.service.SentimentDataService;
 
 /**
  * Unit tests for {@link SentimentViewModel}.
@@ -81,7 +80,7 @@ class SentimentViewModelTest {
 
     @SuppressWarnings("unchecked")
     private void clearSentimentBuffer() throws Exception {
-        Field field = SentimentDataService.class.getDeclaredField("jsonList");
+        Field field = SentimentDataService.class.getDeclaredField("JSON_LIST");
         field.setAccessible(true);
         ((List<String>) field.get(null)).clear();
     }

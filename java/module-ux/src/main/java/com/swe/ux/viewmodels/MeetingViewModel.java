@@ -32,20 +32,20 @@ public class MeetingViewModel extends BaseViewModel {
     /** Meeting ID property. */
     private final BindableProperty<String> meetingId = new BindableProperty<>("", "meetingId");
     /** Message text property. */
-    private final BindableProperty<String> messageText = new BindableProperty<>("", "messageText");
+    public final BindableProperty<String> messageText = new BindableProperty<>("", "messageText");
     /** Messages property. */
-    private final BindableProperty<List<String>> messages = new BindableProperty<>(new ArrayList<>(), "messages");
+    public final BindableProperty<List<String>> messages = new BindableProperty<>(new ArrayList<>(), "messages");
     /** Meeting active state property. */
-    private final BindableProperty<Boolean> isMeetingActive = new BindableProperty<>(false, "isMeetingActive");
+    public final BindableProperty<Boolean> isMeetingActive = new BindableProperty<>(false, "isMeetingActive");
     /** Video enabled property. */
-    private final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
+    public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
     /** Audio enabled property. */
-    private final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
+    public final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
     /** Screen share enabled property. */
-    private final BindableProperty<Boolean> isScreenShareEnabled = 
+    public final BindableProperty<Boolean> isScreenShareEnabled = 
         new BindableProperty<>(false, "isScreenShareEnabled");
     /** Participants property. */
-    private final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(),
+    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(),
             "participants");
     /** Role property. */
     private final BindableProperty<String> role = new BindableProperty<>("", "role");
