@@ -1,3 +1,5 @@
+package com.swe.canvas.datamodel.collaboration;
+
 /*
  * -----------------------------------------------------------------------------
  * File: NetworkMessageTest.java
@@ -6,8 +8,6 @@
  * Module: Canvas
  * -----------------------------------------------------------------------------
  */
-
-package com.swe.canvas.datamodel.collaboration;
 
 import org.junit.jupiter.api.Test;
 
