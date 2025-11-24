@@ -1,0 +1,15 @@
+{
+  "scriptFile" : "../module-cloud-1.0-SNAPSHOT.jar",
+  "entryPoint" : "functionapp.CloudUpdate.runCloudUpdate",
+  "bindings" : [ {
+    "type" : "httpTrigger",
+    "direction" : "in",
+    "name" : "req",
+    "methods" : [ "PUT" ],
+    "authLevel" : "ANONYMOUS"
+  }, {
+    "type" : "http",
+    "direction" : "out",
+    "name" : "$return"
+  } ]
+}

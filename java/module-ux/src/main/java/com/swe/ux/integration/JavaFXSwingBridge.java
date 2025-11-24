@@ -26,12 +26,24 @@ public class JavaFXSwingBridge {
 
     /**
      * Initialize JavaFX toolkit (call once at app startup)
+     * Must be called from a non-JavaFX thread
      */
     public static void initializeJavaFX() {
         if (!javaFXInitialized) {
             Platform.setImplicitExit(false);
-            // Initialize JavaFX toolkit
-            Platform.startup(() -> {});
+            // Try to initialize JavaFX toolkit, but catch exception if already initialized
+            try {
+                // Check if already running
+                if (!Platform.isFxApplicationThread()) {
+                    Platform.startup(() -> {
+                        // Empty startup callback
+                    });
+                }
+            } catch (IllegalStateException e) {
+                // JavaFX toolkit is already initialized (e.g., by another part of the app)
+                // This is fine, we can continue using it
+                System.out.println("JavaFX toolkit already initialized, continuing...");
+            }
             javaFXInitialized = true;
         }
     }
@@ -60,10 +72,20 @@ public class JavaFXSwingBridge {
         
         Platform.runLater(() -> {
             try {
-                // Load FXML
-                FXMLLoader loader = new FXMLLoader(
-                    ClassLoader.getSystemClassLoader().getResource(fxmlPath)
-                );
+                // Load FXML - try multiple classloaders to find the resource
+                java.net.URL fxmlUrl = ClassLoader.getSystemClassLoader().getResource(fxmlPath);
+                if (fxmlUrl == null) {
+                    fxmlUrl = JavaFXSwingBridge.class.getClassLoader().getResource(fxmlPath);
+                }
+                if (fxmlUrl == null) {
+                    fxmlUrl = Thread.currentThread().getContextClassLoader().getResource(fxmlPath);
+                }
+                
+                if (fxmlUrl == null) {
+                    throw new IOException("FXML resource not found: " + fxmlPath);
+                }
+                
+                FXMLLoader loader = new FXMLLoader(fxmlUrl);
                 Parent root = loader.load();
                 Object controller = loader.getController();
 
@@ -77,26 +99,39 @@ public class JavaFXSwingBridge {
 
                 // Load CSS if provided
                 if (cssPath != null && !cssPath.isEmpty()) {
-                    String cssUrl = ClassLoader.getSystemClassLoader()
-                        .getResource(cssPath).toExternalForm();
-                    scene.getStylesheets().add(cssUrl);
+                    java.net.URL cssUrl = ClassLoader.getSystemClassLoader().getResource(cssPath);
+                    if (cssUrl == null) {
+                        cssUrl = JavaFXSwingBridge.class.getClassLoader().getResource(cssPath);
+                    }
+                    if (cssUrl == null) {
+                        cssUrl = Thread.currentThread().getContextClassLoader().getResource(cssPath);
+                    }
+                    if (cssUrl != null) {
+                        scene.getStylesheets().add(cssUrl.toExternalForm());
+                    } else {
+                        System.err.println("Warning: CSS resource not found: " + cssPath);
+                    }
                 }
 
-                // Create stage
+                // Create stage with minimal operations to avoid macOS conflicts
                 Stage stage = new Stage();
                 stage.setTitle(title);
                 stage.setScene(scene);
-                stage.setMinWidth(800);
-                stage.setMinHeight(600);
+                
+                // Set minimum sizes AFTER scene is set (macOS requirement)
+                Platform.runLater(() -> {
+                    stage.setMinWidth(800);
+                    stage.setMinHeight(600);
+                });
 
                 // Notify stage created
                 if (onStageCreated != null) {
                     onStageCreated.accept(stage);
                 }
 
+                // Show stage - minimal operations to avoid macOS window management crashes
+                // Don't use toFront() or requestFocus() as they trigger NSTrackingRectTag errors
                 stage.show();
-                stage.toFront();
-                stage.requestFocus();
 
             } catch (IOException e) {
                 e.printStackTrace();

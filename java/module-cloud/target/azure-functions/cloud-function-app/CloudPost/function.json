@@ -1,0 +1,15 @@
+{
+  "scriptFile" : "../module-cloud-1.0-SNAPSHOT.jar",
+  "entryPoint" : "functionapp.CloudPost.runCloudPost",
+  "bindings" : [ {
+    "type" : "httpTrigger",
+    "direction" : "in",
+    "name" : "req",
+    "methods" : [ "POST" ],
+    "authLevel" : "ANONYMOUS"
+  }, {
+    "type" : "http",
+    "direction" : "out",
+    "name" : "$return"
+  } ]
+}
