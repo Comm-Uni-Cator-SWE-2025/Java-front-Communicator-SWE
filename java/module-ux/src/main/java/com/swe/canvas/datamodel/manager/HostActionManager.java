@@ -27,27 +27,46 @@ import com.swe.controller.RPCinterface.AbstractRPC;
  */
 public class HostActionManager implements ActionManager {
 
-    private final String userId; // Host's own user ID
-    private final CanvasState canvasState; // Authoritative state
+    /** Host's own user ID. */
+    private final String userId;
+    /** Authoritative canvas state. */
+    private final CanvasState canvasState;
+    /** Factory for creating action instances. */
     private final ActionFactory actionFactory;
-    private final UndoRedoManager undoRedoManager; // Host's local undo/redo
+    /** Host's local undo/redo manager. */
+    private final UndoRedoManager undoRedoManager;
+    /** Network service for broadcasting to clients. */
     private final NetworkService networkService;
-    
-    private Runnable onUpdateCallback = () -> {}; // No-op default
+    /** Callback to invoke when updates occur. */
+    private Runnable onUpdateCallback = () -> { }; // No-op default
 
-
-    public HostActionManager(final String userId, final CanvasState canvasState, final NetworkService networkService) {
-        this.userId = userId;
-        this.canvasState = canvasState;
-        this.networkService = networkService;
+    /**
+     * Creates a new host action manager.
+     *
+     * @param userIdentifier Host's user ID.
+     * @param canvas Authoritative canvas state.
+     * @param network Network service for broadcasting.
+     */
+    public HostActionManager(final String userIdentifier, final CanvasState canvas,
+                             final NetworkService network) {
+        this.userId = userIdentifier;
+        this.canvasState = canvas;
+        this.networkService = network;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
         this.networkService.registerHostHandler(this::processIncomingMessage);
     }
 
-    public HostActionManager(final String userId, final CanvasState canvasState,
+    /**
+     * Creates a new host action manager with RPC.
+     *
+     * @param userIdentifier Host's user ID.
+     * @param canvas Authoritative canvas state.
+     * @param rpc RPC service for communication.
+     */
+    public HostActionManager(final String userIdentifier, final CanvasState canvas,
                              final AbstractRPC rpc) {
-        this(userId, canvasState, new CanvasNetworkService(rpc));
+        this(userIdentifier, canvas, new CanvasNetworkService(rpc));
     }
 
     @Override

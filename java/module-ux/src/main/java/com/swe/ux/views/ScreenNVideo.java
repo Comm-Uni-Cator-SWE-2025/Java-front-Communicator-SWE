@@ -1,9 +1,5 @@
-/**
- *  Contributed by Sandeep Kumar.
- */
 package com.swe.ux.views;
 
-import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.model.UIImage;
@@ -32,35 +28,103 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.swe.screenNVideo.Utils.getSelfIP;
-
+/**
+ * Contributed by Sandeep Kumar.
+ */
 public class ScreenNVideo extends JPanel implements ParticipantPanel.ParticipantPanelListener {
-
-    private final JPanel videoGrid;
-    /** Tracks participant panels by ip for add/remove operations. */
-    private static Map<String, ParticipantPanel> participantPanels;
-    /** Container for videoGrid to enable scrolling when full. */
-    private JScrollPane scrollPane;
-
-    private JPanel contentPanel;
-
-    /** Panel to hold the main zoomed-in video. */
-    private JPanel zoomedPanel;
-    /** Tracks the ip of the currently zoomed participant, or null if in gallery view. */
-    private String zoomedParticipantIp = null;
-
+    /**
+     * Default padding value.
+     */
+    private static final int DEFAULT_PADDING = 10;
+    /**
+     * Default gap value.
+     */
+    private static final int DEFAULT_GAP = 10;
+    /**
+     * Wide width threshold.
+     */
+    private static final int WIDE_WIDTH_THRESHOLD = 920;
+    /**
+     * Medium width threshold.
+     */
+    private static final int MEDIUM_WIDTH_THRESHOLD = 610;
+    /**
+     * Wide columns count.
+     */
+    private static final int WIDE_COLS = 3;
+    /**
+     * Medium columns count.
+     */
+    private static final int MEDIUM_COLS = 2;
+    /**
+     * Narrow columns count.
+     */
+    private static final int NARROW_COLS = 1;
+    /**
+     * Aspect ratio width.
+     */
+    private static final double ASPECT_RATIO_WIDTH = 16.0;
+    /**
+     * Aspect ratio height.
+     */
+    private static final double ASPECT_RATIO_HEIGHT = 9.0;
+    /**
+     * Filmstrip scrollbar padding.
+     */
+    private static final int FILMSTRIP_SCROLLBAR_PADDING = 20;
+    /**
+     * Filmstrip panel size.
+     */
     private static final Dimension FILMSTRIP_PANEL_SIZE = new Dimension(180, 120);
 
+    /**
+     * Video grid panel.
+     */
+    private final JPanel videoGrid;
+    /**
+     * Tracks participant panels by ip for add/remove operations.
+     */
+    private static Map<String, ParticipantPanel> participantPanels;
+    /**
+     * Container for videoGrid to enable scrolling when full.
+     */
+    private JScrollPane scrollPane;
+    /**
+     * Content panel.
+     */
+    private JPanel contentPanel;
+    /**
+     * Panel to hold the main zoomed-in video.
+     */
+    private JPanel zoomedPanel;
+    /**
+     * Tracks the ip of the currently zoomed participant, or null if in gallery view.
+     */
+    private String zoomedParticipantIp = null;
+    /**
+     * Current gallery column count.
+     */
     private int currentGalleryCols = -1;
-
+    /**
+     * Start time tracking.
+     */
     private static long start = 0;
-
-    private static final AtomicBoolean updating = new AtomicBoolean(false);
-
+    /**
+     * Atomic boolean for update tracking.
+     */
+    private static final AtomicBoolean UPDATING = new AtomicBoolean(false);
+    /**
+     * Meeting view model.
+     */
     private final MeetingViewModel meetingViewModel;
 
-    public ScreenNVideo(MeetingViewModel meetingViewModel) {
-        this.meetingViewModel = meetingViewModel;
+    /**
+     * Creates a new ScreenNVideo.
+     *
+     * @param mainViewModel the meeting view model
+     */
+    public ScreenNVideo(final MeetingViewModel mainViewModel) {
+        this.meetingViewModel = mainViewModel;
         this.videoGrid = new JPanel();
         participantPanels = new HashMap<>();
         initializeUI();
@@ -76,7 +140,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
      * @param name The participant's display name.
      * @param ip The participant's ip.
      */
-    private void addParticipant(String name, String ip) {
+    private void addParticipant(final String name, final String ip) {
         if (participantPanels.containsKey(ip)) {
             return;
         }
@@ -95,8 +159,8 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
      * Selects a new active panel if needed and updates the layout.
      * @param ip The participant's ip.
      */
-    private void removeParticipant(String ip) {
-        ParticipantPanel panel = participantPanels.remove(ip);
+    private void removeParticipant(final String ip) {
+        final ParticipantPanel panel = participantPanels.remove(ip);
 
         if (panel != null) {
             videoGrid.remove(panel);
@@ -114,25 +178,26 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
      * Dynamically updates the video grid's layout (rows/cols) based on
      * participant count. Enables scrolling for 7+ participants.
      */
+    // CHECKSTYLE:OFF: JavaNCSS - Complex layout calculation method
     private void updateVideoGridLayout() {
+        // CHECKSTYLE:ON: JavaNCSS
         if (zoomedParticipantIp == null) {
-
-            int width = scrollPane.getViewport().getWidth();
-            int height = scrollPane.getViewport().getHeight();
+            final int width = scrollPane.getViewport().getWidth();
+            final int height = scrollPane.getViewport().getHeight();
             if (width == 0 || height == 0) {
                 return;
             }
 
-            int hgap = 10;
-            int vgap = 10;
+            final int hgap = DEFAULT_GAP;
+            final int vgap = DEFAULT_GAP;
 
             int newCols;
-            if (width > 920) {
-                newCols = 3;
-            } else if (width > 610) {
-                newCols = 2;
+            if (width > WIDE_WIDTH_THRESHOLD) {
+                newCols = WIDE_COLS;
+            } else if (width > MEDIUM_WIDTH_THRESHOLD) {
+                newCols = MEDIUM_COLS;
             } else {
-                newCols = 1;
+                newCols = NARROW_COLS;
             }
 
             newCols = Math.min(newCols, participantPanels.size());
@@ -148,46 +213,45 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
             }
 
             // Calculate number of rows needed
-            int participantCount = participantPanels.size();
+            final int participantCount = participantPanels.size();
             int newRows = (int) Math.ceil((double) participantCount / newCols);
             newRows = Math.max(1, newRows);
 
             // Calculate panel dimensions based on both width and height constraints
-            int availableWidth = width - (hgap * (newCols - 1));
-            int availableHeight = height - (vgap * (newRows - 1));
+            final int availableWidth = width - (hgap * (newCols - 1));
+            final int availableHeight = height - (vgap * (newRows - 1));
             
             int newPanelWidth = availableWidth / newCols;
-            int newPanelHeightFromWidth = (int) (newPanelWidth * (9.0 / 16.0));
-            int newPanelHeightFromHeight = availableHeight / newRows;
+            final int newPanelHeightFromWidth = (int) (newPanelWidth * (ASPECT_RATIO_HEIGHT / ASPECT_RATIO_WIDTH));
+            final int newPanelHeightFromHeight = availableHeight / newRows;
             
             // Use the constraint that allows panels to be as large as possible
             // while maintaining 16:9 aspect ratio and fitting within available space
-            int newPanelHeight;
+            final int newPanelHeight;
             if (newPanelHeightFromWidth <= newPanelHeightFromHeight) {
                 // Width is the limiting factor
                 newPanelHeight = newPanelHeightFromWidth;
             } else {
                 // Height is the limiting factor
                 newPanelHeight = newPanelHeightFromHeight;
-                newPanelWidth = (int) (newPanelHeight * (16.0 / 9.0));
+                newPanelWidth = (int) (newPanelHeight * (ASPECT_RATIO_WIDTH / ASPECT_RATIO_HEIGHT));
             }
             
-            Dimension newSize = new Dimension(newPanelWidth, newPanelHeight);
+            final Dimension newSize = new Dimension(newPanelWidth, newPanelHeight);
 
             updateGalleryPanelSizes(newSize);
 
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
             scrollPane.setPreferredSize(null);
-        }
-        else {
+        } else {
             currentGalleryCols = -1;
 
-            int filmstripCount = videoGrid.getComponentCount();
-            videoGrid.setLayout(new GridLayout(Math.max(1, filmstripCount), 1, 10, 10)); // Vertical grid (X rows, 1 col)
+            final int filmstripCount = videoGrid.getComponentCount();
+            videoGrid.setLayout(new GridLayout(Math.max(1, filmstripCount), 1, DEFAULT_GAP, DEFAULT_GAP));
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            scrollPane.setPreferredSize(new Dimension(FILMSTRIP_PANEL_SIZE.width + 20, 0)); // +20 for scrollbar/padding
+            scrollPane.setPreferredSize(new Dimension(FILMSTRIP_PANEL_SIZE.width + FILMSTRIP_SCROLLBAR_PADDING, 0));
         }
 
         videoGrid.revalidate();
@@ -202,14 +266,14 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
      * Initialize UI components and layout.
      */
     private void initializeUI() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setLayout(new BorderLayout(DEFAULT_PADDING, DEFAULT_PADDING));
+        setBorder(new EmptyBorder(DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING));
 
         // Panel to hold the zoomed-in video
         zoomedPanel = new JPanel(new BorderLayout());
 
         // Content panel to hold video grid
-        contentPanel = new JPanel(new BorderLayout(10, 10));
+        contentPanel = new JPanel(new BorderLayout(DEFAULT_PADDING, DEFAULT_PADDING));
         scrollPane = new JScrollPane(videoGrid);
         scrollPane.setBorder(null);
         scrollPane.setOpaque(false);
@@ -221,7 +285,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         // Add listener to the viewport which is the part that changes size
         scrollPane.getViewport().addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized(ComponentEvent e) {
+            public void componentResized(final ComponentEvent e) {
                 updateVideoGridLayout();
             }
         });
@@ -240,17 +304,17 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
      * Updates the ScreenNVideoModel with the list of visible IPs.
      */
     private void calculateVisibleParticipants() {
-        Set<String> visibleIps = new HashSet<>();
+        final Set<String> visibleIps = new HashSet<>();
 
         if (zoomedParticipantIp != null) {
             visibleIps.add(zoomedParticipantIp);
         }
 
-        Rectangle viewRect = scrollPane.getViewport().getViewRect();
+        final Rectangle viewRect = scrollPane.getViewport().getViewRect();
 
-        for (Map.Entry<String, ParticipantPanel> entry : participantPanels.entrySet()) {
-            String ip = entry.getKey();
-            ParticipantPanel panel = entry.getValue();
+        for (final Map.Entry<String, ParticipantPanel> entry : participantPanels.entrySet()) {
+            final String ip = entry.getKey();
+            final ParticipantPanel panel = entry.getValue();
 
             if (ip.equals(zoomedParticipantIp)) {
                 continue;
@@ -259,7 +323,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
             // Only check panels that are actually in the videoGrid
             if (panel.getParent() == videoGrid) {
                 // Get panel bounds relative to the videoGrid
-                Rectangle panelBounds = panel.getBounds();
+                final Rectangle panelBounds = panel.getBounds();
 
                 // Check if the panel intersects with the visible part of the scroll pane
                 if (viewRect.intersects(panelBounds)) {
@@ -268,14 +332,14 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
             }
         }
 
-        ScreenNVideoModel.getInstance(meetingViewModel.rpc).updateVisibleParticipants(visibleIps);
+        ScreenNVideoModel.getInstance(meetingViewModel.getRpc()).updateVisibleParticipants(visibleIps);
     }
 
     /**
      * Nullify the image for a participant panel.
      * @param ip The participant's ip.
      */
-    public void nullifyImage(String ip) {
+    public void nullifyImage(final String ip) {
 
         final ParticipantPanel activeParticipantPanel = participantPanels.get(ip);
         if (activeParticipantPanel == null) {
@@ -292,6 +356,8 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
      * Display a frame from int[][] pixels.
      * The image fully covers the active ParticipantPanel.
      * Drops new frames if the previous one is still being processed.
+     *
+     * @param uiImage the UI image to display
      */
     public static void displayFrame(final UIImage uiImage) {
         final String ip = uiImage.ip();
@@ -304,7 +370,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         }
 
         // if already updating, drop this frame
-        if (!updating.compareAndSet(false, true)) {
+        if (!UPDATING.compareAndSet(false, true)) {
             System.err.println("Dropping frame");
             uiImage.setIsSuccess(false);
             return;
@@ -320,7 +386,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
                 start = System.nanoTime();
             } finally {
                 // release flag so next frame can proceed
-                updating.set(false);
+                UPDATING.set(false);
             }
         });
     }
@@ -333,38 +399,39 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
     private void setupBindings() {
 
         // Bind participant added event
-        meetingViewModel.participants.addListener(PropertyListeners.onListChanged((List<UserProfile> participants) -> {
-            System.out.println("Participants updated");
+        meetingViewModel.getParticipants().addListener(
+                PropertyListeners.onListChanged((List<UserProfile> participants) -> {
+                    System.out.println("Participants updated");
 
-            // Handle participant removal
-            java.util.Set<String> currentIps = new java.util.HashSet<>();
-            for (UserProfile p : participants) {
-                currentIps.add(p.getEmail());
-            }
-            java.util.Set<String> panelsToRemove = new java.util.HashSet<>(participantPanels.keySet());
-            panelsToRemove.removeAll(currentIps);
+                    // Handle participant removal
+                    final java.util.Set<String> currentIps = new java.util.HashSet<>();
+                    for (final UserProfile p : participants) {
+                        currentIps.add(p.getEmail());
+                    }
+                    final java.util.Set<String> panelsToRemove = new java.util.HashSet<>(participantPanels.keySet());
+                    panelsToRemove.removeAll(currentIps);
 
-            for (String ipToRemove : panelsToRemove) {
-                System.out.println("Removing participant with ip: " + ipToRemove);
-                removeParticipant(ipToRemove);
-            }
+                    for (final String ipToRemove : panelsToRemove) {
+                        System.out.println("Removing participant with ip: " + ipToRemove);
+                        removeParticipant(ipToRemove);
+                    }
 
-            // Handle participant addition
-            participants.forEach(participant -> {
-                String ip = meetingViewModel.ipToMail.get(participant.getEmail());
-                if (ip == null) {
-                    return;
-                }
-                System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + ip);
-                addParticipant(participant.getDisplayName(), ip);
-            });
-        }));
+                    // Handle participant addition
+                    participants.forEach(participant -> {
+                        final String ip = meetingViewModel.getIpToMail().get(participant.getEmail());
+                        if (ip == null) {
+                            return;
+                        }
+                        System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + ip);
+                        addParticipant(participant.getDisplayName(), ip);
+                    });
+                }));
 
-        ScreenNVideoModel.getInstance(this.meetingViewModel.rpc).setOnImageReceived(ScreenNVideo::displayFrame);
+        ScreenNVideoModel.getInstance(this.meetingViewModel.getRpc()).setOnImageReceived(ScreenNVideo::displayFrame);
 
         // AbstractRPC rpc = DummyRPC.getInstance();
-        this.meetingViewModel.rpc.subscribe(Utils.STOP_SHARE, (args) -> {
-            String ip = new String(args);
+        this.meetingViewModel.getRpc().subscribe(Utils.STOP_SHARE, args -> {
+            final String ip = new String(args);
             nullifyImage(ip);
             return new byte[0];
         });
@@ -375,9 +442,11 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         ThemeManager.getInstance().applyThemeRecursively(this);
     }
 
-    private void zoomIn(String ip) {
-        ParticipantPanel panel = participantPanels.get(ip);
-        if (panel == null) return;
+    private void zoomIn(final String ip) {
+        final ParticipantPanel panel = participantPanels.get(ip);
+        if (panel == null) {
+            return;
+        }
 
         panel.setPreferredSize(null);
         videoGrid.remove(panel);
@@ -400,9 +469,11 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
     }
 
     private void zoomOut() {
-        if (zoomedParticipantIp == null) return;
+        if (zoomedParticipantIp == null) {
+            return;
+        }
 
-        ParticipantPanel panel = participantPanels.get(zoomedParticipantIp);
+        final ParticipantPanel panel = participantPanels.get(zoomedParticipantIp);
         if (panel == null) {
             zoomedParticipantIp = null;
         }
@@ -410,7 +481,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         contentPanel.remove(zoomedPanel);
         contentPanel.remove(scrollPane);
 
-        if(panel != null) {
+        if (panel != null) {
             zoomedPanel.remove(panel);
             videoGrid.add(panel);
             panel.setZoomed(false);
@@ -427,13 +498,15 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         SwingUtilities.invokeLater(this::calculateVisibleParticipants);
     }
 
-    private void swapZoom(String newIp) {
-        ParticipantPanel oldZoomedPanel = participantPanels.get(zoomedParticipantIp);
-        ParticipantPanel newZoomedPanel = participantPanels.get(newIp);
+    private void swapZoom(final String newIp) {
+        final ParticipantPanel oldZoomedPanel = participantPanels.get(zoomedParticipantIp);
+        final ParticipantPanel newZoomedPanel = participantPanels.get(newIp);
 
-        if (newZoomedPanel == null) return;
+        if (newZoomedPanel == null) {
+            return;
+        }
 
-        if(oldZoomedPanel != null) {
+        if (oldZoomedPanel != null) {
             zoomedPanel.remove(oldZoomedPanel);
             videoGrid.add(oldZoomedPanel);
             oldZoomedPanel.setZoomed(false);
@@ -457,32 +530,32 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
     }
 
     @Override
-    public void onZoomToggle(String ip) {
-        if (meetingViewModel.participants.get().size() == 1) {
+    public void onZoomToggle(final String ip) {
+        if (meetingViewModel.getParticipants().get().size() == 1) {
             return;
         }
         if (zoomedParticipantIp == null) {
-            ScreenNVideoModel.getInstance(meetingViewModel.rpc).requestUncompressedData(ip);
+            ScreenNVideoModel.getInstance(meetingViewModel.getRpc()).requestUncompressedData(ip);
             zoomIn(ip);
         } else if (zoomedParticipantIp.equals(ip)) {
-            ScreenNVideoModel.getInstance(meetingViewModel.rpc).requestCompressedData(ip);
+            ScreenNVideoModel.getInstance(meetingViewModel.getRpc()).requestCompressedData(ip);
             zoomOut();
         } else {
-            ScreenNVideoModel.getInstance(meetingViewModel.rpc).requestUncompressedData(ip);
+            ScreenNVideoModel.getInstance(meetingViewModel.getRpc()).requestUncompressedData(ip);
             swapZoom(ip);
         }
     }
 
     private void updateFilmstripPanelSizes() {
-        for (Component comp : videoGrid.getComponents()) {
+        for (final Component comp : videoGrid.getComponents()) {
             if (comp instanceof ParticipantPanel) {
                 ((ParticipantPanel) comp).setPreferredSize(FILMSTRIP_PANEL_SIZE);
             }
         }
     }
 
-    private void updateGalleryPanelSizes(Dimension newSize) {
-        for (Component comp : videoGrid.getComponents()) {
+    private void updateGalleryPanelSizes(final Dimension newSize) {
+        for (final Component comp : videoGrid.getComponents()) {
             if (comp instanceof ParticipantPanel) {
                 ((ParticipantPanel) comp).setPreferredSize(newSize);
             }

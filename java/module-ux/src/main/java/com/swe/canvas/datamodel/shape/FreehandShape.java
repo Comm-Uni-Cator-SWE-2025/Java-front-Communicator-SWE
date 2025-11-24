@@ -43,12 +43,12 @@ public class FreehandShape extends Shape {
     public Shape copy() {
         // Return a deep copy
         return new FreehandShape(
-                this.shapeId,
-                new ArrayList<>(this.points), // Deep copy of points list
-                this.thickness,
-                this.color,
-                this.createdBy,
-                this.lastUpdatedBy
+                this.getShapeId(),
+                new ArrayList<>(this.getPoints()), // Deep copy of points list
+                this.getThickness(),
+                this.getColor(),
+                this.getCreatedBy(),
+                this.getLastUpdatedBy()
         );
     }
 }

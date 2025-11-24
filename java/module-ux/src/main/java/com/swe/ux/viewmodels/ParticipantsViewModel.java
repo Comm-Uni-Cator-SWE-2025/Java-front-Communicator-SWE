@@ -16,19 +16,24 @@ import com.swe.controller.Meeting.UserProfile;
  * Tracks participant count and names from the MeetingViewModel.
  */
 public class ParticipantsViewModel extends BaseViewModel {
+    /** Meeting view model. */
     private final MeetingViewModel meetingViewModel;
     
-    // Bindable properties
-    public final BindableProperty<Integer> participantCount = new BindableProperty<>(0, "participantCount");
-    public final BindableProperty<List<String>> participantNames = new BindableProperty<>(new ArrayList<>(), "participantNames");
-    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(), "participants");
+    /** Participant count property. */
+    private final BindableProperty<Integer> participantCount = new BindableProperty<>(0, "participantCount");
+    /** Participant names property. */
+    private final BindableProperty<List<String>> participantNames = 
+        new BindableProperty<>(new ArrayList<>(), "participantNames");
+    /** Participants property. */
+    private final BindableProperty<List<UserProfile>> participants = 
+        new BindableProperty<>(new ArrayList<>(), "participants");
     
     /**
      * Creates a new ParticipantsViewModel.
-     * @param meetingViewModel The MeetingViewModel to observe for participant changes
+     * @param meetingViewModelParam The MeetingViewModel to observe for participant changes
      */
-    public ParticipantsViewModel(MeetingViewModel meetingViewModel) {
-        this.meetingViewModel = meetingViewModel;
+    public ParticipantsViewModel(final MeetingViewModel meetingViewModelParam) {
+        this.meetingViewModel = meetingViewModelParam;
         setupBindings();
     }
     
@@ -37,32 +42,35 @@ public class ParticipantsViewModel extends BaseViewModel {
      */
     private void setupBindings() {
         // Listen to participant changes in MeetingViewModel
-        meetingViewModel.participants.addListener(evt -> {
-            List<UserProfile> currentParticipants = meetingViewModel.participants.get();
+        meetingViewModel.getParticipants().addListener(evt -> {
+            final List<UserProfile> currentParticipants = meetingViewModel.getParticipants().get();
             updateParticipants(currentParticipants);
         });
         
         // Initial update
-        updateParticipants(meetingViewModel.participants.get());
+        updateParticipants(meetingViewModel.getParticipants().get());
     }
     
     /**
      * Updates participant count and names based on the current participants list.
      * @param currentParticipants The current list of participants
      */
-    private void updateParticipants(List<UserProfile> currentParticipants) {
+    private void updateParticipants(final List<UserProfile> currentParticipants) {
+        final List<UserProfile> participantList;
         if (currentParticipants == null) {
-            currentParticipants = new ArrayList<>();
+            participantList = new ArrayList<>();
+        } else {
+            participantList = currentParticipants;
         }
         
         // Update participants list
-        participants.set(new ArrayList<>(currentParticipants));
+        participants.set(new ArrayList<>(participantList));
         
         // Update participant count
-        participantCount.set(currentParticipants.size());
+        participantCount.set(participantList.size());
         
         // Extract participant names
-        List<String> names = currentParticipants.stream()
+        final List<String> names = participantList.stream()
             .map(UserProfile::getDisplayName)
             .collect(Collectors.toList());
         participantNames.set(names);
@@ -75,6 +83,14 @@ public class ParticipantsViewModel extends BaseViewModel {
     public int getParticipantCount() {
         return participantCount.get();
     }
+
+    /**
+     * Gets the participant count property.
+     * @return The participant count property
+     */
+    public BindableProperty<Integer> getParticipantCountProperty() {
+        return participantCount;
+    }
     
     /**
      * Gets the list of participant names.
@@ -83,6 +99,14 @@ public class ParticipantsViewModel extends BaseViewModel {
     public List<String> getParticipantNames() {
         return new ArrayList<>(participantNames.get());
     }
+
+    /**
+     * Gets the participant names property.
+     * @return The participant names property
+     */
+    public BindableProperty<List<String>> getParticipantNamesProperty() {
+        return participantNames;
+    }
     
     /**
      * Gets the list of participant User objects.
@@ -90,6 +114,14 @@ public class ParticipantsViewModel extends BaseViewModel {
      */
     public List<UserProfile> getParticipants() {
         return new ArrayList<>(participants.get());
+    }
+
+    /**
+     * Gets the participants property.
+     * @return The participants property
+     */
+    public BindableProperty<List<UserProfile>> getParticipantsProperty() {
+        return participants;
     }
 }
 

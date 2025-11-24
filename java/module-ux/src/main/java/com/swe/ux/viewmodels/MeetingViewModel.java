@@ -14,37 +14,65 @@ import com.swe.ux.model.Meeting;
  * ViewModel for managing meeting-related business logic and state.
  */
 public class MeetingViewModel extends BaseViewModel {
-    public final UserProfile currentUser;
-    private Meeting currentMeeting = new Meeting("Meeting");
-    public AbstractRPC rpc;
-
-    public HashMap<String, String> ipToMail;
+    /** Title segment length constant. */
+    private static final int TITLE_SEGMENT_LENGTH = 8;
     
-    // Bindable properties
-    public final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
-    public final BindableProperty<String> meetingId = new BindableProperty<>("", "meetingId");
-    public final BindableProperty<String> messageText = new BindableProperty<>("", "messageText");
-    public final BindableProperty<List<String>> messages = new BindableProperty<>(new ArrayList<>(), "messages");
-    public final BindableProperty<Boolean> isMeetingActive = new BindableProperty<>(false, "isMeetingActive");
-    public final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
-    public final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
-    public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
-    public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(),
-            "participants");
-    public final BindableProperty<String> role = new BindableProperty<>("", "role");
+    /** Current user in the meeting. */
+    private final UserProfile currentUser;
+    /** Current meeting instance. */
+    private Meeting currentMeeting = new Meeting("Meeting");
+    /** RPC instance for communication. */
+    private final AbstractRPC rpc;
 
-    public MeetingViewModel(UserProfile currentUser, AbstractRPC rpc) {
-        System.out.println("User  " + currentUser);
-        this.currentUser = currentUser;
-        this.rpc = rpc;
-        ipToMail = new HashMap<>();
+    /** IP to email mapping. */
+    private final HashMap<String, String> ipToMail;
+    
+    /** Meeting title property. */
+    private final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
+    /** Meeting ID property. */
+    private final BindableProperty<String> meetingId = new BindableProperty<>("", "meetingId");
+    /** Message text property. */
+    private final BindableProperty<String> messageText = new BindableProperty<>("", "messageText");
+    /** Messages property. */
+    private final BindableProperty<List<String>> messages = new BindableProperty<>(new ArrayList<>(), "messages");
+    /** Meeting active state property. */
+    private final BindableProperty<Boolean> isMeetingActive = new BindableProperty<>(false, "isMeetingActive");
+    /** Video enabled property. */
+    private final BindableProperty<Boolean> isVideoEnabled = new BindableProperty<>(false, "isVideoEnabled");
+    /** Audio enabled property. */
+    private final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
+    /** Screen share enabled property. */
+    private final BindableProperty<Boolean> isScreenShareEnabled = 
+        new BindableProperty<>(false, "isScreenShareEnabled");
+    /** Participants property. */
+    private final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(),
+            "participants");
+    /** Role property. */
+    private final BindableProperty<String> role = new BindableProperty<>("", "role");
+
+    /**
+     * Creates a new MeetingViewModel.
+     * @param currentUserParam The current user
+     * @param rpcParam The RPC instance
+     */
+    public MeetingViewModel(final UserProfile currentUserParam, final AbstractRPC rpcParam) {
+        System.out.println("User  " + currentUserParam);
+        this.currentUser = currentUserParam;
+        this.rpc = rpcParam;
+        this.ipToMail = new HashMap<>();
     }
 
-    public MeetingViewModel(UserProfile currentUser, String role, AbstractRPC rpc) {
-        this.currentUser = currentUser;
-        this.rpc = rpc;
-        this.role.set(role);
-        ipToMail = new HashMap<>();
+    /**
+     * Creates a new MeetingViewModel with role.
+     * @param currentUserParam The current user
+     * @param roleParam The user's role
+     * @param rpcParam The RPC instance
+     */
+    public MeetingViewModel(final UserProfile currentUserParam, final String roleParam, final AbstractRPC rpcParam) {
+        this.currentUser = currentUserParam;
+        this.rpc = rpcParam;
+        this.role.set(roleParam);
+        this.ipToMail = new HashMap<>();
     }
 
     /**
@@ -53,7 +81,7 @@ public class MeetingViewModel extends BaseViewModel {
      * 
      * @param id The meeting ID to set
      */
-    public void setMeetingId(String id) {
+    public void setMeetingId(final String id) {
         if (id != null && !id.trim().isEmpty()) {
             meetingId.set(id);
         }
@@ -67,7 +95,7 @@ public class MeetingViewModel extends BaseViewModel {
      */
     public void startMeeting() {
         // Get the meeting ID that was set via setMeetingId()
-        String newMeetingId = meetingId.get();
+        final String newMeetingId = meetingId.get();
 
         // Meeting ID must be provided before starting the meeting
         if (newMeetingId == null || newMeetingId.trim().isEmpty()) {
@@ -78,7 +106,12 @@ public class MeetingViewModel extends BaseViewModel {
         // Create the meeting with the provided ID
         String title = meetingTitle.get();
         if (title == null || title.trim().isEmpty()) {
-            String displaySegment = newMeetingId.length() > 8 ? newMeetingId.substring(0, 8) : newMeetingId;
+            final String displaySegment;
+            if (newMeetingId.length() > TITLE_SEGMENT_LENGTH) {
+                displaySegment = newMeetingId.substring(0, TITLE_SEGMENT_LENGTH);
+            } else {
+                displaySegment = newMeetingId;
+            }
             title = "Meeting " + displaySegment;
         }
         currentMeeting.setMeetingTitle(title);
@@ -115,7 +148,7 @@ public class MeetingViewModel extends BaseViewModel {
      */
     public void sendMessage() {
         if (currentMeeting != null && messageText.get() != null && !messageText.get().trim().isEmpty()) {
-            String message = messageText.get().trim();
+            final String message = messageText.get().trim();
             currentMeeting.addMessage(new Meeting.ChatMessage(currentUser, message));
             updateMessages();
             messageText.set("");
@@ -124,8 +157,9 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Add a participant to the current meeting.
+     * @param user The user to add
      */
-    public void addParticipant(UserProfile user) {
+    public void addParticipant(final UserProfile user) {
         if (currentMeeting != null) {
             currentMeeting.addParticipant(user);
             updateParticipants();
@@ -133,7 +167,7 @@ public class MeetingViewModel extends BaseViewModel {
         } else {
             System.out.println("MeetingViewModel: currentMeeting is null, saving user to list");
             // Create a new list to trigger property change notification
-            List<UserProfile> updatedParticipants = new ArrayList<>(participants.get());
+            final List<UserProfile> updatedParticipants = new ArrayList<>(participants.get());
             updatedParticipants.add(user);
             participants.set(updatedParticipants);
         }
@@ -141,8 +175,9 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Remove a participant from the current meeting.
+     * @param user The user to remove
      */
-    public void removeParticipant(UserProfile user) {
+    public void removeParticipant(final UserProfile user) {
         if (currentMeeting != null) {
             currentMeeting.removeParticipant(user);
             updateParticipants();
@@ -155,7 +190,7 @@ public class MeetingViewModel extends BaseViewModel {
      */
     public void toggleVideo() {
         if (currentMeeting != null) {
-            boolean newState = !isVideoEnabled.get();
+            final boolean newState = !isVideoEnabled.get();
             isVideoEnabled.set(newState);
             if (newState) {
                 rpc.call(Utils.START_VIDEO_CAPTURE, new byte[0]);
@@ -163,7 +198,11 @@ public class MeetingViewModel extends BaseViewModel {
                 rpc.call(Utils.STOP_VIDEO_CAPTURE, new byte[0]);
             }
             currentMeeting.setVideoEnabled(newState);
-            addSystemMessage("Video " + (newState ? "enabled" : "disabled"));
+            if (newState) {
+                addSystemMessage("Video enabled");
+            } else {
+                addSystemMessage("Video disabled");
+            }
         }
     }
 
@@ -172,7 +211,7 @@ public class MeetingViewModel extends BaseViewModel {
      */
     public void toggleAudio() {
         if (currentMeeting != null) {
-            boolean newState = !isAudioEnabled.get();
+            final boolean newState = !isAudioEnabled.get();
             isAudioEnabled.set(newState);
             if (newState) {
                 rpc.call(Utils.START_AUDIO_CAPTURE, new byte[0]);
@@ -180,7 +219,11 @@ public class MeetingViewModel extends BaseViewModel {
                 rpc.call(Utils.STOP_AUDIO_CAPTURE, new byte[0]);
             }
             currentMeeting.setAudioEnabled(newState);
-            addSystemMessage("Audio " + (newState ? "enabled" : "disabled"));
+            if (newState) {
+                addSystemMessage("Audio enabled");
+            } else {
+                addSystemMessage("Audio disabled");
+            }
         }
     }
 
@@ -189,7 +232,7 @@ public class MeetingViewModel extends BaseViewModel {
      */
     public void toggleScreenSharing() {
         if (currentMeeting != null) {
-            boolean newState = !isScreenShareEnabled.get();
+            final boolean newState = !isScreenShareEnabled.get();
             isScreenShareEnabled.set(newState);
             if (newState) {
                 rpc.call(Utils.START_SCREEN_CAPTURE, new byte[0]);
@@ -197,14 +240,18 @@ public class MeetingViewModel extends BaseViewModel {
                 rpc.call(Utils.STOP_SCREEN_CAPTURE, new byte[0]);
             }
             currentMeeting.setScreenSharingEnabled(newState);
-            addSystemMessage("Screen sharing " + (newState ? "enabled" : "disabled"));
+            if (newState) {
+                addSystemMessage("Screen sharing enabled");
+            } else {
+                addSystemMessage("Screen sharing disabled");
+            }
         }
     }
 
     private void updateMessages() {
         if (currentMeeting != null) {
-            List<String> messageList = new ArrayList<>();
-            for (Meeting.ChatMessage msg : currentMeeting.getMessages()) {
+            final List<String> messageList = new ArrayList<>();
+            for (final Meeting.ChatMessage msg : currentMeeting.getMessages()) {
                 messageList.add(msg.toString());
             }
             messages.set(messageList);
@@ -217,7 +264,7 @@ public class MeetingViewModel extends BaseViewModel {
         }
     }
 
-    private void addSystemMessage(String message) {
+    private void addSystemMessage(final String message) {
         if (currentMeeting != null) {
             // currentMeeting.addMessage(new Meeting.ChatMessage(null, "[System] " +
             // message));
@@ -225,13 +272,124 @@ public class MeetingViewModel extends BaseViewModel {
         }
     }
 
-    // Getters
+    /**
+     * Gets the current meeting.
+     * @return The current meeting
+     */
     public Meeting getCurrentMeeting() {
         return currentMeeting;
     }
 
+    /**
+     * Checks if the current user is in the meeting.
+     * @return True if user is in meeting
+     */
     public boolean isCurrentUserInMeeting() {
-        return currentMeeting != null &&
-                currentMeeting.getParticipants().contains(currentUser);
+        return currentMeeting != null
+                && currentMeeting.getParticipants().contains(currentUser);
+    }
+
+    /**
+     * Gets the current user.
+     * @return The current user
+     */
+    public UserProfile getCurrentUser() {
+        return currentUser;
+    }
+
+    /**
+     * Gets the RPC instance.
+     * @return The RPC instance
+     */
+    public AbstractRPC getRpc() {
+        return rpc;
+    }
+
+    /**
+     * Gets the IP to email mapping.
+     * @return The IP to email mapping
+     */
+    public HashMap<String, String> getIpToMail() {
+        return ipToMail;
+    }
+
+    /**
+     * Gets the meeting title property.
+     * @return The meeting title property
+     */
+    public BindableProperty<String> getMeetingTitle() {
+        return meetingTitle;
+    }
+
+    /**
+     * Gets the meeting ID property.
+     * @return The meeting ID property
+     */
+    public BindableProperty<String> getMeetingId() {
+        return meetingId;
+    }
+
+    /**
+     * Gets the message text property.
+     * @return The message text property
+     */
+    public BindableProperty<String> getMessageText() {
+        return messageText;
+    }
+
+    /**
+     * Gets the messages property.
+     * @return The messages property
+     */
+    public BindableProperty<List<String>> getMessages() {
+        return messages;
+    }
+
+    /**
+     * Gets the meeting active state property.
+     * @return The meeting active state property
+     */
+    public BindableProperty<Boolean> getIsMeetingActive() {
+        return isMeetingActive;
+    }
+
+    /**
+     * Gets the video enabled property.
+     * @return The video enabled property
+     */
+    public BindableProperty<Boolean> getIsVideoEnabled() {
+        return isVideoEnabled;
+    }
+
+    /**
+     * Gets the audio enabled property.
+     * @return The audio enabled property
+     */
+    public BindableProperty<Boolean> getIsAudioEnabled() {
+        return isAudioEnabled;
+    }
+
+    /**
+     * Gets the screen share enabled property.
+     * @return The screen share enabled property
+     */
+    public BindableProperty<Boolean> getIsScreenShareEnabled() {
+        return isScreenShareEnabled;
+    }
+
+    /**
+     * Gets the participants property.
+     * @return The participants property
+     */
+    public BindableProperty<List<UserProfile>> getParticipants() {
+        return participants;
+    }
+
+    /**
+     * Gets the role property.
+     * @return The role property
+     */
+    public BindableProperty<String> getRole() {
+        return role;
     }
 }

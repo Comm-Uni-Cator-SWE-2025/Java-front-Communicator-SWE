@@ -27,7 +27,7 @@ public class CanvasState {
      * A callback to notify the UI that it needs to redraw.
      * This is set by the ActionManager.
      */
-    private Runnable onUpdateCallback = () -> {};
+    private Runnable onUpdateCallback = () -> { };
 
     /**
      * Constructs a new, empty CanvasState.
@@ -45,7 +45,7 @@ public class CanvasState {
         if (onUpdate != null) {
             this.onUpdateCallback = onUpdate;
         } else {
-            this.onUpdateCallback = () -> {};
+            this.onUpdateCallback = () -> { };
         }
     }
     
@@ -62,7 +62,7 @@ public class CanvasState {
      *
      * @param shapeId The ID of the shape to retrieve.
      * @return The current {@link ShapeState}, or {@code null} if the shape
-     * does not exist in the state map.
+     *     does not exist in the state map.
      */
     public ShapeState getShapeState(final ShapeId shapeId) {
         return state.get(shapeId);
@@ -99,6 +99,7 @@ public class CanvasState {
         state.clear();
     }
 
+    /** Length of shape ID substring used in string representation. */
     private static final int SUBSTRING_LENGTH = 8;
 
     /**

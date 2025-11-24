@@ -6,13 +6,22 @@ import java.io.InputStream;
 /**
  * Utility to load JetBrains Mono from resources, or fall back to system fonts.
  *
- * Put JetBrainsMono-Regular.ttf in resources/fonts/ if you want the bundled font.
+ * <p>Put JetBrainsMono-Regular.ttf in resources/fonts/ if you want the bundled font.
  */
 public class FontUtil {
-
+    /**
+     * Cached JetBrains Mono font.
+     */
     private static Font jetbrainsMono = null;
 
-    public static synchronized Font getJetBrainsMono(float size, int style) {
+    /**
+     * Gets the JetBrains Mono font with specified size and style.
+     *
+     * @param size the font size
+     * @param style the font style
+     * @return the font
+     */
+    public static synchronized Font getJetBrainsMono(final float size, final int style) {
         if (jetbrainsMono == null) {
             jetbrainsMono = tryLoadFromResources();
             if (jetbrainsMono == null) {
@@ -30,10 +39,12 @@ public class FontUtil {
     private static Font tryLoadFromResources() {
         try (InputStream is = FontUtil.class.getResourceAsStream("/fonts/JetBrainsMono-Regular.ttf")) {
             if (is != null) {
-                Font f = Font.createFont(Font.TRUETYPE_FONT, is);
+                final Font f = Font.createFont(Font.TRUETYPE_FONT, is);
                 return f;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // Font loading failed, will use fallback
+        }
         return null;
     }
 }

@@ -3,6 +3,7 @@
  */
 
 // package com.swe.ux.viewmodel;
+
 package com.swe.ux.viewmodels;
 
 import com.swe.ux.model.analytics.ShapeCount;
@@ -14,26 +15,43 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+/**
+ * ViewModel for shape analytics.
+ */
 public class ShapeViewModel {
+    /** Window size constant. */
+    private static final int WINDOW_SIZE = 3;
+    
+    /** Data service for shape analytics. */
     private final ShapeDataService dataService;
+    /** All shape count data. */
     private final ObservableList<ShapeCount> allData;
+    /** Current start index property. */
     private final IntegerProperty currentStartIndex;
+    /** Auto mode property. */
     private final BooleanProperty autoMode;
+    /** Window size property. */
     private final IntegerProperty windowSize;
 
+    /**
+     * Creates a new ShapeViewModel.
+     */
     public ShapeViewModel() {
         this.dataService = new ShapeDataService();
         this.allData = FXCollections.observableArrayList();
         this.currentStartIndex = new SimpleIntegerProperty(0);
         this.autoMode = new SimpleBooleanProperty(true);
-        this.windowSize = new SimpleIntegerProperty(3); // Show 3 snapshots at a time
+        this.windowSize = new SimpleIntegerProperty(WINDOW_SIZE); // Show 3 snapshots at a time
     }
 
+    /**
+     * Fetches and updates data.
+     */
     public void fetchAndUpdateData() {
-        String json = dataService.fetchNextData();
+        final String json = dataService.fetchNextData();
 
         if (!json.isEmpty()) {
-            ShapeCount newData = dataService.parseJson(json);
+            final ShapeCount newData = dataService.parseJson(json);
             allData.add(newData);
             autoMode.set(true);
         }
@@ -42,7 +60,7 @@ public class ShapeViewModel {
     }
 
     private void calculateViewBounds() {
-        int n = allData.size();
+        final int n = allData.size();
 
         if (autoMode.get()) {
             // Show last 3 snapshots
@@ -50,6 +68,9 @@ public class ShapeViewModel {
         }
     }
 
+    /**
+     * Moves to next view window.
+     */
     public void moveNext() {
         autoMode.set(false);
         if (currentStartIndex.get() + 1 <= allData.size() - windowSize.get()) {
@@ -57,6 +78,9 @@ public class ShapeViewModel {
         }
     }
 
+    /**
+     * Moves to previous view window.
+     */
     public void movePrevious() {
         autoMode.set(false);
         if (currentStartIndex.get() - 1 >= 0) {
@@ -64,9 +88,13 @@ public class ShapeViewModel {
         }
     }
 
+    /**
+     * Gets the data in the current window.
+     * @return Observable list of shape counts in the window
+     */
     public ObservableList<ShapeCount> getWindowData() {
-        int start = currentStartIndex.get();
-        int end = Math.min(start + windowSize.get(), allData.size());
+        final int start = currentStartIndex.get();
+        final int end = Math.min(start + windowSize.get(), allData.size());
 
         if (start >= allData.size()) {
             return FXCollections.observableArrayList();
@@ -75,22 +103,42 @@ public class ShapeViewModel {
         return FXCollections.observableArrayList(allData.subList(start, end));
     }
 
+    /**
+     * Gets all data.
+     * @return All shape count data
+     */
     public ObservableList<ShapeCount> getAllData() {
         return allData;
     }
 
+    /**
+     * Gets current start index.
+     * @return Current start index
+     */
     public int getCurrentStartIndex() {
         return currentStartIndex.get();
     }
 
+    /**
+     * Returns the current start index property.
+     * @return Current start index property
+     */
     public IntegerProperty currentStartIndexProperty() {
         return currentStartIndex;
     }
 
+    /**
+     * Returns the auto mode property.
+     * @return Auto mode property
+     */
     public BooleanProperty autoModeProperty() {
         return autoMode;
     }
 
+    /**
+     * Returns the window size property.
+     * @return Window size property
+     */
     public IntegerProperty windowSizeProperty() {
         return windowSize;
     }

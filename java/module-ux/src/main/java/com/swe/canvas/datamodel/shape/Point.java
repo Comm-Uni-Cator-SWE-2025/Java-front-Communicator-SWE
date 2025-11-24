@@ -39,12 +39,12 @@ public final class Point implements Serializable {
     /**
      * Constructs a new Point.
      *
-     * @param x The x-coordinate.
-     * @param y The y-coordinate.
+     * @param xCoord The x-coordinate.
+     * @param yCoord The y-coordinate.
      */
-    public Point(final double x, final double y) {
-        this.x = x;
-        this.y = y;
+    public Point(final double xCoord, final double yCoord) {
+        this.x = xCoord;
+        this.y = yCoord;
     }
 
     /**

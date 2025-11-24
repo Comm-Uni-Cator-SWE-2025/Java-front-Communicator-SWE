@@ -55,15 +55,15 @@ public final class ShapeState implements Serializable {
     /**
      * Constructs a new ShapeState.
      *
-     * @param shape_        The shape snapshot. A deep copy MUST be provided.
-     * @param isDeleted_    The deletion status.
-     * @param lastModified_ The modification timestamp.
+     * @param shapeSnapshot The shape snapshot. A deep copy MUST be provided.
+     * @param deleted       The deletion status.
+     * @param modified      The modification timestamp.
      */
-    public ShapeState(final Shape shape_, final boolean isDeleted_, final long lastModified_) {
+    public ShapeState(final Shape shapeSnapshot, final boolean deleted, final long modified) {
         // We trust the shape is a deep copy, which Shape.copy() ensures.
-        this.shape = shape_;
-        this.isDeleted = isDeleted_;
-        this.lastModified = lastModified_;
+        this.shape = shapeSnapshot;
+        this.isDeleted = deleted;
+        this.lastModified = modified;
     }
 
     /**
@@ -87,7 +87,8 @@ public final class ShapeState implements Serializable {
     }
 
     /**
-     * @summary Checks if the shape is soft-deleted.
+     * Checks if the shape is soft-deleted.
+     *
      * @return True if the shape is soft-deleted, false otherwise.
      */
     public boolean isDeleted() {
@@ -95,6 +96,8 @@ public final class ShapeState implements Serializable {
     }
 
     /**
+     * Gets the modification timestamp.
+     *
      * @return The modification timestamp.
      */
     public long getLastModified() {

@@ -24,8 +24,8 @@ import com.swe.canvas.datamodel.shape.TriangleShape;
  * Provides manual JSON serialization and deserialization for the Canvas data model
  * (Shapes and Actions) using only core Java classes.
  *
- * This class handles the high-level structure and relies on
- * {@link JsonUtils} for low-level parsing and helper functions.
+ * <p>This class handles the high-level structure and relies on
+ * {@link JsonUtils} for low-level parsing and helper functions.</p>
  */
 public final class ShapeSerializer {
 
@@ -53,10 +53,12 @@ public final class ShapeSerializer {
         sb.append("{");
         
         // 1. ShapeId
-        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":").append(JsonUtils.jsonEscape(shape.getShapeId().getValue())).append(",");
+        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":");
+        sb.append(JsonUtils.jsonEscape(shape.getShapeId().getValue())).append(",");
         
         // 2. Type
-        sb.append(JsonUtils.jsonEscape("Type")).append(":").append(JsonUtils.jsonEscape(shape.getShapeType().toString())).append(",");
+        sb.append(JsonUtils.jsonEscape("Type")).append(":");
+        sb.append(JsonUtils.jsonEscape(shape.getShapeType().toString())).append(",");
 
         // 3. Points Array
         sb.append(JsonUtils.jsonEscape("Points")).append(":[");
@@ -74,16 +76,20 @@ public final class ShapeSerializer {
         sb.append("],");
 
         // 4. Color
-        sb.append(JsonUtils.jsonEscape("Color")).append(":").append(JsonUtils.jsonEscape(JsonUtils.colorToHex(shape.getColor()))).append(",");
+        sb.append(JsonUtils.jsonEscape("Color")).append(":");
+        sb.append(JsonUtils.jsonEscape(JsonUtils.colorToHex(shape.getColor()))).append(",");
         
         // 5. Thickness
-        sb.append(JsonUtils.jsonEscape("Thickness")).append(":").append(shape.getThickness()).append(",");
+        sb.append(JsonUtils.jsonEscape("Thickness")).append(":");
+        sb.append(shape.getThickness()).append(",");
 
         // 6. CreatedBy
-        sb.append(JsonUtils.jsonEscape("CreatedBy")).append(":").append(JsonUtils.jsonEscape(shape.getCreatedBy())).append(",");
+        sb.append(JsonUtils.jsonEscape("CreatedBy")).append(":");
+        sb.append(JsonUtils.jsonEscape(shape.getCreatedBy())).append(",");
         
         // 7. LastModifiedBy
-        sb.append(JsonUtils.jsonEscape("LastModifiedBy")).append(":").append(JsonUtils.jsonEscape(shape.getLastUpdatedBy())).append(",");
+        sb.append(JsonUtils.jsonEscape("LastModifiedBy")).append(":");
+        sb.append(JsonUtils.jsonEscape(shape.getLastUpdatedBy())).append(",");
         
         // 8. IsDeleted
         sb.append(JsonUtils.jsonEscape("IsDeleted")).append(":").append(shapeState.isDeleted());
@@ -171,11 +177,16 @@ public final class ShapeSerializer {
         sb.append("{");
 
         // Simple metadata fields
-        sb.append(JsonUtils.jsonEscape("ActionType")).append(":").append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
-        sb.append(JsonUtils.jsonEscape("ActionId")).append(":").append(JsonUtils.jsonEscape(action.getActionId())).append(",");
-        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":").append(JsonUtils.jsonEscape(action.getShapeId().getValue())).append(",");
-        sb.append(JsonUtils.jsonEscape("UserId")).append(":").append(JsonUtils.jsonEscape(action.getUserId())).append(",");
-        sb.append(JsonUtils.jsonEscape("Timestamp")).append(":").append(action.getTimestamp()).append(",");
+        sb.append(JsonUtils.jsonEscape("ActionType")).append(":");
+        sb.append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
+        sb.append(JsonUtils.jsonEscape("ActionId")).append(":");
+        sb.append(JsonUtils.jsonEscape(action.getActionId())).append(",");
+        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":");
+        sb.append(JsonUtils.jsonEscape(action.getShapeId().getValue())).append(",");
+        sb.append(JsonUtils.jsonEscape("UserId")).append(":");
+        sb.append(JsonUtils.jsonEscape(action.getUserId())).append(",");
+        sb.append(JsonUtils.jsonEscape("Timestamp")).append(":");
+        sb.append(action.getTimestamp()).append(",");
 
         // PrevState (nested ShapeState JSON)
         final String prevStateJson = serializeShape(action.getPrevState());
@@ -262,8 +273,9 @@ public final class ShapeSerializer {
         if (shape == null) {
             return "{}";
         }
-        // Since we need ShapeState for the isDeleted flag, we mock a ShapeState for serialization.
-        // We know that for a newly drawn shape, isDeleted is false and timestamp is irrelevant for the payload structure.
+        // Since we need ShapeState for the isDeleted flag, we mock a ShapeState
+        // for serialization. We know that for a newly drawn shape, isDeleted is
+        // false and timestamp is irrelevant for the payload structure.
         final long zeroL = 0L;
         final ShapeState tempState = new ShapeState(shape, false, zeroL);
         return serializeShape(tempState);

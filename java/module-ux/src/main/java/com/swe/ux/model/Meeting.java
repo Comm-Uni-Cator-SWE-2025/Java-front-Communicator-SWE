@@ -11,19 +11,51 @@ import com.swe.controller.Meeting.UserProfile;
  * Represents a meeting with participants and messages.
  */
 public class Meeting {
+    /**
+     * Unique meeting ID.
+     */
     private final String id;
+    /**
+     * Meeting title.
+     */
     private String title;
+    /**
+     * Start time of the meeting.
+     */
     private final LocalDateTime startTime;
+    /**
+     * End time of the meeting.
+     */
     private LocalDateTime endTime;
+    /**
+     * List of participants.
+     */
     private final List<UserProfile> participants;
+    /**
+     * List of chat messages.
+     */
     private final List<ChatMessage> messages;
+    /**
+     * Whether video is enabled.
+     */
     private boolean videoEnabled;
+    /**
+     * Whether screen sharing is enabled.
+     */
     private boolean screenSharingEnabled;
+    /**
+     * Whether audio is enabled.
+     */
     private boolean audioEnabled;
 
-    public Meeting(String title) {
+    /**
+     * Creates a new meeting.
+     *
+     * @param meetingTitle the title of the meeting
+     */
+    public Meeting(final String meetingTitle) {
         this.id = UUID.randomUUID().toString();
-        this.title = title;
+        this.title = meetingTitle;
         this.startTime = LocalDateTime.now();
         this.participants = new ArrayList<>();
         this.messages = new ArrayList<>();
@@ -31,54 +63,150 @@ public class Meeting {
         this.screenSharingEnabled = false;
     }
 
-    // Getters
-    public String getId() { return id; }
-    public String getTitle() { return title; }
-    public LocalDateTime getStartTime() { return startTime; }
-    public LocalDateTime getEndTime() { return endTime; }
-    public List<UserProfile> getParticipants() { return new ArrayList<>(participants); }
-    public List<ChatMessage> getMessages() { return new ArrayList<>(messages); }
+    /**
+     * Gets the meeting ID.
+     *
+     * @return the meeting ID
+     */
+    public String getId() {
+        return id;
+    }
 
-    // Methods
-    public void addParticipant(UserProfile user) {
-        boolean userPresent = participants.stream().map(UserProfile::getEmail).toList().contains(user.getEmail());
+    /**
+     * Gets the meeting title.
+     *
+     * @return the meeting title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Gets the start time.
+     *
+     * @return the start time
+     */
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    /**
+     * Gets the end time.
+     *
+     * @return the end time
+     */
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    /**
+     * Gets the participants list.
+     *
+     * @return copy of participants list
+     */
+    public List<UserProfile> getParticipants() {
+        return new ArrayList<>(participants);
+    }
+
+    /**
+     * Gets the messages list.
+     *
+     * @return copy of messages list
+     */
+    public List<ChatMessage> getMessages() {
+        return new ArrayList<>(messages);
+    }
+
+    /**
+     * Adds a participant to the meeting.
+     *
+     * @param user the user profile to add
+     */
+    public void addParticipant(final UserProfile user) {
+        final boolean userPresent = participants.stream()
+                .map(UserProfile::getEmail)
+                .toList()
+                .contains(user.getEmail());
         if (!userPresent) {
             participants.add(user);
         }
     }
 
+    /**
+     * Checks if audio is enabled.
+     *
+     * @return true if audio is enabled
+     */
     public boolean isAudioEnabled() {
         return audioEnabled;
     }
 
-    public void setAudioEnabled(boolean audioEnabled) {
-        this.audioEnabled = audioEnabled;
+    /**
+     * Sets audio enabled state.
+     *
+     * @param enabled the audio enabled state
+     */
+    public void setAudioEnabled(final boolean enabled) {
+        this.audioEnabled = enabled;
     }
 
-    public void setVideoEnabled(boolean enabled) {
+    /**
+     * Sets video enabled state.
+     *
+     * @param enabled the video enabled state
+     */
+    public void setVideoEnabled(final boolean enabled) {
         this.videoEnabled = enabled;
     }
 
-    public void setScreenSharingEnabled(boolean enabled) {
+    /**
+     * Sets screen sharing enabled state.
+     *
+     * @param enabled the screen sharing enabled state
+     */
+    public void setScreenSharingEnabled(final boolean enabled) {
         this.screenSharingEnabled = enabled;
     }
 
-    public void setMeetingTitle(String title) {
-        this.title = title;
+    /**
+     * Sets the meeting title.
+     *
+     * @param meetingTitle the meeting title
+     */
+    public void setMeetingTitle(final String meetingTitle) {
+        this.title = meetingTitle;
     }
 
-    public void removeParticipant(UserProfile user) {
+    /**
+     * Removes a participant from the meeting.
+     *
+     * @param user the user profile to remove
+     */
+    public void removeParticipant(final UserProfile user) {
         participants.remove(user);
     }
 
-    public void addMessage(ChatMessage message) {
+    /**
+     * Adds a message to the meeting.
+     *
+     * @param message the chat message to add
+     */
+    public void addMessage(final ChatMessage message) {
         messages.add(message);
     }
 
+    /**
+     * Ends the meeting.
+     */
     public void endMeeting() {
         this.endTime = LocalDateTime.now();
     }
 
+    /**
+     * Checks if meeting is active.
+     *
+     * @return true if active
+     */
     public boolean isActive() {
         return endTime == null;
     }
@@ -87,20 +215,57 @@ public class Meeting {
      * Represents a chat message within a meeting.
      */
     public static class ChatMessage {
+        /**
+         * The sender of the message.
+         */
         private final UserProfile sender;
+        /**
+         * The message content.
+         */
         private final String content;
+        /**
+         * The timestamp of the message.
+         */
         private final LocalDateTime timestamp;
 
-        public ChatMessage(UserProfile sender, String content) {
-            this.sender = sender;
-            this.content = content;
+        /**
+         * Creates a new chat message.
+         *
+         * @param messageSender the sender profile
+         * @param messageContent the message content
+         */
+        public ChatMessage(final UserProfile messageSender, final String messageContent) {
+            this.sender = messageSender;
+            this.content = messageContent;
             this.timestamp = LocalDateTime.now();
         }
 
-        // Getters
-        public UserProfile getSender() { return sender; }
-        public String getContent() { return content; }
-        public LocalDateTime getTimestamp() { return timestamp; }
+        /**
+         * Gets the sender.
+         *
+         * @return the sender profile
+         */
+        public UserProfile getSender() {
+            return sender;
+        }
+
+        /**
+         * Gets the content.
+         *
+         * @return the message content
+         */
+        public String getContent() {
+            return content;
+        }
+
+        /**
+         * Gets the timestamp.
+         *
+         * @return the timestamp
+         */
+        public LocalDateTime getTimestamp() {
+            return timestamp;
+        }
 
         @Override
         public String toString() {

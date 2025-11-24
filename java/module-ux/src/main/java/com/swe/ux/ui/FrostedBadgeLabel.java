@@ -14,26 +14,71 @@ import com.swe.ux.theme.ThemeManager;
  * Small rounded badge used on login card.
  */
 public class FrostedBadgeLabel extends JLabel {
+    /**
+     * Font size.
+     */
+    private static final float FONT_SIZE = 12f;
+    /**
+     * Vertical border padding.
+     */
+    private static final int BORDER_VERTICAL = 6;
+    /**
+     * Horizontal border padding.
+     */
+    private static final int BORDER_HORIZONTAL = 12;
+    /**
+     * Width padding.
+     */
+    private static final int WIDTH_PADDING = 8;
+    /**
+     * Minimum height.
+     */
+    private static final int MIN_HEIGHT = 28;
+    /**
+     * Alpha for light theme.
+     */
+    private static final int ALPHA_LIGHT = 18;
+    /**
+     * Alpha for dark theme.
+     */
+    private static final int ALPHA_DARK = 8;
+    /**
+     * Border offset.
+     */
+    private static final int BORDER_OFFSET = 2;
+    /**
+     * Maximum RGB value.
+     */
+    private static final int RGB_MAX = 255;
 
-    public FrostedBadgeLabel(String text) {
+    /**
+     * Creates a new frosted badge label.
+     *
+     * @param text the label text
+     */
+    public FrostedBadgeLabel(final String text) {
         super(text);
         setOpaque(false);
-        setBorder(new EmptyBorder(6, 12, 6, 12));
-        setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        setBorder(new EmptyBorder(BORDER_VERTICAL, BORDER_HORIZONTAL,
+                BORDER_VERTICAL, BORDER_HORIZONTAL));
+        setFont(FontUtil.getJetBrainsMono(FONT_SIZE, Font.PLAIN));
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
+    protected void paintComponent(final Graphics g) {
+        final Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        java.awt.Color bg = ThemeManager.getInstance().getCurrentTheme().isDark() 
-                ? new java.awt.Color(255,255,255,18) 
-                : new java.awt.Color(0,0,0,8);
+        final java.awt.Color bg;
+        if (ThemeManager.getInstance().getCurrentTheme().isDark()) {
+            bg = new java.awt.Color(RGB_MAX, RGB_MAX, RGB_MAX, ALPHA_LIGHT);
+        } else {
+            bg = new java.awt.Color(0, 0, 0, ALPHA_DARK);
+        }
 
-        int w = getWidth();
-        int h = getHeight();
-        int r = h - 2;
+        final int w = getWidth();
+        final int h = getHeight();
+        final int r = h - BORDER_OFFSET;
         g2.setColor(bg);
         g2.fillRoundRect(0, 0, w, h, r, r);
 
@@ -43,9 +88,9 @@ public class FrostedBadgeLabel extends JLabel {
 
     @Override
     public Dimension getPreferredSize() {
-        Dimension d = super.getPreferredSize();
-        d.width += 8;
-        d.height = Math.max(d.height, 28);
+        final Dimension d = super.getPreferredSize();
+        d.width += WIDTH_PADDING;
+        d.height = Math.max(d.height, MIN_HEIGHT);
         return d;
     }
 }

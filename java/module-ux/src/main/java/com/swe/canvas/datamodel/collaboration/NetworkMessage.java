@@ -8,24 +8,26 @@ import java.util.regex.Pattern;
  * A wrapper for data sent over the network.
  * It contains the MessageType and the serialized Action (as bytes).
  *
- * This class includes its own manual JSON serializer/deserializer to wrap
- * the byte[] payload as a Base64 string for safe JSON transport.
+ * <p>This class includes its own manual JSON serializer/deserializer to wrap
+ * the byte[] payload as a Base64 string for safe JSON transport.</p>
  *
  * @author Canvas Team
  */
 public class NetworkMessage {
 
+    /** The type of message being sent. */
     private final MessageType messageType;
+    /** The serialized action data. */
     private final byte[] serializedAction;
 
     /**
      * Constructs a NetworkMessage.
-     * @param messageType The type of message.
-     * @param serializedAction The serialized action bytes.
+     * @param msgType The type of message.
+     * @param actionBytes The serialized action bytes.
      */
-    public NetworkMessage(final MessageType messageType, final byte[] serializedAction) {
-        this.messageType = messageType;
-        this.serializedAction = serializedAction;
+    public NetworkMessage(final MessageType msgType, final byte[] actionBytes) {
+        this.messageType = msgType;
+        this.serializedAction = actionBytes;
     }
 
     /**

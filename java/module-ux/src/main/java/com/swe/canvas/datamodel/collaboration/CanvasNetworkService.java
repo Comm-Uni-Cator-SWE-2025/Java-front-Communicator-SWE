@@ -13,21 +13,34 @@ import com.swe.networking.NetworkFront;
  */
 public class CanvasNetworkService implements NetworkService {
 
+    /** Network front for sending messages. */
     private final NetworkFront network;
+    /** RPC bridge for subscriptions. */
     private final AbstractRPC rpc;
-
+    /** The host node to send messages to. */
     private ClientNode hostNode;
 
-    public CanvasNetworkService(final AbstractRPC rpc) {
-        this(rpc, NetworkFront.getInstance());
+    /**
+     * Creates a new canvas network service.
+     *
+     * @param rpcService The RPC service.
+     */
+    public CanvasNetworkService(final AbstractRPC rpcService) {
+        this(rpcService, NetworkFront.getInstance());
         if (this.rpc != null) {
             this.rpc.subscribe("canvas:getHostIp", this::handleSubscribeRPC);
         }
     }
 
-    public CanvasNetworkService(final AbstractRPC rpc, final NetworkFront network) {
-        this.rpc = rpc;
-        this.network = network;
+    /**
+     * Creates a new canvas network service.
+     *
+     * @param rpcService The RPC service.
+     * @param networkFront The network front.
+     */
+    public CanvasNetworkService(final AbstractRPC rpcService, final NetworkFront networkFront) {
+        this.rpc = rpcService;
+        this.network = networkFront;
         if (this.rpc != null) {
             this.rpc.subscribe("canvas:getHostIp", this::handleSubscribeRPC);
         }

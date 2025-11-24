@@ -15,17 +15,27 @@ import com.swe.canvas.datamodel.shape.Shape;
  */
 public class StandaloneActionManager implements ActionManager {
 
+    /** Canvas state for this manager. */
     private final CanvasState canvasState;
+    /** Undo/redo manager. */
     private final UndoRedoManager undoRedoManager;
+    /** Action factory. */
     private final ActionFactory actionFactory;
+    /** User ID. */
     private final String userId;
-    private Runnable onUpdateCallback = () -> {};
+    /** Update callback. */
+    private Runnable onUpdateCallback = () -> { };
 
-    public StandaloneActionManager(CanvasState canvasState, String userId) {
-        this.canvasState = canvasState;
+    /**
+     * Creates a new StandaloneActionManager.
+     * @param canvasStateParam The canvas state
+     * @param userIdParam The user ID
+     */
+    public StandaloneActionManager(final CanvasState canvasStateParam, final String userIdParam) {
+        this.canvasState = canvasStateParam;
         this.undoRedoManager = new UndoRedoManager();
         this.actionFactory = new ActionFactory();
-        this.userId = userId;
+        this.userId = userIdParam;
     }
 
     @Override
@@ -44,8 +54,12 @@ public class StandaloneActionManager implements ActionManager {
     }
 
     @Override
-    public void setOnUpdate(Runnable callback) {
-        this.onUpdateCallback = callback != null ? callback : () -> {};
+    public void setOnUpdate(final Runnable callback) {
+        if (callback != null) {
+            this.onUpdateCallback = callback;
+        } else {
+            this.onUpdateCallback = () -> { };
+        }
     }
 
     private void notifyUpdate() {
@@ -53,8 +67,8 @@ public class StandaloneActionManager implements ActionManager {
     }
 
     @Override
-    public void requestCreate(Shape newShape) {
-        Action action = actionFactory.createCreateAction(newShape, userId);
+    public void requestCreate(final Shape newShape) {
+        final Action action = actionFactory.createCreateAction(newShape, userId);
         // In standalone mode, apply immediately
         canvasState.applyState(action.getShapeId(), action.getNewState());
         undoRedoManager.push(action);
@@ -62,8 +76,9 @@ public class StandaloneActionManager implements ActionManager {
     }
 
     @Override
-    public void requestModify(ShapeState prevState, Shape modifiedShape) {
-        Action action = actionFactory.createModifyAction(canvasState, prevState.getShapeId(), modifiedShape, userId);
+    public void requestModify(final ShapeState prevState, final Shape modifiedShape) {
+        final Action action = actionFactory.createModifyAction(
+            canvasState, prevState.getShapeId(), modifiedShape, userId);
         // In standalone mode, apply immediately
         canvasState.applyState(action.getShapeId(), action.getNewState());
         undoRedoManager.push(action);
@@ -71,8 +86,8 @@ public class StandaloneActionManager implements ActionManager {
     }
 
     @Override
-    public void requestDelete(ShapeState shapeToDelete) {
-        Action action = actionFactory.createDeleteAction(canvasState, shapeToDelete.getShapeId(), userId);
+    public void requestDelete(final ShapeState shapeToDelete) {
+        final Action action = actionFactory.createDeleteAction(canvasState, shapeToDelete.getShapeId(), userId);
         // In standalone mode, apply immediately
         canvasState.applyState(action.getShapeId(), action.getNewState());
         undoRedoManager.push(action);
@@ -81,9 +96,9 @@ public class StandaloneActionManager implements ActionManager {
 
     @Override
     public void requestUndo() {
-        Action actionToUndo = undoRedoManager.getActionToUndo();
+        final Action actionToUndo = undoRedoManager.getActionToUndo();
         if (actionToUndo != null) {
-            Action inverseAction = actionFactory.createInverseAction(actionToUndo, userId);
+            final Action inverseAction = actionFactory.createInverseAction(actionToUndo, userId);
             // Apply inverse immediately
             canvasState.applyState(inverseAction.getShapeId(), inverseAction.getNewState());
             undoRedoManager.applyHostUndo(); // Move pointer back
@@ -93,7 +108,7 @@ public class StandaloneActionManager implements ActionManager {
 
     @Override
     public void requestRedo() {
-        Action actionToRedo = undoRedoManager.getActionToRedo();
+        final Action actionToRedo = undoRedoManager.getActionToRedo();
         if (actionToRedo != null) {
             // Re-apply original action
             canvasState.applyState(actionToRedo.getShapeId(), actionToRedo.getNewState());
@@ -103,8 +118,7 @@ public class StandaloneActionManager implements ActionManager {
     }
 
     @Override
-    public void processIncomingMessage(NetworkMessage message) {
+    public void processIncomingMessage(final NetworkMessage message) {
         // Not used in standalone mode
     }
 }
-

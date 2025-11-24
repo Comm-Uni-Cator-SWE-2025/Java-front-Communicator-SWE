@@ -14,6 +14,7 @@ import com.swe.canvas.datamodel.action.Action;
  */
 public class UndoRedoManager {
 
+    /** The list of actions in the history. */
     private final List<Action> history = new ArrayList<>();
     
     /**

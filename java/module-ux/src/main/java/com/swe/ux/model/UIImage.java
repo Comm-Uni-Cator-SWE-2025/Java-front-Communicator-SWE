@@ -11,20 +11,33 @@ import java.util.Objects;
  * Represents an image with metadata for UI display.
  */
 public final class UIImage {
-
+    /**
+     * Success flag value for true.
+     */
     private static final byte SUCCESS_TRUE = 1;
+    /**
+     * Success flag value for false.
+     */
     private static final byte SUCCESS_FALSE = 0;
 
-    /** The buffered image. */
+    /**
+     * The buffered image.
+     */
     private final BufferedImage image;
 
-    /** The IP address. */
+    /**
+     * The IP address.
+     */
     private final String ip;
 
-    /** The data rate. */
+    /**
+     * The data rate.
+     */
     private final long dataRate;
 
-    /** Success flag as byte. */
+    /**
+     * Success flag as byte.
+     */
     private byte isSuccess;
 
     /**

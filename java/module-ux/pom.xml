@@ -295,6 +295,8 @@
                 <version>${checkstyle.version}</version>
                 <configuration>
                     <skip>false</skip>
+                    <configLocation>${session.executionRootDirectory}/config/checkstyle/checkstyle.xml</configLocation>
+                    <suppressionsLocation>${session.executionRootDirectory}/config/checkstyle/suppressions.xml</suppressionsLocation>
                 </configuration>
             </plugin>
 

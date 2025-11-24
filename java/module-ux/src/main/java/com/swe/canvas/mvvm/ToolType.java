@@ -2,28 +2,28 @@ package com.swe.canvas.mvvm;
 
 
 /**
- * Enum for the tool type used
+ * Enum for the tool type used.
  * @author Bhogaraju Shanmukha Sri Krishna
  */
 public enum ToolType {
-    /** Select action */
+    /** Select action. */
     SELECT,
 
-    /** Freehand draw action */
+    /** Freehand draw action. */
     FREEHAND,
 
-    /** Rectangle action */
+    /** Rectangle action. */
     RECTANGLE,
 
-    /** Ellipse action */
+    /** Ellipse action. */
     ELLIPSE,
 
-    /** Line action */
+    /** Line action. */
     LINE,
 
-    /** Triangle action */
+    /** Triangle action. */
     TRIANGLE,
 
-    /** Regularize action */
+    /** Regularize action. */
     REGULARIZE
 }

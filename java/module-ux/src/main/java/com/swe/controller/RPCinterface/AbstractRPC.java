@@ -20,7 +20,7 @@ public interface AbstractRPC {
      * @param methodName the method name
      * @param method the method function
      */
-    void subscribe(final String methodName, final Function<byte[], byte[]> method);
+    void subscribe(String methodName, Function<byte[], byte[]> method);
 
     /**
      * Connects to the RPC server.
@@ -31,7 +31,7 @@ public interface AbstractRPC {
      * @throws InterruptedException if interrupted
      * @throws ExecutionException if execution fails
      */
-    Thread connect(final int portNumber)
+    Thread connect(int portNumber)
             throws IOException, InterruptedException, ExecutionException;
 
     /**
@@ -41,5 +41,5 @@ public interface AbstractRPC {
      * @param data the data to send
      * @return a future with the response
      */
-    CompletableFuture<byte[]> call(final String methodName, final byte[] data);
+    CompletableFuture<byte[]> call(String methodName, byte[] data);
 }

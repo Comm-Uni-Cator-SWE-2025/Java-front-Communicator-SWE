@@ -98,16 +98,16 @@ public final class FileMessageSerializer {
      * @return the message bytes container
      */
     private static MessageBytes extractMessageBytes(final FileMessage message) {
-        return new MessageBytes(
-                convertToBytes(message.getMessageId()),
-                convertToBytes(message.getUserId()),
-                convertToBytes(message.getSenderDisplayName()),
-                convertToBytes(message.getFileName()),
-                convertToBytes(message.getFilePath()),
-                message.getFileContent(),
-                convertToBytes(message.getReplyToMessageId()),
-                convertToBytes(message.getCaption())
-        );
+        final MessageBytes bytes = new MessageBytes();
+        bytes.setMessageIdBytes(convertToBytes(message.getMessageId()));
+        bytes.setUserIdBytes(convertToBytes(message.getUserId()));
+        bytes.setSenderNameBytes(convertToBytes(message.getSenderDisplayName()));
+        bytes.setFileNameBytes(convertToBytes(message.getFileName()));
+        bytes.setFilePathBytes(convertToBytes(message.getFilePath()));
+        bytes.setFileContentBytes(message.getFileContent());
+        bytes.setReplyIdBytes(convertToBytes(message.getReplyToMessageId()));
+        bytes.setCaptionBytes(convertToBytes(message.getCaption()));
+        return bytes;
     }
 
     /**
@@ -131,15 +131,15 @@ public final class FileMessageSerializer {
      */
     private static int calculateTotalSize(final MessageBytes messageBytes) {
         int totalSize = 0;
-        totalSize += INT_SIZE + getLength(messageBytes.messageIdBytes);
-        totalSize += INT_SIZE + getLength(messageBytes.userIdBytes);
-        totalSize += INT_SIZE + getLength(messageBytes.senderNameBytes);
-        totalSize += INT_SIZE + getLength(messageBytes.captionBytes);
-        totalSize += INT_SIZE + getLength(messageBytes.fileNameBytes);
-        totalSize += INT_SIZE + getLength(messageBytes.filePathBytes);
-        totalSize += INT_SIZE + getLength(messageBytes.fileContentBytes);
+        totalSize += INT_SIZE + getLength(messageBytes.getMessageIdBytes());
+        totalSize += INT_SIZE + getLength(messageBytes.getUserIdBytes());
+        totalSize += INT_SIZE + getLength(messageBytes.getSenderNameBytes());
+        totalSize += INT_SIZE + getLength(messageBytes.getCaptionBytes());
+        totalSize += INT_SIZE + getLength(messageBytes.getFileNameBytes());
+        totalSize += INT_SIZE + getLength(messageBytes.getFilePathBytes());
+        totalSize += INT_SIZE + getLength(messageBytes.getFileContentBytes());
         totalSize += LONG_SIZE;
-        totalSize += INT_SIZE + getLength(messageBytes.replyIdBytes);
+        totalSize += INT_SIZE + getLength(messageBytes.getReplyIdBytes());
         return totalSize;
     }
 
@@ -151,14 +151,14 @@ public final class FileMessageSerializer {
      */
     private static void writeAllBytes(final ByteBuffer buffer,
                                       final MessageBytes messageBytes) {
-        writeBytes(buffer, messageBytes.messageIdBytes);
-        writeBytes(buffer, messageBytes.userIdBytes);
-        writeBytes(buffer, messageBytes.senderNameBytes);
-        writeBytes(buffer, messageBytes.captionBytes);
-        writeBytes(buffer, messageBytes.fileNameBytes);
-        writeBytes(buffer, messageBytes.filePathBytes);
-        writeBytes(buffer, messageBytes.fileContentBytes);
-        writeBytes(buffer, messageBytes.replyIdBytes);
+        writeBytes(buffer, messageBytes.getMessageIdBytes());
+        writeBytes(buffer, messageBytes.getUserIdBytes());
+        writeBytes(buffer, messageBytes.getSenderNameBytes());
+        writeBytes(buffer, messageBytes.getCaptionBytes());
+        writeBytes(buffer, messageBytes.getFileNameBytes());
+        writeBytes(buffer, messageBytes.getFilePathBytes());
+        writeBytes(buffer, messageBytes.getFileContentBytes());
+        writeBytes(buffer, messageBytes.getReplyIdBytes());
     }
 
     /**
@@ -229,57 +229,178 @@ public final class FileMessageSerializer {
     private static class MessageBytes {
 
         /** Message ID bytes. */
-        final byte[] messageIdBytes;
+        private byte[] messageIdBytes;
 
         /** User ID bytes. */
-        final byte[] userIdBytes;
+        private byte[] userIdBytes;
 
         /** Sender name bytes. */
-        final byte[] senderNameBytes;
+        private byte[] senderNameBytes;
 
         /** File name bytes. */
-        final byte[] fileNameBytes;
+        private byte[] fileNameBytes;
 
         /** File path bytes. */
-        final byte[] filePathBytes;
+        private byte[] filePathBytes;
 
         /** File content bytes. */
-        final byte[] fileContentBytes;
+        private byte[] fileContentBytes;
 
         /** Reply ID bytes. */
-        final byte[] replyIdBytes;
+        private byte[] replyIdBytes;
 
         /** Caption bytes. */
-        final byte[] captionBytes;
+        private byte[] captionBytes;
 
         /**
-         * Creates a new MessageBytes container.
-         *
-         * @param messageIdBytes the message ID bytes
-         * @param userIdBytes the user ID bytes
-         * @param senderNameBytes the sender name bytes
-         * @param fileNameBytes the file name bytes
-         * @param filePathBytes the file path bytes
-         * @param fileContentBytes the file content bytes
-         * @param replyIdBytes the reply ID bytes
-         * @param captionBytes the caption bytes
+         * Creates a new empty MessageBytes container.
          */
-        MessageBytes(final byte[] messageIdBytes,
-                     final byte[] userIdBytes,
-                     final byte[] senderNameBytes,
-                     final byte[] fileNameBytes,
-                     final byte[] filePathBytes,
-                     final byte[] fileContentBytes,
-                     final byte[] replyIdBytes,
-                     final byte[] captionBytes) {
-            this.messageIdBytes = messageIdBytes;
-            this.userIdBytes = userIdBytes;
-            this.senderNameBytes = senderNameBytes;
-            this.fileNameBytes = fileNameBytes;
-            this.filePathBytes = filePathBytes;
-            this.fileContentBytes = fileContentBytes;
-            this.replyIdBytes = replyIdBytes;
-            this.captionBytes = captionBytes;
+        MessageBytes() {
+            // Default constructor
+        }
+
+        /**
+         * Sets the message ID bytes.
+         *
+         * @param bytes the message ID bytes
+         */
+        void setMessageIdBytes(final byte[] bytes) {
+            this.messageIdBytes = bytes;
+        }
+
+        /**
+         * Sets the user ID bytes.
+         *
+         * @param bytes the user ID bytes
+         */
+        void setUserIdBytes(final byte[] bytes) {
+            this.userIdBytes = bytes;
+        }
+
+        /**
+         * Sets the sender name bytes.
+         *
+         * @param bytes the sender name bytes
+         */
+        void setSenderNameBytes(final byte[] bytes) {
+            this.senderNameBytes = bytes;
+        }
+
+        /**
+         * Sets the file name bytes.
+         *
+         * @param bytes the file name bytes
+         */
+        void setFileNameBytes(final byte[] bytes) {
+            this.fileNameBytes = bytes;
+        }
+
+        /**
+         * Sets the file path bytes.
+         *
+         * @param bytes the file path bytes
+         */
+        void setFilePathBytes(final byte[] bytes) {
+            this.filePathBytes = bytes;
+        }
+
+        /**
+         * Sets the file content bytes.
+         *
+         * @param bytes the file content bytes
+         */
+        void setFileContentBytes(final byte[] bytes) {
+            this.fileContentBytes = bytes;
+        }
+
+        /**
+         * Sets the reply ID bytes.
+         *
+         * @param bytes the reply ID bytes
+         */
+        void setReplyIdBytes(final byte[] bytes) {
+            this.replyIdBytes = bytes;
+        }
+
+        /**
+         * Sets the caption bytes.
+         *
+         * @param bytes the caption bytes
+         */
+        void setCaptionBytes(final byte[] bytes) {
+            this.captionBytes = bytes;
+        }
+
+        /**
+         * Gets the message ID bytes.
+         *
+         * @return the message ID bytes
+         */
+        byte[] getMessageIdBytes() {
+            return messageIdBytes;
+        }
+
+        /**
+         * Gets the user ID bytes.
+         *
+         * @return the user ID bytes
+         */
+        byte[] getUserIdBytes() {
+            return userIdBytes;
+        }
+
+        /**
+         * Gets the sender name bytes.
+         *
+         * @return the sender name bytes
+         */
+        byte[] getSenderNameBytes() {
+            return senderNameBytes;
+        }
+
+        /**
+         * Gets the file name bytes.
+         *
+         * @return the file name bytes
+         */
+        byte[] getFileNameBytes() {
+            return fileNameBytes;
+        }
+
+        /**
+         * Gets the file path bytes.
+         *
+         * @return the file path bytes
+         */
+        byte[] getFilePathBytes() {
+            return filePathBytes;
+        }
+
+        /**
+         * Gets the file content bytes.
+         *
+         * @return the file content bytes
+         */
+        byte[] getFileContentBytes() {
+            return fileContentBytes;
+        }
+
+        /**
+         * Gets the reply ID bytes.
+         *
+         * @return the reply ID bytes
+         */
+        byte[] getReplyIdBytes() {
+            return replyIdBytes;
+        }
+
+        /**
+         * Gets the caption bytes.
+         *
+         * @return the caption bytes
+         */
+        byte[] getCaptionBytes() {
+            return captionBytes;
         }
     }
 }

@@ -13,7 +13,9 @@ import java.util.function.Consumer;
  */
 public class NetworkSimulator implements NetworkService {
 
+    /** Handler for host-side messages. */
     private Consumer<NetworkMessage> hostHandler;
+    /** List of client-side message handlers. */
     private final List<Consumer<NetworkMessage>> clientHandlers = new CopyOnWriteArrayList<>();
 
     @Override
