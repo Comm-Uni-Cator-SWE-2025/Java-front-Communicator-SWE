@@ -1,14 +1,16 @@
 package cosmosoperations;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import datastructures.CloudResponse;
-import datastructures.Entity;
-import interfaces.IdbConnector;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import datastructures.CloudResponse;
+import datastructures.Entity;
+import interfaces.IdbConnector;
 
 class MockDbConnectorTest {
 
@@ -17,7 +19,7 @@ class MockDbConnectorTest {
 
     @BeforeEach
     void createTestEntity() {
-        testEntity  = new Entity("TestModule", "TestTable", "TestId", null, -1, null, null);
+        testEntity = new Entity("TestModule", "TestTable", "TestId", null, -1, null, null);
     }
 
     @Test
