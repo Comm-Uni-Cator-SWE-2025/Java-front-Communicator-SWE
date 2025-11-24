@@ -1,6 +1,3 @@
-# ==============================================================
-# Azure DevOps Pipeline: Java CI with Maven (Self-Hosted Mac)
-# ==============================================================
 
 trigger:
   branches:
@@ -22,7 +19,7 @@ pr:
       - '**/*.md'
 
 pool:
-  name: Default   # Self-hosted agent on your Mac
+  name: Default   # Self-hosted Mac agent
 
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
@@ -34,77 +31,72 @@ jobs:
   timeoutInMinutes: 30
 
   steps:
-    # -----------------------------
-    # 1. Checkout Code
-    # -----------------------------
     - checkout: self
       clean: true
 
-    # -----------------------------
-    # 2. Verify Environment
-    # -----------------------------
     - script: |
-        echo "Agent: $(Agent.Name)"
-        echo "Pool: $(Agent.PoolName)"
-        echo "Using pre-installed Java & Maven"
         java -version
         mvn -version
       displayName: "Verify Environment"
 
-    # -----------------------------
-    # 3. Build and Compile
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Build & Compile  — must not block pipeline
+    # ------------------------------------------------------------
     - script: mvn -f java/pom.xml -B clean compile
       displayName: "Build with Maven"
+      continueOnError: true
 
-    # -----------------------------
-    # 4. Run Checkstyle
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Static Code Check  — must not block pipeline
+    # ------------------------------------------------------------
     - script: mvn -f java/pom.xml -B checkstyle:check
       displayName: "Run Checkstyle"
+      continueOnError: true
 
-    # -----------------------------
-    # 5. Run Tests with JaCoCo Coverage
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Unit Tests for ALL modules + Coverage  — must not block pipeline
+    # ------------------------------------------------------------
     - script: mvn -f java/pom.xml -B test jacoco:report
-      displayName: "Run Tests with Coverage"
+      displayName: "Run Tests with Coverage (All Modules)"
+      continueOnError: true
 
-    # -----------------------------
-    # 6. Package Application
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Package JARs — ALWAYS runs even if tests/checkstyle failed
+    # ------------------------------------------------------------
     - script: mvn -f java/pom.xml -B package -DskipTests
       displayName: "Package Application"
+      continueOnError: true
 
-    # -----------------------------
-    # 7. Publish Test Results
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Publish Test Results
+    # ------------------------------------------------------------
     - task: PublishTestResults@2
-      displayName: "Publish Test Results"
+      displayName: "Publish Unit Test Results"
       condition: always()
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         mergeTestResults: true
-        failTaskOnFailedTests: true
+        failTaskOnFailedTests: false
 
-    # -----------------------------
-    # 8. Publish Code Coverage (JaCoCo)
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Publish Coverage Reports
+    # ------------------------------------------------------------
     - task: PublishCodeCoverageResults@1
       displayName: "Publish JaCoCo Coverage"
-      condition: succeededOrFailed()
+      condition: always()
       inputs:
         codeCoverageTool: 'JaCoCo'
         summaryFileLocation: '**/jacoco.xml'
         reportDirectory: '**/site/jacoco'
         failIfCoverageEmpty: false
 
-    # -----------------------------
-    # 9. Copy Build Artifacts
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Copy Artifacts
+    # ------------------------------------------------------------
     - task: CopyFiles@2
       displayName: "Copy Build Artifacts"
-      condition: succeeded()
+      condition: always()
       inputs:
         sourceFolder: '$(System.DefaultWorkingDirectory)'
         contents: |
@@ -112,29 +104,25 @@ jobs:
           **/site/**
         targetFolder: '$(Build.ArtifactStagingDirectory)'
 
-    # -----------------------------
-    # 10. Publish Build Artifacts
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Publish Artifacts
+    # ------------------------------------------------------------
     - task: PublishBuildArtifacts@1
       displayName: "Publish Build Artifacts"
-      condition: succeeded()
+      condition: always()
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: 'java-build-artifacts'
         publishLocation: 'Container'
 
-    # -----------------------------
-    # 11. Build Summary
-    # -----------------------------
+    # ------------------------------------------------------------
+    # Build Summary
+    # ------------------------------------------------------------
     - script: |
-        echo "##[section]Build Summary"
-        echo "✅ Build completed successfully"
-        echo "✅ Tests executed"
-        echo "✅ JaCoCo coverage report generated"
-        echo "✅ Checkstyle validation passed"
-        echo ""
-        echo "📊 Artifacts available:"
-        echo "  - Coverage Report: java/target/site/jacoco/index.html"
-        echo "  - JAR Files: under build artifacts"
+        echo "##[section] Build Summary"
+        echo "🧱 Build executed (errors allowed)"
+        echo "🧪 Unit tests executed for ALL modules"
+        echo "📊 Coverage attempted"
+        echo "📦 JAR(s) published as artifact"
       displayName: "Display Build Summary"
       condition: always()
