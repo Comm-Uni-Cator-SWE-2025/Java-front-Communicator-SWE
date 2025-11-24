@@ -1,0 +1,42 @@
+{
+    "ActionId": "action-abc",
+    "ActionType": "MODIFY",
+    "Prev": {
+        "ShapeId": "shape-123",
+        "Type": "RECTANGLE",
+        "Points": [
+            {
+                "X": 10.0,
+                "Y": 10.0
+            },
+            {
+                "X": 20.0,
+                "Y": 20.0
+            }
+        ],
+        "Color": "#FFFF0000",
+        "Thickness": 2.0,
+        "CreatedBy": "test-user",
+        "LastModifiedBy": "test-user",
+        "IsDeleted": false
+    },
+    "Next": {
+        "ShapeId": "shape-123",
+        "Type": "RECTANGLE",
+        "Points": [
+            {
+                "X": 50.0,
+                "Y": 50.0
+            },
+            {
+                "X": 60.0,
+                "Y": 60.0
+            }
+        ],
+        "Color": "#FF0000FF",
+        "Thickness": 4.0,
+        "CreatedBy": "test-user",
+        "LastModifiedBy": "test-user",
+        "IsDeleted": false
+    }
+}
