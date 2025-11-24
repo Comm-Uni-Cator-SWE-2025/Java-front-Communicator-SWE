@@ -4,23 +4,28 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.swe.controller.ClientNode;
 import com.swe.controller.RPC;
+import com.google.common.graph.AbstractNetwork;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
+import com.swe.networking.AbstractController;
+import com.swe.networking.AbstractNetworking;
+import com.swe.networking.NetworkFront;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
 
-import com.swe.ux.view.LoginPage;
-import com.swe.ux.view.MainPage;
-import com.swe.ux.view.MeetingPage;
-import com.swe.ux.viewmodel.LoginViewModel;
-import com.swe.ux.viewmodel.MainViewModel;
-import com.swe.ux.viewmodel.MeetingViewModel;
+import com.swe.ux.views.LoginPage;
+import com.swe.ux.views.MainPage;
+import com.swe.ux.views.MeetingPage;
+import com.swe.ux.viewmodels.LoginViewModel;
+import com.swe.ux.viewmodels.MainViewModel;
+import com.swe.ux.viewmodels.MeetingViewModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +47,8 @@ public class App extends JFrame {
     public static final String MAIN_VIEW = "MAIN";
     public static final String MEETING_VIEW = "MEETING";
 
+    private static final int DEFAULT_WIDTH = 1200;
+    private static final int DEFAULT_HEIGHT = 700;
 
     // Current user
     private UserProfile currentUser;
@@ -82,7 +89,7 @@ public class App extends JFrame {
         // Set up the main window
         setTitle("Comm-Uni-Cate");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 700);
+        setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         setLocationRelativeTo(null);
 
         // Add main panel to the frame
@@ -116,19 +123,20 @@ public class App extends JFrame {
             return val;
         }
         final String ipVal = val.substring(val.indexOf("hostName=") + 9);
-        return ipVal.substring(0, ipVal.indexOf(",") );
+        return ipVal.substring(0, ipVal.indexOf(","));
     }
 
     /**
      * Initializes all the views and adds them to the card layout.
      */
     private void initViews() {
+
         // Initialize ViewModels
         loginViewModel = new LoginViewModel(rpc);
         mainViewModel = new MainViewModel(rpc);
         System.out.println("Meeting");
 
-        final UserProfile newUser = new UserProfile(Utils.getSelfIP(), "You", ParticipantRole.STUDENT);
+        final UserProfile newUser = new UserProfile("", "You", ParticipantRole.STUDENT);
         // Will be set when user joins a meeting
         MeetingViewModel meetingViewModel = new MeetingViewModel(newUser, rpc);
 
@@ -137,12 +145,10 @@ public class App extends JFrame {
         MainPage mainView = new MainPage(mainViewModel);
         MeetingPage meetingView = new MeetingPage(meetingViewModel);
 
-
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
         mainPanel.add(meetingView, MEETING_VIEW);
-
 
         meetingViewModel.startMeeting();
         // Set up navigation listeners
@@ -150,6 +156,11 @@ public class App extends JFrame {
             if (user != null) {
                 this.currentUser = user;
                 mainViewModel.setCurrentUser(currentUser);
+                
+                // Load theme from cloud after user is logged in
+                ThemeManager.getInstance().loadThemeFromCloud();
+                System.out.println("App: Theme loaded from cloud");
+                System.out.println("App: Theme: " + ThemeManager.getInstance().getCurrentTheme());
                 showView(MAIN_VIEW);
             }
         }));
@@ -168,9 +179,6 @@ public class App extends JFrame {
         // Use an array to hold the current active meeting view model reference
         MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { meetingViewModel };
 
-
-
-
         // New participant
         // rpc.subscribe(Utils.SUBSCRIBE_AS_VIEWER, data -> {
         //     final String viewerIP = new String(data);
@@ -185,6 +193,7 @@ public class App extends JFrame {
                 System.out.println("App: participantsMap: " + participantsMap);
                 participantsMap.forEach((clientNode, userProfile) -> {
                     System.out.println("App: clientNode: " + clientNode + " userProfile: " + userProfile);
+                    activeMeetingViewModelRef[0].ipToMail.put(userProfile.getEmail(), clientNode.hostName());
                     // Use the currently active meeting view model
                     activeMeetingViewModelRef[0].addParticipant(userProfile);
                     System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
@@ -200,7 +209,7 @@ public class App extends JFrame {
             if (startMeeting && currentUser != null) {
                 // First, get the meeting ID from MainViewModel by creating the meeting
                 String meetingId = mainViewModel.startMeeting();
-                
+
                 // Only proceed if we successfully got a meeting ID
                 if (meetingId == null || meetingId.trim().isEmpty()) {
                     System.err.println("App: Failed to create meeting - no meeting ID received from RPC");
@@ -210,10 +219,10 @@ public class App extends JFrame {
 
                 // Create a new meeting view model for this meeting with Instructor role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
-                
+
                 // Update the active meeting view model reference
                 activeMeetingViewModelRef[0] = newMeetingViewModel;
-                
+
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingId);
                 System.out.println("App: Passing meeting ID from MainViewModel to MeetingViewModel: " + meetingId);
@@ -254,7 +263,6 @@ public class App extends JFrame {
                 // Get the meeting code from MainViewModel
                 String meetingCode = mainViewModel.meetingCode.get();
 
-                
                 // Only proceed if we have a valid meeting code
                 if (meetingCode == null || meetingCode.trim().isEmpty()) {
                     System.err.println("App: Failed to join meeting - no meeting code provided");
@@ -263,20 +271,20 @@ public class App extends JFrame {
                 }
 
                 mainViewModel.joinMeeting(meetingCode);
-                
+
                 // Create a new meeting view model for joining meeting with Student role
                 MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
 
                 // Create a new MeetingPage with the new view model
                 meetingViewRef[0] = new MeetingPage(newMeetingViewModel);
-                
+
                 // Update the active meeting view model reference
                 activeMeetingViewModelRef[0] = newMeetingViewModel;
 
                 // Explicitly pass the meeting ID from MainViewModel to MeetingViewModel
                 newMeetingViewModel.setMeetingId(meetingCode);
                 System.out.println("App: Passing meeting code from MainViewModel to MeetingViewModel: " + meetingCode);
-                
+
                 // Try to start the meeting with the provided meeting ID
                 newMeetingViewModel.startMeeting();
 
@@ -327,6 +335,15 @@ public class App extends JFrame {
     public void showView(String viewName) {
         cardLayout.show(mainPanel, viewName);
 
+        if (MEETING_VIEW.equals(viewName)) {
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+            setResizable(true);
+        } else {
+            setExtendedState(JFrame.NORMAL);
+            setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            setLocationRelativeTo(null);
+        }
+
         // Add to history if it's different from the current view
         if (viewHistory.isEmpty() || !viewHistory.peek().equals(viewName)) {
             viewHistory.push(viewName);
@@ -350,7 +367,7 @@ public class App extends JFrame {
     public static void main(String[] args) {
         int portNumber = 6942;
 
-        if (args.length > 0) { 
+        if (args.length > 0) {
             String port = args[0];
             portNumber = Integer.parseInt(port);
         }
@@ -364,16 +381,37 @@ public class App extends JFrame {
         Thread handler = null;
         try {
             handler = rpc.connect(portNumber);
+            AbstractController nController = NetworkFront.getInstance();
+            nController.consumeRPC(rpc);
         } catch (IOException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
         // try {
-        //     byte[] data = rpc.call("core/register", new byte[0]).get();
-        //     System.out.println("Data: " + data.length);
+        // byte[] data = rpc.call("core/register", new byte[0]).get();
+        // System.out.println("Data: " + data.length);
         // } catch (InterruptedException | ExecutionException e) {
-        //     throw new RuntimeException(e);
+        // throw new RuntimeException(e);
         // }
+
+        // Initialize JavaFX toolkit early in a separate thread to avoid macOS conflicts
+        // This prevents macOS window management conflicts
+        Thread javaFXInitThread = new Thread(() -> {
+            try {
+                com.swe.ux.integration.JavaFXSwingBridge.initializeJavaFX();
+            } catch (Exception e) {
+                System.err.println("Warning: Could not initialize JavaFX early: " + e.getMessage());
+            }
+        });
+        javaFXInitThread.setDaemon(true);
+        javaFXInitThread.start();
+
+        // Give JavaFX a moment to initialize
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            // Ignore
+        }
 
         // Run on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
