@@ -20,8 +20,8 @@ import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 
 import cosmosoperations.DbConnectorFactory;
-import datastructures.Entity;
 import datastructures.CloudResponse;
+import datastructures.Entity;
 import interfaces.IdbConnector;
 
 
@@ -39,7 +39,8 @@ public class CloudCreate extends CloudHelper {
      */
     @FunctionName("CloudCreate")
     public HttpResponseMessage runCloudCreate(
-            @HttpTrigger(name = "req", methods = HttpMethod.POST, authLevel = AuthorizationLevel.ANONYMOUS) final HttpRequestMessage<Optional<String>> request,
+            @HttpTrigger(name = "req", methods = HttpMethod.POST,
+                    authLevel = AuthorizationLevel.ANONYMOUS) final HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) throws JsonProcessingException {
         context.getLogger().info("Java HTTP trigger processed a request.");
         try {
@@ -49,7 +50,8 @@ public class CloudCreate extends CloudHelper {
             final IdbConnector dbConnector = DbConnectorFactory.getDbConnector("cosmo");
             context.getLogger().info("Initialized DB Connector");
             final CloudResponse cloudResponse =  dbConnector.createData(entityRequest);
-            context.getLogger().info("Received Create CloudResponse: [" + cloudResponse.status_code() + "] " + cloudResponse.message());
+            context.getLogger().info("Received Create CloudResponse: [" + cloudResponse.status_code()
+                    + "] " + cloudResponse.message());
 
             return handleResponse(cloudResponse, request);
 

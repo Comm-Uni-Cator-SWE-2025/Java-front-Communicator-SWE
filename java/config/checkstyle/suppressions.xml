@@ -133,4 +133,19 @@
               lines="182"/>
     <suppress checks="JavaNCSS" 
               files=".*MeetingControlButton\.java"/>
+    
+    <!-- Suppress VisibilityModifier for ViewModel fields -->
+    <!-- These fields need to be public for test access -->
+    <suppress checks="VisibilityModifier" 
+              files=".*[\\/]viewmodels[\\/]LoginViewModel\.java"/>
+    <suppress checks="VisibilityModifier" 
+              files=".*LoginViewModel\.java"/>
+    <suppress checks="VisibilityModifier" 
+              files=".*[\\/]viewmodels[\\/]MainViewModel\.java"/>
+    <suppress checks="VisibilityModifier" 
+              files=".*MainViewModel\.java"/>
+    <suppress checks="VisibilityModifier" 
+              files=".*[\\/]viewmodels[\\/]MeetingViewModel\.java"/>
+    <suppress checks="VisibilityModifier" 
+              files=".*MeetingViewModel\.java"/>
 </suppressions>
