@@ -1,4 +1,4 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import java.beans.PropertyChangeListener;
 
@@ -14,7 +14,6 @@ import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.serialize.DataSerializer;
 import com.swe.ux.testutil.MockAbstractRPC;
-import com.swe.ux.viewmodels.LoginViewModel;
 
 /**
  * Unit tests for LoginViewModel.

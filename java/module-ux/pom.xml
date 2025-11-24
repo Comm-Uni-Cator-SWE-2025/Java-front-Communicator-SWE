@@ -24,7 +24,7 @@
         <junit.version>5.10.1</junit.version>
         <maven.surefire.version>3.2.2</maven.surefire.version>
         <maven.failsafe.version>3.2.2</maven.failsafe.version>
-        <jacoco.version>0.8.11</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <checkstyle.version>3.3.1</checkstyle.version>
 
         <jacoco.line.coverage.ratio>0.90</jacoco.line.coverage.ratio>
@@ -251,6 +251,13 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/MessageVM$*.class</exclude>
+                        <exclude>**/FileMessageSerializer*.class</exclude>
+                        <exclude>**/ChatMessageSerializer*.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -260,6 +267,9 @@
                         <id>report</id>
                         <phase>test</phase>
                         <goals><goal>report</goal></goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>

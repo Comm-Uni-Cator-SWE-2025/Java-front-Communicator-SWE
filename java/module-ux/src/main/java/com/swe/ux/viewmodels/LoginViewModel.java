@@ -10,11 +10,11 @@ import com.swe.ux.binding.BindableProperty;
  */
 public class LoginViewModel extends BaseViewModel {
     /** Loading state property. */
-    private final BindableProperty<Boolean> isLoading = new BindableProperty<>(false, "isLoading");
+    public final BindableProperty<Boolean> isLoading = new BindableProperty<>(false, "isLoading");
     /** Authentication error message property. */
-    private final BindableProperty<String> authErrorMessage = new BindableProperty<>("", "authErrorMessage");
+    public final BindableProperty<String> authErrorMessage = new BindableProperty<>("", "authErrorMessage");
     /** Current user property. */
-    private final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
+    public final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
 
     /** RPC instance. */
     private final AbstractRPC rpc;

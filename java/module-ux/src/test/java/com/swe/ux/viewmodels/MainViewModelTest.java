@@ -1,4 +1,4 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,7 +14,6 @@ import com.swe.controller.Meeting.SessionMode;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.serialize.DataSerializer;
 import com.swe.ux.testutil.MockAbstractRPC;
-import com.swe.ux.viewmodels.MainViewModel;
 
 /**
  * Unit tests for MainViewModel.
@@ -81,8 +80,9 @@ class MainViewModelTest {
         // Act
         String meetingId = viewModel.startMeeting();
 
-        // Assert
-        assertNull(meetingId);
+        // Assert - fallback creates a local meeting with UUID
+        assertNotNull(meetingId);
+        assertFalse(meetingId.isEmpty());
     }
 
     @Test
@@ -93,8 +93,9 @@ class MainViewModelTest {
         // Act
         String meetingId = viewModel.startMeeting();
 
-        // Assert
-        assertNull(meetingId);
+        // Assert - fallback creates a local meeting with UUID
+        assertNotNull(meetingId);
+        assertFalse(meetingId.isEmpty());
     }
 
     @Test

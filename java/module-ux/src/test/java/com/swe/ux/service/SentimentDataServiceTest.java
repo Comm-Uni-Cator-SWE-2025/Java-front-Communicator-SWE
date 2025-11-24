@@ -1,19 +1,18 @@
 package com.swe.ux.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.controller.serialize.DataSerializer;
-import com.swe.ux.model.analytics.SentimentPoint;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.controller.serialize.DataSerializer;
+import com.swe.ux.model.analytics.SentimentPoint;
 
 /**
  * Unit tests for {@link SentimentDataService}.
@@ -66,7 +65,7 @@ class SentimentDataServiceTest {
 
     @SuppressWarnings("unchecked")
     private void clearStaticJsonList() throws Exception {
-        Field listField = SentimentDataService.class.getDeclaredField("jsonList");
+        Field listField = SentimentDataService.class.getDeclaredField("JSON_LIST");
         listField.setAccessible(true);
         List<String> list = (List<String>) listField.get(null);
         list.clear();
