@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.shape.SVGPath?>
+
+<!--
+  This FXML has been updated to support Pan & Zoom.
+  1. The <Viewbox> has been REMOVED.
+  2. The <center> StackPane (fx:id="canvasContainer") now captures all mouse
+     events for panning and zooming.
+  3. The Canvas (fx:id="canvas") is inside it and handles drawing events.
+-->
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.swe.ux.canvas.CanvasController">
+    <fx:define>
+        <ToggleGroup fx:id="toolGroup" />
+    </fx:define>
+
+    <!-- Top Toolbar (Unchanged) -->
+    <top>
+        <ToolBar styleClass="tool-bar">
+            <HBox alignment="CENTER" spacing="0" HBox.hgrow="ALWAYS">
+                <!-- Group 1: Tools -->
+                <HBox alignment="CENTER" spacing="2.0">
+                    <ToggleButton fx:id="selectBtn" styleClass="tool-button-with-label" contentDisplay="TOP" text="Select" toggleGroup="$toolGroup" onAction="#onToolSelected">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M14.6,11L18.4,12L12.4,18L8.7,17.1L10.3,13.8L4.3,7.8L5.2,4L11.2,10L14.6,11M13,0L21,3.2L15,10.7L19.2,22L12.3,18.7L8,19.3L0,12L13,0Z" />
+                            </StackPane>
+                        </graphic>
+                    </ToggleButton>
+                    <ToggleButton fx:id="freehandBtn" styleClass="tool-button-with-label" contentDisplay="TOP" text="Freehand" toggleGroup="$toolGroup" selected="true" onAction="#onToolSelected">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C17.98,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87M3,17.25V21H6.75L17.81,9.94L14.06,6.19L3,17.25Z" />
+                            </StackPane>
+                        </graphic>
+                    </ToggleButton>
+                    <ToggleButton fx:id="lineBtn" styleClass="tool-button-with-label" contentDisplay="TOP" text="Line" toggleGroup="$toolGroup" onAction="#onToolSelected">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M20.71,3.29L3.29,20.71C2.9,21.1 2.27,21.1 1.88,20.71C1.49,20.32 1.49,19.69 1.88,19.3L19.3,1.88C19.69,1.49 20.32,1.49 20.71,1.88C21.1,2.27 21.1,2.9 20.71,3.29Z" />
+                            </StackPane>
+                        </graphic>
+                    </ToggleButton>
+                    <ToggleButton fx:id="rectBtn" styleClass="tool-button-with-label" contentDisplay="TOP" text="Rectangle" toggleGroup="$toolGroup" onAction="#onToolSelected">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M4,6V18H20V6H4M6,8H18V16H6V8Z" />
+                            </StackPane>
+                        </graphic>
+                    </ToggleButton>
+                    <ToggleButton fx:id="ellipseBtn" styleClass="tool-button-with-label" contentDisplay="TOP" text="Ellipse" toggleGroup="$toolGroup" onAction="#onToolSelected">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z" />
+                            </StackPane>
+                        </graphic>
+                    </ToggleButton>
+                    <ToggleButton fx:id="triangleBtn" styleClass="tool-button-with-label" contentDisplay="TOP" text="Triangle" toggleGroup="$toolGroup" onAction="#onToolSelected">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M1,21H23L12,2L1,21M12,4.6L19.5,19H4.5L12,4.6Z" />
+                            </StackPane>
+                        </graphic>
+                    </ToggleButton>
+                </HBox>
+                <Separator orientation="VERTICAL" />
+                <HBox alignment="CENTER" spacing="8.0">
+                    <!-- Size Slider - Directly accessible without MenuButton popup -->
+                    <HBox alignment="CENTER" spacing="4.0" style="-fx-padding: 0 4 0 4;">
+                        <SVGPath styleClass="svg-icon" content="M3,18H21V16H3V18M3,13H21V11H3V13M3,6V8H21V6H3Z" style="-fx-pref-width: 18; -fx-pref-height: 18;" />
+                        <Slider fx:id="sizeSlider" min="1" max="20" value="2" blockIncrement="1" majorTickUnit="1" minorTickCount="0" snapToTicks="true" orientation="HORIZONTAL" prefWidth="120" showTickMarks="true" showTickLabels="false" />
+                    </HBox>
+                    <ColorPicker fx:id="colorPicker" styleClass="color-picker-button" onAction="#onColorSelected" />
+                </HBox>
+                <Separator orientation="VERTICAL" />
+                <HBox alignment="CENTER" spacing="4.0">
+                    <Button fx:id="deleteBtn" styleClass="toolbar-icon-button" contentDisplay="GRAPHIC_ONLY" onAction="#onDelete">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6M9,8V17H11V8H9M13,8V17H15V8H13Z" />
+                            </StackPane>
+                        </graphic>
+                    </Button>
+                    <Button fx:id="regularizeBtn" styleClass="toolbar-icon-button" contentDisplay="GRAPHIC_ONLY" onAction="#onRegularize">
+                         <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                            </StackPane>
+                        </graphic>
+                    </Button>
+                    <Button fx:id="undoBtn" styleClass="toolbar-icon-button" contentDisplay="GRAPHIC_ONLY" onAction="#onUndo">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.71 20.1,16L22.47,15.2C21.07,10.8 17.15,8 12.5,8Z" />
+                            </StackPane>
+                        </graphic>
+                    </Button>
+                    <Button fx:id="redoBtn" styleClass="toolbar-icon-button" contentDisplay="GRAPHIC_ONLY" onAction="#onRedo">
+                        <graphic>
+                            <StackPane style="-fx-pref-width: 18; -fx-pref-height: 18;">
+                                <SVGPath styleClass="svg-icon" content="M11.5,8C14.15,8 16.55,9 18.4,10.6L22,7V16H13L16.62,12.38C15.23,11.22 13.46,10.5 11.5,10.5C7.96,10.5 4.95,12.71 3.9,16L1.53,15.2C2.93,10.8 6.85,8 11.5,8Z" />
+                            </StackPane>
+                        </graphic>
+                    </Button>
+                </HBox>
+            </HBox>
+        </ToolBar>
+    </top>
+
+    <!-- Main drawing area -->
+    <center>
+        <!-- 
+          The <Viewbox> is gone. This StackPane is now the "viewport"
+          and will capture pan and zoom events.
+        -->
+        <StackPane fx:id="canvasContainer" style="-fx-background-color: #E0E0E0; -fx-padding: 10;"
+                   onMousePressed="#onViewportMousePressed"
+                   onMouseDragged="#onViewportMouseDragged"
+                   onMouseReleased="#onViewportMouseReleased"
+                   onScroll="#onScroll">
+            
+            <!-- 
+              FIX: Added fx:id="canvasHolder" to this StackPane.
+              This is the "white box" that we will scale and translate.
+            -->
+            <StackPane fx:id="canvasHolder" alignment="TOP_LEFT" style="-fx-background-color: white; -fx-border-color: #888; -fx-border-width: 1;">
+                <effect>
+                    <DropShadow color="#0000004D" radius="10" offsetX="0" offsetY="4" />
+                </effect>
+
+                <!-- 
+                  The Canvas is a child. It no longer has transforms applied directly.
+                -->
+                <Canvas fx:id="canvas" width="1600" height="900"
+                        onMousePressed="#onCanvasMousePressed"
+                        onMouseDragged="#onCanvasMouseDragged"
+                        onMouseReleased="#onCanvasMouseReleased" />
+            </StackPane>
+        </StackPane>
+    </center>
+</BorderPane>

@@ -59,6 +59,7 @@
             <include>**/*Tests.java</include>
           </includes>
           <useSystemClassLoader>false</useSystemClassLoader>
+          <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -124,6 +125,8 @@
         <version>3.1.0</version>
         <configuration>
           <mainClass>com.swe.ux.App</mainClass>
+          <includeProjectDependencies>true</includeProjectDependencies>
+          <includePluginDependencies>true</includePluginDependencies>
         </configuration>
       </plugin>
     </plugins>
@@ -167,6 +170,44 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.7.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>byte-buddy</artifactId>
+          <groupId>net.bytebuddy</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>byte-buddy-agent</artifactId>
+          <groupId>net.bytebuddy</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>objenesis</artifactId>
+          <groupId>org.objenesis</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>5.7.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-jupiter-api</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-inline</artifactId>
+      <version>5.2.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <reporting>
     <plugins>
@@ -190,14 +231,14 @@
     </plugins>
   </reporting>
   <properties>
-    <maven.compiler.release>17</maven.compiler.release>
-    <jacoco.branch.coverage.ratio>0.85</jacoco.branch.coverage.ratio>
-    <jacoco.line.coverage.ratio>0.90</jacoco.line.coverage.ratio>
-    <jacoco.version>0.8.11</jacoco.version>
+    <maven.compiler.release>24</maven.compiler.release>
     <checkstyle.version>3.3.1</checkstyle.version>
+    <jacoco.branch.coverage.ratio>0.85</jacoco.branch.coverage.ratio>
     <maven.failsafe.version>3.2.2</maven.failsafe.version>
+    <jacoco.line.coverage.ratio>0.90</jacoco.line.coverage.ratio>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.10.1</junit.version>
     <maven.surefire.version>3.2.2</maven.surefire.version>
+    <jacoco.version>0.8.11</jacoco.version>
   </properties>
 </project>
