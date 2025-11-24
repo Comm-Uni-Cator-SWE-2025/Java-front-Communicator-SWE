@@ -1,8 +1,8 @@
-/**
+package com.swe.screenNVideo;
+
+/*
  * Contributed by Priyanshu Pandey.
  */
-
-package com.swe.screenNVideo;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -97,7 +97,13 @@ public class Utils {
     public static final int MAX_TRIES_TO_SERIALIZE = 3;
 
     /**
+     * Port number for Google DNS service used to determine local IP.
+     */
+    public static final int DNS_PORT = 10002;
+
+    /**
      * Writes the given int to the buffer in little endian.
+     *
      * @param bufferOut the buffer to write to
      * @param data the data to write
      */
@@ -110,6 +116,7 @@ public class Utils {
 
     /**
      * Converts the given image to its rgb form.
+     *
      * @param feed the image
      * @return int[][] : RGB matrix 0xAARRGGBB / 0x00RRGGBB
      */
@@ -124,10 +131,15 @@ public class Utils {
     }
 
 
+    /**
+     * Gets the local IP address of this machine.
+     *
+     * @return the IP address as a string
+     */
     public static String getSelfIP() {
         // Get IP address as string
         try (DatagramSocket socket = new DatagramSocket()) {
-            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            socket.connect(InetAddress.getByName("8.8.8.8"), DNS_PORT);
             return socket.getLocalAddress().getHostAddress();
         } catch (SocketException | UnknownHostException e) {
             throw new RuntimeException(e);

@@ -9,18 +9,25 @@ import java.util.Objects;
  * @param <T> The type of the property value
  */
 public class BindableProperty<T> {
+    /** The current value of the property. */
     private T value;
+    /** Support for property change notifications. */
     private final PropertyChangeSupport propertyChangeSupport;
+    /** The name of this property. */
     private final String propertyName;
 
     /**
      * Creates a new BindableProperty with an initial value and property name.
      * @param initialValue The initial value of the property
-     * @param propertyName The name of the property (used for change events)
+     * @param name The name of the property (used for change events)
      */
-    public BindableProperty(T initialValue, String propertyName) {
+    public BindableProperty(final T initialValue, final String name) {
         this.value = initialValue;
-        this.propertyName = propertyName != null ? propertyName : "";
+        if (name != null) {
+            this.propertyName = name;
+        } else {
+            this.propertyName = "";
+        }
         this.propertyChangeSupport = new PropertyChangeSupport(this);
     }
 
@@ -36,9 +43,9 @@ public class BindableProperty<T> {
      * Sets a new value for the property and notifies listeners if the value has changed.
      * @param newValue The new value
      */
-    public void set(T newValue) {
+    public void set(final T newValue) {
         if (!Objects.equals(this.value, newValue)) {
-            T oldValue = this.value;
+            final T oldValue = this.value;
             this.value = newValue;
             propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
         }
@@ -48,7 +55,7 @@ public class BindableProperty<T> {
      * Adds a property change listener.
      * @param listener The listener to add
      */
-    public void addListener(PropertyChangeListener listener) {
+    public void addListener(final PropertyChangeListener listener) {
         propertyChangeSupport.addPropertyChangeListener(listener);
     }
 
@@ -56,7 +63,7 @@ public class BindableProperty<T> {
      * Removes a property change listener.
      * @param listener The listener to remove
      */
-    public void removeListener(PropertyChangeListener listener) {
+    public void removeListener(final PropertyChangeListener listener) {
         propertyChangeSupport.removePropertyChangeListener(listener);
     }
 
@@ -64,7 +71,7 @@ public class BindableProperty<T> {
      * Binds this property to another bindable property bidirectionally.
      * @param other The other property to bind to
      */
-    public void bindBidirectional(BindableProperty<T> other) {
+    public void bindBidirectional(final BindableProperty<T> other) {
         // Update other when this changes
         this.addListener(evt -> {
             if (!other.get().equals(this.get())) {
@@ -84,7 +91,7 @@ public class BindableProperty<T> {
      * Binds this property to another bindable property unidirectionally.
      * @param other The other property to bind to
      */
-    public void bind(BindableProperty<T> other) {
+    public void bind(final BindableProperty<T> other) {
         // Update this when other changes
         other.addListener(evt -> {
             if (!this.get().equals(other.get())) {

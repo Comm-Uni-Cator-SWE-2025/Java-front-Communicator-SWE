@@ -13,12 +13,19 @@ import javafx.geometry.Bounds;
 /**
  * Utility for geometric calculations (bounding boxes, hit testing).
  */
-public class GeometryUtils {
-
-    private static final double HIT_THRESHOLD = 5.0;
+public final class GeometryUtils {
 
     /**
-     * Function to return the bounds of a shape
+     * Threshold for hit testing proximity.
+     */
+    private static final double HIT_THRESHOLD = 5.0;
+
+    private GeometryUtils() {
+        // Utility class should not be instantiated
+    }
+
+    /**
+     * Function to return the bounds of a shape.
      * @param shape the current shape
      * @return Bounds
      */
@@ -44,7 +51,7 @@ public class GeometryUtils {
     }
 
     /**
-     * Test to see if the shape is hit or not
+     * Test to see if the shape is hit or not.
      * @param shape Shape that is clicked
      * @param x x coordinate
      * @param y y coordinate
@@ -52,39 +59,44 @@ public class GeometryUtils {
      */
     public static boolean hitTest(final Shape shape, final double x, final double y) {
         final Bounds b = getBounds(shape);
+        final ShapeType shapeType = shape.getShapeType();
+        
         // Simple bounding box hit test first for efficiency
-        if (!b.contains(x, y) && shape.getShapeType() != ShapeType.FREEHAND && shape.getShapeType() != ShapeType.LINE) {
+        if (!b.contains(x, y) && shapeType != ShapeType.FREEHAND && shapeType != ShapeType.LINE) {
             return false;
         }
 
-        switch (shape.getShapeType()) {
-            case RECTANGLE:
-            case ELLIPSE: // Simplified as rect for now
-            case TRIANGLE: // Simplified as rect for now
-                return b.contains(x, y);
-            case LINE:
-                return distanceToLine(shape.getPoints().get(0), shape.getPoints().get(1), x, y) < HIT_THRESHOLD;
-            case FREEHAND:
-                for (int i = 0; i < shape.getPoints().size() - 1; i++) {
-                    if (distanceToLine(shape.getPoints().get(i), shape.getPoints().get(i + 1), x, y) < HIT_THRESHOLD) {
-                        return true;
-                    }
-                }
-                return false;
-            default:
-                return false;
+        if (shapeType == ShapeType.RECTANGLE || shapeType == ShapeType.ELLIPSE || shapeType == ShapeType.TRIANGLE) {
+            return b.contains(x, y);
+        } else if (shapeType == ShapeType.LINE) {
+            return distanceToLine(shape.getPoints().get(0), shape.getPoints().get(1), x, y) < HIT_THRESHOLD;
+        } else if (shapeType == ShapeType.FREEHAND) {
+            return isFreehandHit(shape, x, y);
         }
+        return false;
+    }
+
+    private static boolean isFreehandHit(final Shape shape, final double x, final double y) {
+        for (int i = 0; i < shape.getPoints().size() - 1; i++) {
+            if (distanceToLine(shape.getPoints().get(i), shape.getPoints().get(i + 1), x, y) < HIT_THRESHOLD) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static double distanceToLine(final Point p1, final Point p2, final double px, final double py) {
-        final double x1 = p1.getX(), y1 = p1.getY(), x2 = p2.getX(), y2 = p2.getY();
-        double A = px - x1;
-        double B = py - y1;
-        double C = x2 - x1;
-        double D = y2 - y1;
+        final double x1 = p1.getX();
+        final double y1 = p1.getY();
+        final double x2 = p2.getX();
+        final double y2 = p2.getY();
+        final double deltaA = px - x1;
+        final double deltaB = py - y1;
+        final double deltaC = x2 - x1;
+        final double deltaD = y2 - y1;
 
-        final double dot = A * C + B * D;
-        final double lenSq = C * C + D * D;
+        final double dot = deltaA * deltaC + deltaB * deltaD;
+        final double lenSq = deltaC * deltaC + deltaD * deltaD;
 
         double param = -1;
 
@@ -92,15 +104,18 @@ public class GeometryUtils {
             param = dot / lenSq;
         }
 
-        final double xx, yy;
+        final double xx;
+        final double yy;
 
         if (param < 0) {
-            xx = x1; yy = y1;
+            xx = x1;
+            yy = y1;
         } else if (param > 1) {
-            xx = x2; yy = y2;
+            xx = x2;
+            yy = y2;
         } else {
-            xx = x1 + param * C;
-            yy = y1 + param * D;
+            xx = x1 + param * deltaC;
+            yy = y1 + param * deltaD;
         }
 
         final double dx = px - xx;

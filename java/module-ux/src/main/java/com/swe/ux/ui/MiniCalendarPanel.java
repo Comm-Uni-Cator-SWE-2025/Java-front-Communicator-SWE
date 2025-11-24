@@ -20,20 +20,84 @@ import java.util.Locale;
  * Compact current-month calendar widget.
  */
 public class MiniCalendarPanel extends JPanel {
+    /**
+     * Font size for header text.
+     */
+    private static final float HEADER_FONT_SIZE = 16f;
+    /**
+     * Font size for day names.
+     */
+    private static final float DAY_NAME_FONT_SIZE = 12f;
+    /**
+     * Font size for date numbers.
+     */
+    private static final float DATE_FONT_SIZE = 13f;
+    /**
+     * Spacing between grid cells.
+     */
+    private static final int GRID_SPACING = 4;
+    /**
+     * Border spacing around calendar.
+     */
+    private static final int BORDER_SPACING = 6;
+    /**
+     * Number of columns in calendar grid (days of week).
+     */
+    private static final int GRID_COLUMNS = 7;
+    /**
+     * First day of month.
+     */
+    private static final int DAY_OF_MONTH_START = 1;
+    /**
+     * Number of days in a week.
+     */
+    private static final int DAYS_IN_WEEK = 7;
+    /**
+     * Number of characters for day name abbreviation.
+     */
+    private static final int DAY_NAME_CHARS = 2;
+    /**
+     * Default color red component.
+     */
+    private static final int DEFAULT_COLOR_R = 90;
+    /**
+     * Default color green component.
+     */
+    private static final int DEFAULT_COLOR_G = 160;
+    /**
+     * Default color blue component.
+     */
+    private static final int DEFAULT_COLOR_B = 255;
+    /**
+     * Milliseconds in one hour.
+     */
+    private static final int HOUR_IN_MILLIS = 60 * 60 * 1000;
 
+    /**
+     * Header label showing month and year.
+     */
     private final JLabel headerLabel;
+    /**
+     * Grid panel containing calendar cells.
+     */
     private final JPanel gridPanel;
+    /**
+     * Current month being displayed.
+     */
     private LocalDate currentMonth;
 
+    /**
+     * Creates a new mini calendar panel.
+     */
     public MiniCalendarPanel() {
         setOpaque(false);
-        setLayout(new BorderLayout(0, 6));
-        currentMonth = LocalDate.now().withDayOfMonth(1);
+        setLayout(new BorderLayout(0, BORDER_SPACING));
+        currentMonth = LocalDate.now().withDayOfMonth(DAY_OF_MONTH_START);
 
         headerLabel = new JLabel("", SwingConstants.CENTER);
-        headerLabel.setFont(FontUtil.getJetBrainsMono(16f, Font.BOLD));
+        headerLabel.setFont(FontUtil.getJetBrainsMono(HEADER_FONT_SIZE, Font.BOLD));
 
-        gridPanel = new JPanel(new GridLayout(0, 7, 4, 4));
+        gridPanel = new JPanel(new GridLayout(0, GRID_COLUMNS, GRID_SPACING, GRID_SPACING));
         gridPanel.setOpaque(false);
 
         add(headerLabel, BorderLayout.NORTH);
@@ -41,20 +105,30 @@ public class MiniCalendarPanel extends JPanel {
 
         refreshCalendar();
 
-        Timer midnightTimer = new Timer(60 * 60 * 1000, e -> refreshCalendar());
+        final Timer midnightTimer = new Timer(HOUR_IN_MILLIS, e -> refreshCalendar());
         midnightTimer.setRepeats(true);
         midnightTimer.start();
     }
 
     private void refreshCalendar() {
-        LocalDate now = LocalDate.now();
-        if (!now.withDayOfMonth(1).equals(currentMonth)) {
-            currentMonth = now.withDayOfMonth(1);
+        final LocalDate now = LocalDate.now();
+        if (!now.withDayOfMonth(DAY_OF_MONTH_START).equals(currentMonth)) {
+            currentMonth = now.withDayOfMonth(DAY_OF_MONTH_START);
         }
 
-        Theme theme = ThemeManager.getInstance().getCurrentTheme();
-        Color textColor = theme != null ? theme.getTextColor() : Color.WHITE;
-        Color accentColor = theme != null ? theme.getPrimaryColor() : new Color(90, 160, 255);
+        final Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        final Color textColor;
+        if (theme != null) {
+            textColor = theme.getTextColor();
+        } else {
+            textColor = Color.WHITE;
+        }
+        final Color accentColor;
+        if (theme != null) {
+            accentColor = theme.getPrimaryColor();
+        } else {
+            accentColor = new Color(DEFAULT_COLOR_R, DEFAULT_COLOR_G, DEFAULT_COLOR_B);
+        }
 
         headerLabel.setForeground(textColor);
         headerLabel.setText(currentMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault())
@@ -62,27 +136,31 @@ public class MiniCalendarPanel extends JPanel {
 
         gridPanel.removeAll();
 
-        Font dayFont = FontUtil.getJetBrainsMono(12f, Font.BOLD);
-        for (DayOfWeek dow : DayOfWeek.values()) {
-            JLabel dayLabel = createCell(dow.getDisplayName(TextStyle.SHORT, Locale.getDefault()).substring(0, 2).toUpperCase(),
+        final Font dayFont = FontUtil.getJetBrainsMono(DAY_NAME_FONT_SIZE, Font.BOLD);
+        for (final DayOfWeek dow : DayOfWeek.values()) {
+            final JLabel dayLabel = createCell(
+                    dow.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                            .substring(0, DAY_NAME_CHARS).toUpperCase(),
                     dayFont, accentColor, SwingConstants.CENTER);
             gridPanel.add(dayLabel);
         }
 
-        int firstDayOffset = currentMonth.getDayOfWeek().getValue() % 7; // make Sunday =0
+        final int firstDayOffset = currentMonth.getDayOfWeek().getValue() % DAYS_IN_WEEK;
         for (int i = 0; i < firstDayOffset; i++) {
-            gridPanel.add(createCell("", FontUtil.getJetBrainsMono(12f, Font.PLAIN), textColor, SwingConstants.CENTER));
+            gridPanel.add(createCell("",
+                    FontUtil.getJetBrainsMono(DAY_NAME_FONT_SIZE, Font.PLAIN),
+                    textColor, SwingConstants.CENTER));
         }
 
-        Font dateFont = FontUtil.getJetBrainsMono(13f, Font.PLAIN);
-        int length = currentMonth.lengthOfMonth();
-        LocalDate today = LocalDate.now();
+        final Font dateFont = FontUtil.getJetBrainsMono(DATE_FONT_SIZE, Font.PLAIN);
+        final int length = currentMonth.lengthOfMonth();
+        final LocalDate today = LocalDate.now();
 
         for (int day = 1; day <= length; day++) {
-            LocalDate date = currentMonth.withDayOfMonth(day);
-            boolean isToday = date.equals(today);
-            JLabel cell = createCell(String.valueOf(day), dateFont,
-                    isToday ? Color.BLACK : textColor, SwingConstants.CENTER);
+            final LocalDate date = currentMonth.withDayOfMonth(day);
+            final boolean isToday = date.equals(today);
+            final JLabel cell = createCell(String.valueOf(day), dateFont,
+                    getDayTextColor(isToday, textColor), SwingConstants.CENTER);
             if (isToday) {
                 cell.setOpaque(true);
                 cell.setBackground(accentColor);
@@ -94,8 +172,23 @@ public class MiniCalendarPanel extends JPanel {
         gridPanel.repaint();
     }
 
-    private JLabel createCell(String text, Font font, Color color, int align) {
-        JLabel label = new JLabel(text, align);
+    /**
+     * Gets the text color for a day cell.
+     *
+     * @param isToday whether the day is today
+     * @param defaultColor default text color
+     * @return the text color to use
+     */
+    private Color getDayTextColor(final boolean isToday, final Color defaultColor) {
+        if (isToday) {
+            return Color.BLACK;
+        }
+        return defaultColor;
+    }
+
+    private JLabel createCell(final String text, final Font font,
+                               final Color color, final int align) {
+        final JLabel label = new JLabel(text, align);
         label.setFont(font);
         label.setForeground(color);
         return label;

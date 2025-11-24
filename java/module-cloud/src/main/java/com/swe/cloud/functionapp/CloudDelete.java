@@ -38,7 +38,8 @@ public class CloudDelete extends CloudHelper {
      */
     @FunctionName("CloudDelete")
     public HttpResponseMessage runCloudDelete(
-            @HttpTrigger(name = "req", methods = HttpMethod.POST, authLevel = AuthorizationLevel.ANONYMOUS) final HttpRequestMessage<Optional<String>> request,
+            @HttpTrigger(name = "req", methods = HttpMethod.POST,
+                    authLevel = AuthorizationLevel.ANONYMOUS) final HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) throws JsonProcessingException {
         context.getLogger().info("Java HTTP trigger processed a request.");
         try {
@@ -48,7 +49,8 @@ public class CloudDelete extends CloudHelper {
             final IdbConnector dbConnector = DbConnectorFactory.getDbConnector("cosmo");
             context.getLogger().info("Initialized DB Connector");
             final CloudResponse cloudResponse = dbConnector.deleteData(entityRequest);
-            context.getLogger().info("Received Delete CloudResponse: [" + cloudResponse.status_code() + "] " + cloudResponse.message());
+            context.getLogger().info("Received Delete CloudResponse: [" + cloudResponse.status_code()
+                    + "] " + cloudResponse.message());
 
             return handleResponse(cloudResponse, request);
 

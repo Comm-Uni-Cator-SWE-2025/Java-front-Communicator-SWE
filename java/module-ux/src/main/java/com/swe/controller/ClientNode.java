@@ -11,5 +11,23 @@ public record ClientNode(String hostName, int port) {
     public int hashCode() {
         return (hostName + port).hashCode();
     }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final ClientNode other = (ClientNode) obj;
+        if (port != other.port) {
+            return false;
+        }
+        if (hostName == null) {
+            return other.hostName == null;
+        }
+        return hostName.equals(other.hostName);
+    }
 }
 

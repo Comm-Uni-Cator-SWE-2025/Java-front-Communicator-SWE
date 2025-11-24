@@ -1,4 +1,10 @@
-package com.swe.ux.viewmodel;
+package com.swe.ux.viewmodels;
 
-public class cvm {
+/**
+ * Placeholder class.
+ */
+public final class Cvm {
+    private Cvm() {
+        // Private constructor to prevent instantiation
+    }
 }

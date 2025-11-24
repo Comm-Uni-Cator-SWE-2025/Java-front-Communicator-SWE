@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,7 +41,6 @@ class ErrorHandlingTest {
         testUser = new UserProfile(
             "test@example.com",
             "Test User",
-            "http://example.com/logo.png",
             ParticipantRole.STUDENT
         );
         meetingViewModel = new MeetingViewModel(testUser, mockRpc);
@@ -103,9 +103,11 @@ class ErrorHandlingTest {
         // Act
         String meetingId = mainViewModel.startMeeting();
 
-        // Assert
-        assertNull(meetingId);
-        assertEquals("", mainViewModel.meetingCode.get());
+        // Assert - fallback creates a local meeting with UUID
+        assertNotNull(meetingId);
+        assertFalse(meetingId.isEmpty());
+        assertNotNull(mainViewModel.meetingCode.get());
+        assertFalse(mainViewModel.meetingCode.get().isEmpty());
     }
 
     @Test
@@ -116,8 +118,9 @@ class ErrorHandlingTest {
         // Act
         String meetingId = mainViewModel.startMeeting();
 
-        // Assert
-        assertNull(meetingId);
+        // Assert - fallback creates a local meeting with UUID
+        assertNotNull(meetingId);
+        assertFalse(meetingId.isEmpty());
     }
 
     @Test
@@ -272,7 +275,6 @@ class ErrorHandlingTest {
         UserProfile notInMeeting = new UserProfile(
             "other@example.com",
             "Other",
-            null,
             ParticipantRole.STUDENT
         );
 

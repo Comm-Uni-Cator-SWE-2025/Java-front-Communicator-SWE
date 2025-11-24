@@ -22,46 +22,80 @@ import com.swe.controller.RPCinterface.AbstractRPC;
  * - Validates all incoming actions from clients.
  * - Rejects actions that have conflicts (stale prevState).
  * - Broadcasts all *valid* actions to all clients.
+ *
+ * @author Canvas Team
  */
 public class HostActionManager implements ActionManager {
 
-    private final String userId; // Host's own user ID
-    private final CanvasState canvasState; // Authoritative state
+    /** Host's own user ID. */
+    private final String userId;
+    /** Authoritative canvas state. */
+    private final CanvasState canvasState;
+    /** Factory for creating action instances. */
     private final ActionFactory actionFactory;
-    private final UndoRedoManager undoRedoManager; // Host's local undo/redo
+    /** Host's local undo/redo manager. */
+    private final UndoRedoManager undoRedoManager;
+    /** Network service for broadcasting to clients. */
     private final NetworkService networkService;
-    
-    private Runnable onUpdateCallback = () -> {}; // No-op default
+    /** Callback to invoke when updates occur. */
+    private Runnable onUpdateCallback = () -> { }; // No-op default
 
-
-    public HostActionManager(final String userId, final CanvasState canvasState, final NetworkService networkService) {
-        this.userId = userId;
-        this.canvasState = canvasState;
-        this.networkService = networkService;
+    /**
+     * Creates a new host action manager.
+     *
+     * @param userIdentifier Host's user ID.
+     * @param canvas Authoritative canvas state.
+     * @param network Network service for broadcasting.
+     */
+    public HostActionManager(final String userIdentifier, final CanvasState canvas,
+                             final NetworkService network) {
+        this.userId = userIdentifier;
+        this.canvasState = canvas;
+        this.networkService = network;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
         this.networkService.registerHostHandler(this::processIncomingMessage);
     }
 
-    public HostActionManager(final String userId, final CanvasState canvasState,
+    /**
+     * Creates a new host action manager with RPC.
+     *
+     * @param userIdentifier Host's user ID.
+     * @param canvas Authoritative canvas state.
+     * @param rpc RPC service for communication.
+     */
+    public HostActionManager(final String userIdentifier, final CanvasState canvas,
                              final AbstractRPC rpc) {
-        this(userId, canvasState, new CanvasNetworkService(rpc));
+        this(userIdentifier, canvas, new CanvasNetworkService(rpc));
     }
 
     @Override
-    public ActionFactory getActionFactory() { return actionFactory; }
+    public ActionFactory getActionFactory() { 
+        return actionFactory; 
+    }
+    
     @Override
-    public CanvasState getCanvasState() { return canvasState; }
+    public CanvasState getCanvasState() { 
+        return canvasState; 
+    }
+    
     @Override
-    public UndoRedoManager getUndoRedoManager() { return undoRedoManager; }
+    public UndoRedoManager getUndoRedoManager() { 
+        return undoRedoManager; 
+    }
+    
     @Override
-    public void setOnUpdate(Runnable callback) { this.onUpdateCallback = callback; }
+    public void setOnUpdate(final Runnable callback) { 
+        this.onUpdateCallback = callback; 
+    }
 
     /**
      * Validates an action against the authoritative state.
      * This is the core logic from the prompt.
+     * @param action The action to validate.
+     * @return true if valid, false otherwise.
      */
-    private boolean validate(Action action) {
+    private boolean validate(final Action action) {
         // As per prompt: "if the action type is CREATE directly he will create"
         if (action.getActionType() == ActionType.CREATE) {
             // A more robust check is to ensure it doesn't already exist,
@@ -70,8 +104,8 @@ public class HostActionManager implements ActionManager {
         }
 
         // For MODIFY, DELETE, RESURRECT (from UNDO/REDO), we do the full prevState check.
-        ShapeState currentState = canvasState.getShapeState(action.getShapeId());
-        ShapeState actionPrevState = action.getPrevState();
+        final ShapeState currentState = canvasState.getShapeState(action.getShapeId());
+        final ShapeState actionPrevState = action.getPrevState();
 
         // This Objects.equals() check is the "Optimistic Concurrency" check.
         if (Objects.equals(currentState, actionPrevState)) {
@@ -87,8 +121,10 @@ public class HostActionManager implements ActionManager {
 
     /**
      * Helper to apply a valid action and broadcast it.
+     * @param action The action to apply.
+     * @param originalMessage The message to broadcast.
      */
-    private void applyAndBroadcast(Action action, NetworkMessage originalMessage) {
+    private void applyAndBroadcast(final Action action, final NetworkMessage originalMessage) {
         // 1. Apply to host's authoritative state
         canvasState.applyState(action.getShapeId(), action.getNewState());
         
@@ -100,53 +136,54 @@ public class HostActionManager implements ActionManager {
     // The Host's actions are just local requests that are auto-validated.
 
     @Override
-    public void requestCreate(Shape newShape) {
-        Action action = actionFactory.createCreateAction(newShape, userId);
+    public void requestCreate(final Shape newShape) {
+        final Action action = actionFactory.createCreateAction(newShape, userId);
         try {
-            String sa = NetActionSerializer.serializeAction(action);
-            NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getBytes());
+            final String sa = NetActionSerializer.serializeAction(action);
+            final NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getBytes());
             // Host processes its own message (which applies state and broadcasts)
             processIncomingMessage(msg);
-        } catch (SerializationException e) {
+        } catch (final SerializationException e) {
             System.err.println("Host failed to serialize local action: " + e.getMessage());
         }
     }
 
     @Override
-    public void requestModify(ShapeState prevState, Shape modifiedShape) {
-        Action action = actionFactory.createModifyAction(canvasState, prevState.getShapeId(), modifiedShape, userId);
+    public void requestModify(final ShapeState prevState, final Shape modifiedShape) {
+        final Action action = actionFactory.createModifyAction(canvasState, prevState.getShapeId(), 
+                modifiedShape, userId);
         try {
-            String sa = NetActionSerializer.serializeAction(action);
-            NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getBytes());
+            final String sa = NetActionSerializer.serializeAction(action);
+            final NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getBytes());
             processIncomingMessage(msg);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Host failed to serialize local action: " + e.getMessage());
         }
     }
 
     @Override
-    public void requestDelete(ShapeState shapeToDelete) {
-        Action action = actionFactory.createDeleteAction(canvasState, shapeToDelete.getShapeId(), userId);
+    public void requestDelete(final ShapeState shapeToDelete) {
+        final Action action = actionFactory.createDeleteAction(canvasState, shapeToDelete.getShapeId(), userId);
         try {
-            String sa = NetActionSerializer.serializeAction(action);
-            NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getBytes());
+            final String sa = NetActionSerializer.serializeAction(action);
+            final NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, sa.getBytes());
             processIncomingMessage(msg);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Host failed to serialize local action: " + e.getMessage());
         }
     }
 
     @Override
     public void requestUndo() {
-        Action actionToUndo = undoRedoManager.getActionToUndo(); // Gets action
+        final Action actionToUndo = undoRedoManager.getActionToUndo(); // Gets action
         if (actionToUndo != null) {
-            Action inverseAction = actionFactory.createInverseAction(actionToUndo, userId);
+            final Action inverseAction = actionFactory.createInverseAction(actionToUndo, userId);
             try {
-                String sa = NetActionSerializer.serializeAction(inverseAction);
-                NetworkMessage msg = new NetworkMessage(MessageType.UNDO, sa.getBytes());
+                final String sa = NetActionSerializer.serializeAction(inverseAction);
+                final NetworkMessage msg = new NetworkMessage(MessageType.UNDO, sa.getBytes());
                 // Host processes its own undo, which validates, applies, and broadcasts
                 processIncomingMessage(msg);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 System.err.println("Host failed to serialize local undo: " + e.getMessage());
             }
         }
@@ -154,13 +191,13 @@ public class HostActionManager implements ActionManager {
 
     @Override
     public void requestRedo() {
-        Action actionToRedo = undoRedoManager.getActionToRedo(); // Gets action
+        final Action actionToRedo = undoRedoManager.getActionToRedo(); // Gets action
         if (actionToRedo != null) {
             try {
-                String sa = NetActionSerializer.serializeAction(actionToRedo);
-                NetworkMessage msg = new NetworkMessage(MessageType.REDO, sa.getBytes());
+                final String sa = NetActionSerializer.serializeAction(actionToRedo);
+                final NetworkMessage msg = new NetworkMessage(MessageType.REDO, sa.getBytes());
                 processIncomingMessage(msg);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 System.err.println("Host failed to serialize local redo: " + e.getMessage());
             }
         }
@@ -169,12 +206,14 @@ public class HostActionManager implements ActionManager {
     // --- Network-facing Method (as specified in prompt) ---
 
     @Override
-    public void processIncomingMessage(NetworkMessage message) {
+    public void processIncomingMessage(final NetworkMessage message) {
         try {
-            Action action = NetActionSerializer.deserializeAction(new String(message.getSerializedAction()));
-            if (action == null) return;
+            final Action action = NetActionSerializer.deserializeAction(new String(message.getSerializedAction()));
+            if (action == null) {
+                return;
+            }
             
-            boolean isHostSelfAction = action.getNewState().getShape().getLastUpdatedBy().equals(userId);
+            final boolean isHostSelfAction = action.getNewState().getShape().getLastUpdatedBy().equals(userId);
 
             // Host-side validation logic
             if (validate(action)) {
@@ -192,6 +231,8 @@ public class HostActionManager implements ActionManager {
                         case REDO:
                             undoRedoManager.applyHostRedo(); // Move pointer forward
                             break;
+                        default:
+                            break;
                     }
                 }
                 
@@ -207,7 +248,7 @@ public class HostActionManager implements ActionManager {
             // Redraw the Host's local UI
             onUpdateCallback.run();
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Host failed to process message: " + e.getMessage());
         }
     }

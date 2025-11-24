@@ -26,31 +26,31 @@ public class ShapeFactory {
     /**
      * Creates a new shape instance.
      *
-     * @param shapeType_ The enum type of shape to create.
-     * @param shapeId_   The unique ID for the new shape.
-     * @param points_    The geometric points for the new shape.
-     * @param thickness_ The stroke thickness.
-     * @param color_     The shape color.
-     * @param userId_    The user creating the shape.
+     * @param shapeType The enum type of shape to create.
+     * @param shapeId   The unique ID for the new shape.
+     * @param points    The geometric points for the new shape.
+     * @param thickness The stroke thickness.
+     * @param color     The shape color.
+     * @param userId    The user creating the shape.
      * @return A new, concrete {@link Shape} instance.
      * @throws IllegalArgumentException if the shapeType is unrecognized.
      */
-    public Shape createShape(final ShapeType shapeType_, final ShapeId shapeId_, final List<Point> points_,
-                             final double thickness_, final Color color_, final String userId_) {
+    public Shape createShape(final ShapeType shapeType, final ShapeId shapeId, final List<Point> points,
+                             final double thickness, final Color color, final String userId) {
 
-        switch (shapeType_) {
+        switch (shapeType) {
             case FREEHAND:
-                return new FreehandShape(shapeId_, points_, thickness_, color_, userId_, userId_);
+                return new FreehandShape(shapeId, points, thickness, color, userId, userId);
             case RECTANGLE:
-                return new RectangleShape(shapeId_, points_, thickness_, color_, userId_, userId_);
+                return new RectangleShape(shapeId, points, thickness, color, userId, userId);
             case ELLIPSE:
-                return new EllipseShape(shapeId_, points_, thickness_, color_, userId_, userId_);
+                return new EllipseShape(shapeId, points, thickness, color, userId, userId);
             case TRIANGLE:
-                return new TriangleShape(shapeId_, points_, thickness_, color_, userId_, userId_);
+                return new TriangleShape(shapeId, points, thickness, color, userId, userId);
             case LINE:
-                return new LineShape(shapeId_, points_, thickness_, color_, userId_, userId_);
+                return new LineShape(shapeId, points, thickness, color, userId, userId);
             default:
-                throw new IllegalArgumentException("Unknown shape type: " + shapeType_);
+                throw new IllegalArgumentException("Unknown shape type: " + shapeType);
         }
     }
 }

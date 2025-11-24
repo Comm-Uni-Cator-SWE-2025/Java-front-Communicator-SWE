@@ -1,14 +1,15 @@
 package crashhandler;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import datastructures.Entity;
-import functionlibrary.CloudFunctionLibrary;
-import interfaces.ICrashHandler;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import datastructures.Entity;
+import functionlibrary.CloudFunctionLibrary;
+import interfaces.ICrashHandler;
 
 /**
  * Class which handles logging and storing call stack and other exception
@@ -51,7 +52,8 @@ public class CrashHandler implements ICrashHandler {
             final String exceptionString = exceptionToString(exception);
             final String stackJoined = stackToSingleString(exception.getStackTrace());
 
-            final JsonNode exceptionJsonNode = toJsonNode(exceptionName, timestamp, exceptionMessage, exceptionString, stackJoined);
+            final JsonNode exceptionJsonNode = toJsonNode(exceptionName, timestamp,
+                    exceptionMessage, exceptionString, stackJoined);
 
             final Entity exceptionEntity = new Entity(
                     null,
@@ -64,12 +66,12 @@ public class CrashHandler implements ICrashHandler {
             );
             System.out.println("Inside def...");
             new Thread(() -> {
-                    cloudFunctionLibrary.cloudPost(exceptionEntity).thenAccept(cloudResponse -> {
-                        System.out.println("Log created successfully");
-                    })
-                            .exceptionally(e -> {
-                                throw new RuntimeException(e);
-                            });
+                cloudFunctionLibrary.cloudPost(exceptionEntity).thenAccept(cloudResponse -> {
+                    System.out.println("Log created successfully");
+                })
+                        .exceptionally(e -> {
+                            throw new RuntimeException(e);
+                        });
 
             }, "WorkerThreadStoreException").start();
         });
@@ -89,7 +91,8 @@ public class CrashHandler implements ICrashHandler {
         return sb.toString();
     }
 
-    private JsonNode toJsonNode(final String eName, final String timeStamp, final String eMsg, final String eDetails, final String eTrace) {
+    private JsonNode toJsonNode(final String eName, final String timeStamp, final String eMsg,
+            final String eDetails, final String eTrace) {
         final ObjectMapper mapper = new ObjectMapper();
         final JsonNode jsonNode = mapper.createObjectNode()
                 .put("ExceptionName", eName)
