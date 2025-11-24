@@ -8,14 +8,15 @@
 
 package functionapp;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.HttpStatus;
-import datastructures.CloudResponse;
 
-import java.util.Optional;
+import datastructures.CloudResponse;
 
 /**
  * Provides common helper methods for Azure Function HTTP handlers,
@@ -45,7 +46,8 @@ public class CloudHelper {
         }
     }
 
-    protected HttpResponseMessage handleResponse(final CloudResponse cloudResponse, final HttpRequestMessage<Optional<String>> request) {
+    protected HttpResponseMessage handleResponse(final CloudResponse cloudResponse,
+            final HttpRequestMessage<Optional<String>> request) {
         try {
             return request.createResponseBuilder(HttpStatus.OK)
                     .body(objectMapper.writeValueAsString(cloudResponse))
