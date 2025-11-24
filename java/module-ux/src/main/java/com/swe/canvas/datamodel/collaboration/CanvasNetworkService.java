@@ -18,6 +18,9 @@ public class CanvasNetworkService implements NetworkService {
 
     public CanvasNetworkService(final AbstractRPC rpc) {
         this(rpc, NetworkFront.getInstance());
+        if (this.rpc != null) {
+            this.rpc.subscribe("canvas:getHostIp", this::handleSubscribeRPC);
+        }
     }
 
     public CanvasNetworkService(final AbstractRPC rpc, final NetworkFront network) {
@@ -48,6 +51,7 @@ public class CanvasNetworkService implements NetworkService {
 
     @Override
     public void sendMessageToHost(NetworkMessage message) {
+        System.out.println("CanvasNetworkService: Sending message to host");
         String serializedMessage = message.serialize();
         if (hostNode == null) {
             System.err.println("CanvasNetworkService: Host node unknown, cannot send message");

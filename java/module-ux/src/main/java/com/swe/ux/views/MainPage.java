@@ -12,7 +12,12 @@ import com.swe.ux.ui.PlaceholderTextField;
 import com.swe.ux.ui.SoftCardPanel;
 import com.swe.ux.ui.ThemeToggleButton;
 import com.swe.ux.ui.FontUtil;
+import com.swe.ux.viewmodels.DashboardViewModel;
 import com.swe.ux.viewmodels.MainViewModel;
+
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,7 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Simplified Main Page: small header, large insights pane, and 
+ * Simplified Main Page: small header, large insights pane, and
  * meeting join/start controls left-aligned.
  */
 public class MainPage extends FrostedBackgroundPanel {
@@ -30,6 +35,7 @@ public class MainPage extends FrostedBackgroundPanel {
 
     private SoftCardPanel headerCard;
     private SoftCardPanel insightsCard;
+    private JFXPanel dashboardFxPanel;
 
     private JLabel welcomeLabel;
     private JLabel subtitleLabel;
@@ -44,44 +50,47 @@ public class MainPage extends FrostedBackgroundPanel {
 
     private Timer minuteTimer;
     private boolean uiCreated = false;
+    private final DashboardViewModel dashboardViewModel;
 
     public MainPage(MainViewModel viewModel) {
         this.viewModel = viewModel;
+        this.dashboardViewModel = new DashboardViewModel();
         initializeUI();
         uiCreated = true;
         setupBindings();
         startClock();
         applyTheme();
     }
+
     /**
- * Enables or disables the Start Meeting button and related UI controls.
- */
-/**
- * Enables or disables the Start Meeting button and related UI controls.
- */
-public void setStartControlsEnabled(boolean enabled) {
-    try {
-        if (this.createMeetingButton != null) {
-            this.createMeetingButton.setEnabled(enabled);
+     * Enables or disables the Start Meeting button and related UI controls.
+     */
+    /**
+     * Enables or disables the Start Meeting button and related UI controls.
+     */
+    public void setStartControlsEnabled(boolean enabled) {
+        try {
+            if (this.createMeetingButton != null) {
+                this.createMeetingButton.setEnabled(enabled);
+            }
+        } catch (Exception ignored) {
         }
-    } catch (Exception ignored) {}
-}
+    }
 
-/**
- * Enables or disables the Join Meeting button and related UI controls.
- */
-public void setJoinControlsEnabled(boolean enabled) {
-    try {
-        if (this.joinMeetingButton != null) {
-            this.joinMeetingButton.setEnabled(enabled);
+    /**
+     * Enables or disables the Join Meeting button and related UI controls.
+     */
+    public void setJoinControlsEnabled(boolean enabled) {
+        try {
+            if (this.joinMeetingButton != null) {
+                this.joinMeetingButton.setEnabled(enabled);
+            }
+            if (this.meetingCodeField != null) {
+                this.meetingCodeField.setEnabled(enabled);
+            }
+        } catch (Exception ignored) {
         }
-        if (this.meetingCodeField != null) {
-            this.meetingCodeField.setEnabled(enabled);
-        }
-    } catch (Exception ignored) {}
-}
-
-
+    }
 
     private void initializeUI() {
 
@@ -175,8 +184,6 @@ public void setJoinControlsEnabled(boolean enabled) {
         joinPanel.add(createMeetingButton);
 
         // Place it ABOVE insights
-        
-
 
         // ------------------------------------------------------
         // CONTENT AREA
@@ -189,9 +196,7 @@ public void setJoinControlsEnabled(boolean enabled) {
         // Big insights panel
         insightsCard = new SoftCardPanel(32);
         insightsCard.setLayout(new BorderLayout());
-        JLabel insightsLabel = new JLabel("Insights Area (coming soon)", SwingConstants.CENTER);
-        insightsLabel.setFont(FontUtil.getJetBrainsMono(20f, Font.BOLD));
-        insightsCard.add(insightsLabel, BorderLayout.CENTER);
+        initializeDashboardInsights();
 
         mainArea.add(insightsCard, BorderLayout.CENTER);
 
@@ -218,9 +223,6 @@ public void setJoinControlsEnabled(boolean enabled) {
 
         mainArea.add(sideColumn, BorderLayout.EAST);
 
-
-
-
         add(mainArea, BorderLayout.CENTER);
     }
 
@@ -235,12 +237,12 @@ public void setJoinControlsEnabled(boolean enabled) {
     private void updateUserInfo() {
         UserProfile user = viewModel.currentUser.get();
         welcomeLabel.setText(
-                user != null ? "Welcome, " + user.getDisplayName() : "Welcome"
-        );
+                user != null ? "Welcome, " + user.getDisplayName() : "Welcome");
     }
 
     private void startClock() {
-        if (minuteTimer != null) minuteTimer.stop();
+        if (minuteTimer != null)
+            minuteTimer.stop();
 
         minuteTimer = new Timer(60_000, e -> dateLabel.setText(formatDate(new Date())));
         minuteTimer.setInitialDelay(0);
@@ -252,10 +254,12 @@ public void setJoinControlsEnabled(boolean enabled) {
     }
 
     private void applyTheme() {
-        if (!uiCreated) return;
+        if (!uiCreated)
+            return;
 
         Theme theme = ThemeManager.getInstance().getCurrentTheme();
-        if (theme == null) return;
+        if (theme == null)
+            return;
 
         setBackground(theme.getBackgroundColor());
 
@@ -273,6 +277,19 @@ public void setJoinControlsEnabled(boolean enabled) {
 
         revalidate();
         repaint();
+    }
+
+    private void initializeDashboardInsights() {
+        dashboardFxPanel = new JFXPanel();
+        insightsCard.add(dashboardFxPanel, BorderLayout.CENTER);
+
+        Platform.setImplicitExit(false);
+        Platform.runLater(() -> {
+            DashboardView dashboardView = new DashboardView();
+            dashboardView.setViewModel(dashboardViewModel);
+            Scene scene = new Scene(dashboardView);
+            dashboardFxPanel.setScene(scene);
+        });
     }
 
     @Override
