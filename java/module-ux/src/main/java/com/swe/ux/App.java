@@ -47,6 +47,9 @@ public class App extends JFrame {
     public static final String MAIN_VIEW = "MAIN";
     public static final String MEETING_VIEW = "MEETING";
 
+    private static final int DEFAULT_WIDTH = 1200;
+    private static final int DEFAULT_HEIGHT = 700;
+
     // Current user
     private UserProfile currentUser;
 
@@ -86,7 +89,7 @@ public class App extends JFrame {
         // Set up the main window
         setTitle("Comm-Uni-Cate");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 700);
+        setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         setLocationRelativeTo(null);
 
         // Add main panel to the frame
@@ -331,6 +334,15 @@ public class App extends JFrame {
      */
     public void showView(String viewName) {
         cardLayout.show(mainPanel, viewName);
+
+        if (MEETING_VIEW.equals(viewName)) {
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+            setResizable(true);
+        } else {
+            setExtendedState(JFrame.NORMAL);
+            setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            setLocationRelativeTo(null);
+        }
 
         // Add to history if it's different from the current view
         if (viewHistory.isEmpty() || !viewHistory.peek().equals(viewName)) {
