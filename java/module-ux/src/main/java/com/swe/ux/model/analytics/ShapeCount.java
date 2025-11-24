@@ -5,11 +5,11 @@
 package com.swe.ux.model.analytics;
 
 public class ShapeCount {
-    private final int freeHand;
-    private final int straightLine;
-    private final int rectangle;
-    private final int ellipse;
-    private final int triangle;
+    private int freeHand;
+    private int straightLine;
+    private int rectangle;
+    private int ellipse;
+    private int triangle;
 
     public ShapeCount(int freeHand, int straightLine, int rectangle, int ellipse, int triangle) {
         this.freeHand = freeHand;
@@ -37,5 +37,26 @@ public class ShapeCount {
 
     public int getTriangle() {
         return triangle;
+    }
+
+    // Increment methods for analytics tracking
+    public void incrementFreeHand() {
+        this.freeHand++;
+    }
+
+    public void incrementStraightLine() {
+        this.straightLine++;
+    }
+
+    public void incrementRectangle() {
+        this.rectangle++;
+    }
+
+    public void incrementEllipse() {
+        this.ellipse++;
+    }
+
+    public void incrementTriangle() {
+        this.triangle++;
     }
 }

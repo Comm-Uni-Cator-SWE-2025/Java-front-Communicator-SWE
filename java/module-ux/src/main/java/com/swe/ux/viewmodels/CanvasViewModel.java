@@ -17,6 +17,7 @@ import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.datamodel.shape.ShapeType;
 import com.swe.ux.canvas.util.ColorConverter;
 import com.swe.ux.canvas.util.GeometryUtils;
+import com.swe.ux.model.analytics.ShapeCount;
 
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -51,6 +52,12 @@ public class CanvasViewModel {
     private double lastDragY;
     public boolean isDraggingSelection = false;
     private ShapeState originalShapeForDrag = null;
+
+    private ShapeCount shapeCount = new ShapeCount(0, 0, 0, 0, 0);
+
+    public ShapeCount getShapeCount() {
+        return shapeCount;
+    }
 
     public CanvasViewModel(String userId, ActionManager actionManager) {
         this.userId = userId;
@@ -167,6 +174,9 @@ public class CanvasViewModel {
         } else if (transientShape != null) {
             actionManager.requestCreate(transientShape);
 
+            // Track shape creation for analytics
+            updateShapeCount(transientShape.getShapeType());
+
             // FIX: Intent is Create
             this.isPendingDelete = false;
             startGhostTimer();
@@ -244,6 +254,26 @@ public class CanvasViewModel {
 
     public void undo() { actionManager.requestUndo(); }
     public void redo() { actionManager.requestRedo(); }
+
+    private void updateShapeCount(ShapeType shapeType) {
+        switch (shapeType) {
+            case FREEHAND:
+                shapeCount.incrementFreeHand();
+                break;
+            case LINE:
+                shapeCount.incrementStraightLine();
+                break;
+            case RECTANGLE:
+                shapeCount.incrementRectangle();
+                break;
+            case ELLIPSE:
+                shapeCount.incrementEllipse();
+                break;
+            case TRIANGLE:
+                shapeCount.incrementTriangle();
+                break;
+        }
+    }
 
     /**
      * FIX: Revised logic to check for conflict resolution correctly.

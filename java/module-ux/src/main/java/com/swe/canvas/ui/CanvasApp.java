@@ -53,7 +53,12 @@ public class CanvasApp extends Application {
      * Helper to launch a new canvas window with its own ActionManager.
      */
     private void launchWindow(String title, ActionManager actionManager) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("../fxml/canvas-view.fxml"));
+        // Load FXML using absolute resource path to avoid classpath/package-relative issues
+        java.net.URL fxmlUrl = getClass().getResource("/fxml/canvas-view.fxml");
+        if (fxmlUrl == null) {
+            throw new RuntimeException("FXML resource not found: /fxml/canvas-view.fxml. Check that the file exists in resources/fxml and is packaged on the classpath.");
+        }
+        FXMLLoader loader = new FXMLLoader(fxmlUrl);
         Parent root = loader.load();
 
         // Get the controller and inject the ActionManager
@@ -62,7 +67,25 @@ public class CanvasApp extends Application {
         
         Stage stage = new Stage();
         stage.setTitle(title);
-        stage.setScene(new Scene(root, 1000, 700));
+        Scene scene = new Scene(root, 1000, 700);
+        
+        // Set minimum window size to prevent layout breaking
+        stage.setMinWidth(800);
+        stage.setMinHeight(600);
+        
+        // Optional: Set maximum size if you want to limit how large it can grow
+        // stage.setMaxWidth(1920);
+        // stage.setMaxHeight(1080);
+        
+        // Attempt to load module CSS from resources (optional)
+        java.net.URL cssUrl = getClass().getResource("/css/canvas-view.css");
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl.toExternalForm());
+        } else {
+            System.err.println("Warning: CSS resource not found: /css/canvas-view.css");
+        }
+        
+        stage.setScene(scene);
         stage.show();
     }
 

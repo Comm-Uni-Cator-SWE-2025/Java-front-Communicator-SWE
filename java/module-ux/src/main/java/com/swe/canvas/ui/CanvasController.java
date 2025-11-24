@@ -126,6 +126,23 @@ public class CanvasController {
         canvasScale = new Scale();
         canvasHolder.getTransforms().addAll(canvasTranslate, canvasScale);
 
+        // --- Make canvas responsive to window resize ---
+        canvasContainer.widthProperty().addListener((obs, oldVal, newVal) -> {
+            double availableWidth = newVal.doubleValue() - 20; // Account for padding
+            if (availableWidth > 400) { // Minimum canvas width
+                canvas.setWidth(Math.min(availableWidth, 2400)); // Max canvas width
+                redraw();
+            }
+        });
+        
+        canvasContainer.heightProperty().addListener((obs, oldVal, newVal) -> {
+            double availableHeight = newVal.doubleValue() - 20; // Account for padding
+            if (availableHeight > 300) { // Minimum canvas height
+                canvas.setHeight(Math.min(availableHeight, 1800)); // Max canvas height
+                redraw();
+            }
+        });
+
         // --- Initialize Controls ---
         sizeSlider.setValue(viewModel.activeStrokeWidth.get());
         colorPicker.setValue(viewModel.activeColor.get());
