@@ -64,7 +64,7 @@ public class LoginPage extends FrostedBackgroundPanel {
 
         JPanel titleWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
         titleWrapper.setOpaque(false);
-        titleLabel = new JLabel("IIT Palakkad Meet");
+        titleLabel = new JLabel("VARTΛŁΛpp");
         titleLabel.setFont(FontUtil.getJetBrainsMono(32f, Font.BOLD));
         titleWrapper.add(titleLabel);
         content.add(titleWrapper);
