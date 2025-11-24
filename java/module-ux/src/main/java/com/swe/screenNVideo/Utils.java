@@ -4,12 +4,16 @@
 
 package com.swe.screenNVideo;
 
+import com.swe.controller.RPCinterface.AbstractRPC;
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Utility class for ScreenN Video.
@@ -124,6 +128,41 @@ public class Utils {
     }
 
 
+    // Static RPC instance and cached IP
+    private static AbstractRPC rpcInstance = null;
+    private static String cachedIP = null;
+
+    /**
+     * Initializes the RPC instance for IP retrieval.
+     * Should be called once during application startup.
+     * @param rpc The RPC instance to use for IP retrieval
+     */
+    public static void initializeRPC(AbstractRPC rpc) {
+        rpcInstance = rpc;
+    }
+
+    public static String getSelfIP() {
+        // Return cached IP if available
+        if (cachedIP != null) {
+            return cachedIP;
+        }
+
+        // Use RPC to get IP address
+        if (rpcInstance == null) {
+            throw new RuntimeException("RPC instance not initialized. Call Utils.initializeRPC() first.");
+        }
+
+        try {
+            byte[] response = rpcInstance.call("core/ip", new byte[0]).get();
+            cachedIP = new String(response, StandardCharsets.UTF_8).trim();
+            return cachedIP;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Failed to get IP address via RPC", e);
+        }
+    }
+
+    // Old implementation - commented out
+    /*
     public static String getSelfIP() {
         // Get IP address as string
         try (DatagramSocket socket = new DatagramSocket()) {
@@ -133,5 +172,6 @@ public class Utils {
             throw new RuntimeException(e);
         }
     }
+    */
 
 }

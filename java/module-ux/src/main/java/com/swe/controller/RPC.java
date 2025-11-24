@@ -13,20 +13,28 @@ public class RPC implements AbstractRPC {
     HashMap<String, Function<byte[], byte[]>> methods;
 
     private SocketryServer socketryServer;
+    private boolean isConnected = false;
 
     public RPC() {
         methods = new HashMap<>();
     }
 
     public void subscribe(String methodName, Function<byte[], byte[]> method) {
+        // if (isConnected) {
+        //     throw new RuntimeException("Already connected to a port");
+        // }
         methods.put(methodName, method);
     }
 
     public Thread connect(int portNumber) throws IOException, InterruptedException, ExecutionException {
+        if (isConnected) {
+            return null;
+        }
         System.out.println("Connecting to port: " + portNumber + " " + methods.keySet());
         socketryServer = new SocketryServer(portNumber, methods);
         Thread rpcThread = new Thread(socketryServer::listenLoop);
         rpcThread.start();
+        isConnected = true;
         return rpcThread;
     }
 
