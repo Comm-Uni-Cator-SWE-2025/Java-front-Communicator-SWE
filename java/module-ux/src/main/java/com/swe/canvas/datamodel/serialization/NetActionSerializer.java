@@ -44,8 +44,10 @@ public final class NetActionSerializer {
         sb.append("{");
 
         // 1. Core Metadata Fields
-        sb.append(JsonUtils.jsonEscape("ActionId")).append(":").append(JsonUtils.jsonEscape(action.getActionId())).append(",");
-        sb.append(JsonUtils.jsonEscape("ActionType")).append(":").append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
+        sb.append(JsonUtils.jsonEscape("ActionId")).append(":")
+                .append(JsonUtils.jsonEscape(action.getActionId())).append(",");
+        sb.append(JsonUtils.jsonEscape("ActionType")).append(":")
+                .append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
         
         
 
@@ -77,8 +79,11 @@ public final class NetActionSerializer {
     /**
      * Manually deserializes a JSON string back into a concrete Action object.
      *
-     * IMPORTANT: This method must use the Action subclass constructors
-     * (e.g., CreateShapeAction, ModifyShapeAction) for correct object creation.
+     * <p>IMPORTANT: This method must use the Action subclass constructors
+     * (e.g., CreateShapeAction, ModifyShapeAction) for correct object creation.</p>
+     *
+     * @param json The JSON string to deserialize.
+     * @return The deserialized Action object.
      */
     public static Action deserializeAction(final String json) {
         if (json == null || json.isEmpty() || "null".equals(json)) {

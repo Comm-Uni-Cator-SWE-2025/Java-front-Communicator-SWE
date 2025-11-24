@@ -1,16 +1,10 @@
-/**
- *  Contributed by Kishore & Jyoti.
- */
 package com.swe.ux.views;
 
 import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.model.analytics.SentimentPoint;
 import com.swe.ux.service.MessageDataService;
-import com.swe.ux.viewmodels.ShapeViewModel;
 import com.swe.ux.viewmodels.MeetingViewModel;
-import com.swe.ux.viewmodels.SentimentViewModel;
-import com.swe.ux.views.ScreenVideoTelemetryView;
 import com.swe.ux.viewmodels.ShapeViewModel;
 import com.swe.ux.viewmodels.SentimentViewModel;
 import com.swe.ux.viewmodels.ScreenVideoTelemetryViewModel;
@@ -42,48 +36,101 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 
-import javax.swing.SwingUtilities;
-
 /**
  * JavaFX pane that renders the Sentiment + Shape analytics dashboard.
  * Extracted from the standalone SentimentView application so it can be embedded
  * in Swing.
+ * Contributed by Kishore & Jyoti.
  */
 public class SentimentViewPane extends StackPane {
+    /** Default padding value. */
+    private static final int DEFAULT_PADDING = 10;
+    /** Default spacing value. */
+    private static final int DEFAULT_SPACING = 10;
+    /** Default gap value. */
+    private static final int DEFAULT_GAP = 5;
+    /** Default preferred width. */
+    private static final int PREFERRED_WIDTH = 1200;
+    /** Default preferred height. */
+    private static final int PREFERRED_HEIGHT = 800;
+    /** Animation duration in milliseconds. */
+    private static final int ANIMATION_DURATION_MS = 500;
+    /** Timer interval in milliseconds. */
+    private static final int TIMER_INTERVAL_MS = 1000;
+    /** Bar chart category gap. */
+    private static final int BAR_CHART_CATEGORY_GAP = 30;
+    /** Number of color options. */
+    private static final int COLOR_COUNT = 4;
+    /** Message box padding. */
+    private static final int MESSAGE_BOX_PADDING = 10;
+    /** Message box spacing. */
+    private static final int MESSAGE_BOX_SPACING = 5;
+    /** Font size for title label. */
+    private static final int TITLE_FONT_SIZE = 14;
+    /** Font size for message label. */
+    private static final int MESSAGE_FONT_SIZE = 12;
+    /** Content snippet max length. */
+    private static final int CONTENT_SNIPPET_MAX_LENGTH = 20;
+
+    /** Sentiment view model. */
     private final SentimentViewModel viewModel;
+    /** Shape view model. */
     private final ShapeViewModel shapeViewModel;
+    /** Telemetry view model. */
     private final ScreenVideoTelemetryViewModel telemetryViewModel;
+    /** Message data service. */
     private final MessageDataService messageDataService;
+    /** All messages list. */
     private final List<String> allMessages;
 
+    /** Root grid pane. */
     private GridPane root;
+    /** Top left pane. */
     private VBox topLeftPane;
+    /** Top right pane. */
     private VBox topRightPane;
+    /** Bottom left pane. */
     private VBox bottomLeftPane;
+    /** Bottom right pane. */
     private VBox bottomRightPane;
+    /** Telemetry view. */
     private ScreenVideoTelemetryView telemetryView;
+    /** Message container. */
     private VBox messageContainer;
+    /** Message scroll pane. */
     private ScrollPane messageScrollPane;
+    /** Line chart. */
     private LineChart<Number, Number> chart;
+    /** X axis. */
     private NumberAxis xAxis;
+    /** Y axis. */
     private NumberAxis yAxis;
+    /** Bar chart. */
     private BarChart<String, Number> barChart;
+    /** Category axis. */
     private CategoryAxis categoryAxis;
+    /** Bar Y axis. */
     private NumberAxis barYAxis;
-    AbstractRPC rpc;
-    MeetingViewModel meetingViewModel;
+    /** RPC instance. */
+    private AbstractRPC rpc;
+    /** Meeting view model. */
+    private MeetingViewModel meetingViewModel;
 
-    public SentimentViewPane(MeetingViewModel meetingViewModel) {
-        this.rpc = meetingViewModel.rpc;
-        this.meetingViewModel = meetingViewModel;
+    /**
+     * Creates a new SentimentViewPane.
+     * @param meetingViewModelParam The meeting view model
+     */
+    public SentimentViewPane(final MeetingViewModel meetingViewModelParam) {
+        this.rpc = meetingViewModelParam.getRpc();
+        this.meetingViewModel = meetingViewModelParam;
         this.viewModel = new SentimentViewModel(rpc);
         this.shapeViewModel = new ShapeViewModel();
         this.telemetryViewModel = new ScreenVideoTelemetryViewModel();
         this.messageDataService = new MessageDataService();
         this.allMessages = new ArrayList<>();
 
-        setPadding(new Insets(10));
-        setPrefSize(1200, 800);
+        setPadding(new Insets(DEFAULT_PADDING));
+        setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
 
         buildLayout();
         bindPaneSizing();
@@ -93,29 +140,29 @@ public class SentimentViewPane extends StackPane {
     private void buildLayout() {
         System.out.println("Building Sentiment View Pane Layout...");
         root = new GridPane();
-        root.setHgap(5);
-        root.setVgap(5);
+        root.setHgap(DEFAULT_GAP);
+        root.setVgap(DEFAULT_GAP);
         root.setPadding(new Insets(0));
 
-        topLeftPane = new VBox(10);
-        topLeftPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: 10;");
+        topLeftPane = new VBox(DEFAULT_SPACING);
+        topLeftPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: " + DEFAULT_PADDING + ";");
         topLeftPane.setMinHeight(0);
         topLeftPane.setMinWidth(0);
 
-        topRightPane = new VBox(10);
-        topRightPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: 10;");
+        topRightPane = new VBox(DEFAULT_SPACING);
+        topRightPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: " + DEFAULT_PADDING + ";");
         topRightPane.setMinHeight(0);
         topRightPane.setMinWidth(0);
 
-        bottomLeftPane = new VBox(10);
-        bottomLeftPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: 10;");
+        bottomLeftPane = new VBox(DEFAULT_SPACING);
+        bottomLeftPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: " + DEFAULT_PADDING + ";");
         bottomLeftPane.setMinHeight(0);
         bottomLeftPane.setMinWidth(0);
 
         setupMessagePane();
 
-        bottomRightPane = new VBox(10);
-        bottomRightPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: 10;");
+        bottomRightPane = new VBox(DEFAULT_SPACING);
+        bottomRightPane.setStyle("-fx-border-color: gray; -fx-border-width: 1; -fx-padding: " + DEFAULT_PADDING + ";");
         bottomRightPane.setMinHeight(0);
         bottomRightPane.setMinWidth(0);
         telemetryView = new ScreenVideoTelemetryView(telemetryViewModel);
@@ -137,8 +184,8 @@ public class SentimentViewPane extends StackPane {
         root.add(bottomLeftPane, 0, 1);
         root.add(bottomRightPane, 1, 1);
 
-        Button prevBtn = new Button("Previous");
-        Button nextBtn = new Button("Next");
+        final Button prevBtn = new Button("Previous");
+        final Button nextBtn = new Button("Next");
 
         prevBtn.setOnAction(e -> {
             viewModel.movePrevious();
@@ -150,11 +197,11 @@ public class SentimentViewPane extends StackPane {
             updateChartWithAnimation(true);
         });
 
-        HBox buttonBox = new HBox(10);
+        final HBox buttonBox = new HBox(DEFAULT_SPACING);
         buttonBox.getChildren().addAll(prevBtn, nextBtn);
 
-        Button shapePrevBtn = new Button("Previous");
-        Button shapeNextBtn = new Button("Next");
+        final Button shapePrevBtn = new Button("Previous");
+        final Button shapeNextBtn = new Button("Next");
 
         shapePrevBtn.setOnAction(e -> {
             shapeViewModel.movePrevious();
@@ -166,7 +213,7 @@ public class SentimentViewPane extends StackPane {
             updateBarChartWithAnimation(true);
         });
 
-        HBox shapeButtonBox = new HBox(10);
+        final HBox shapeButtonBox = new HBox(DEFAULT_SPACING);
         shapeButtonBox.getChildren().addAll(shapePrevBtn, shapeNextBtn);
 
         createChart();
@@ -188,42 +235,42 @@ public class SentimentViewPane extends StackPane {
         heightProperty().addListener((obs, oldVal, newVal) -> updatePaneHeights(newVal.doubleValue()));
     }
 
-    private void updatePaneWidths(double width) {
+    private void updatePaneWidths(final double width) {
         if (width <= 0) {
             return;
         }
-        double halfWidth = width / 2;
+        final double halfWidth = width / 2;
         setPaneWidth(topLeftPane, halfWidth);
         setPaneWidth(topRightPane, halfWidth);
         setPaneWidth(bottomLeftPane, halfWidth);
         setPaneWidth(bottomRightPane, halfWidth);
     }
 
-    private void updatePaneHeights(double height) {
+    private void updatePaneHeights(final double height) {
         if (height <= 0) {
             return;
         }
-        double halfHeight = height / 2;
+        final double halfHeight = height / 2;
         setPaneHeight(topLeftPane, halfHeight);
         setPaneHeight(topRightPane, halfHeight);
         setPaneHeight(bottomLeftPane, halfHeight);
         setPaneHeight(bottomRightPane, halfHeight);
     }
 
-    private void setPaneWidth(Region pane, double width) {
+    private void setPaneWidth(final Region pane, final double width) {
         pane.setMaxWidth(width);
     }
 
-    private void setPaneHeight(Region pane, double height) {
+    private void setPaneHeight(final Region pane, final double height) {
         pane.setMaxHeight(height);
     }
 
     private void setupMessagePane() {
-        Label titleLabel = new Label("Messages");
-        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        final Label titleLabel = new Label("Messages");
+        titleLabel.setStyle("-fx-font-size: " + TITLE_FONT_SIZE + "px; -fx-font-weight: bold;");
 
-        messageContainer = new VBox(10);
-        messageContainer.setPadding(new Insets(5));
+        messageContainer = new VBox(DEFAULT_SPACING);
+        messageContainer.setPadding(new Insets(MESSAGE_BOX_SPACING));
 
         messageScrollPane = new ScrollPane(messageContainer);
         messageScrollPane.setFitToWidth(true);
@@ -237,8 +284,8 @@ public class SentimentViewPane extends StackPane {
     }
 
     private void updateMessages() {
-        String json = messageDataService.fetchNextData(rpc);
-        List<String> messages = messageDataService.parseJson(json);
+        final String json = messageDataService.fetchNextData(rpc);
+        final List<String> messages = messageDataService.parseJson(json);
 
         for (int i = messages.size() - 1; i >= 0; i--) {
             allMessages.add(0, messages.get(i));
@@ -246,16 +293,17 @@ public class SentimentViewPane extends StackPane {
 
         messageContainer.getChildren().clear();
 
-        for (int i = 0; i < allMessages.size(); i += 2) {
-            HBox row = new HBox(10);
+        final int stepSize = 2;
+        for (int i = 0; i < allMessages.size(); i += stepSize) {
+            final HBox row = new HBox(DEFAULT_SPACING);
             row.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-            VBox box1 = createMessageBox(allMessages.get(i), i);
+            final VBox box1 = createMessageBox(allMessages.get(i), i);
             HBox.setHgrow(box1, Priority.ALWAYS);
             row.getChildren().add(box1);
 
             if (i + 1 < allMessages.size()) {
-                VBox box2 = createMessageBox(allMessages.get(i + 1), i + 1);
+                final VBox box2 = createMessageBox(allMessages.get(i + 1), i + 1);
                 HBox.setHgrow(box2, Priority.ALWAYS);
                 row.getChildren().add(box2);
             }
@@ -264,20 +312,22 @@ public class SentimentViewPane extends StackPane {
         }
     }
 
-    private VBox createMessageBox(String message, int index) {
-        VBox box = new VBox(5);
-        box.setPadding(new Insets(10));
+    private VBox createMessageBox(final String message, final int index) {
+        final VBox box = new VBox(MESSAGE_BOX_SPACING);
+        box.setPadding(new Insets(MESSAGE_BOX_PADDING));
+        final int borderRadius = 5;
+        final int borderWidth = 1;
         box.setStyle(
-                "-fx-background-color: " + getColorByIndex(index) + ";" +
-                        "-fx-background-radius: 5;" +
-                        "-fx-border-color: #cccccc;" +
-                        "-fx-border-radius: 5;" +
-                        "-fx-border-width: 1;");
+                "-fx-background-color: " + getColorByIndex(index) + ";"
+                        + "-fx-background-radius: " + borderRadius + ";"
+                        + "-fx-border-color: #cccccc;"
+                        + "-fx-border-radius: " + borderRadius + ";"
+                        + "-fx-border-width: " + borderWidth + ";");
         box.setMaxWidth(Double.MAX_VALUE);
 
-        Label messageLabel = new Label(message);
+        final Label messageLabel = new Label(message);
         messageLabel.setWrapText(true);
-        messageLabel.setStyle("-fx-text-fill: #333333; -fx-font-size: 12px;");
+        messageLabel.setStyle("-fx-text-fill: #333333; -fx-font-size: " + MESSAGE_FONT_SIZE + "px;");
         messageLabel.setMaxWidth(Double.MAX_VALUE);
 
         box.getChildren().add(messageLabel);
@@ -285,14 +335,14 @@ public class SentimentViewPane extends StackPane {
         return box;
     }
 
-    private String getColorByIndex(int index) {
-        String[] colors = {
-                "#E3F2FD",
-                "#F3E5F5",
-                "#E8F5E9",
-                "#FFF3E0"
+    private String getColorByIndex(final int index) {
+        final String[] colors = {
+            "#E3F2FD",
+            "#F3E5F5",
+            "#E8F5E9",
+            "#FFF3E0",
         };
-        return colors[index % 4];
+        return colors[index % COLOR_COUNT];
     }
 
     private void createChart() {
@@ -315,7 +365,7 @@ public class SentimentViewPane extends StackPane {
         barChart = new BarChart<>(categoryAxis, barYAxis);
         barChart.setTitle("Shape Count Distribution (Last 3 Snapshots)");
         barChart.setAnimated(false);
-        barChart.setCategoryGap(30);
+        barChart.setCategoryGap(BAR_CHART_CATEGORY_GAP);
         barChart.setBarGap(0);
         barChart.setLegendVisible(true);
     }
@@ -324,8 +374,8 @@ public class SentimentViewPane extends StackPane {
         updateBarChartWithAnimation(false);
     }
 
-    private void updateBarChartWithAnimation(boolean animate) {
-        ObservableList<ShapeCount> windowData = shapeViewModel.getWindowData();
+    private void updateBarChartWithAnimation(final boolean animate) {
+        final ObservableList<ShapeCount> windowData = shapeViewModel.getWindowData();
 
         barChart.getData().clear();
 
@@ -333,25 +383,25 @@ public class SentimentViewPane extends StackPane {
             return;
         }
 
-        XYChart.Series<String, Number> freeHandSeries = new XYChart.Series<>();
+        final XYChart.Series<String, Number> freeHandSeries = new XYChart.Series<>();
         freeHandSeries.setName("Free Hand");
 
-        XYChart.Series<String, Number> straightLineSeries = new XYChart.Series<>();
+        final XYChart.Series<String, Number> straightLineSeries = new XYChart.Series<>();
         straightLineSeries.setName("Straight Line");
 
-        XYChart.Series<String, Number> rectangleSeries = new XYChart.Series<>();
+        final XYChart.Series<String, Number> rectangleSeries = new XYChart.Series<>();
         rectangleSeries.setName("Rectangle");
 
-        XYChart.Series<String, Number> ellipseSeries = new XYChart.Series<>();
+        final XYChart.Series<String, Number> ellipseSeries = new XYChart.Series<>();
         ellipseSeries.setName("Ellipse");
 
-        XYChart.Series<String, Number> triangleSeries = new XYChart.Series<>();
+        final XYChart.Series<String, Number> triangleSeries = new XYChart.Series<>();
         triangleSeries.setName("Triangle");
 
-        int startIndex = shapeViewModel.getCurrentStartIndex();
+        final int startIndex = shapeViewModel.getCurrentStartIndex();
         for (int i = 0; i < windowData.size(); i++) {
-            ShapeCount data = windowData.get(i);
-            String snapshotLabel = "T" + (startIndex + i + 1);
+            final ShapeCount data = windowData.get(i);
+            final String snapshotLabel = "T" + (startIndex + i + 1);
 
             freeHandSeries.getData().add(new XYChart.Data<>(snapshotLabel, data.getFreeHand()));
             straightLineSeries.getData().add(new XYChart.Data<>(snapshotLabel, data.getStraightLine()));
@@ -371,17 +421,19 @@ public class SentimentViewPane extends StackPane {
 
         if (animate) {
             // Placeholder for future animated transitions if needed
+            // No action needed at this time
+            return;
         }
     }
 
     private void applyBarColors() {
         Platform.runLater(() -> {
-            String[] colors = {
-                    "#3498db",
-                    "#e74c3c",
-                    "#2ecc71",
-                    "#f39c12",
-                    "#9b59b6"
+            final String[] colors = {
+                "#3498db",
+                "#e74c3c",
+                "#2ecc71",
+                "#f39c12",
+                "#9b59b6",
             };
 
             for (int i = 0; i < barChart.getData().size() && i < colors.length; i++) {
@@ -398,35 +450,36 @@ public class SentimentViewPane extends StackPane {
         updateChartWithAnimation(false);
     }
 
-    private void updateChartWithAnimation(boolean animate) {
-        XYChart.Series<Number, Number> series = new XYChart.Series<>();
+    private void updateChartWithAnimation(final boolean animate) {
+        final XYChart.Series<Number, Number> series = new XYChart.Series<>();
         series.setName("Sentiment Trend");
 
-        int startIndex = viewModel.getCurrentStartIndex();
+        final int startIndex = viewModel.getCurrentStartIndex();
 
         for (int i = 0; i < viewModel.getWindowData().size(); i++) {
-            SentimentPoint point = viewModel.getWindowData().get(i);
+            final SentimentPoint point = viewModel.getWindowData().get(i);
             series.getData().add(new XYChart.Data<>(startIndex + i, point.getSentiment()));
         }
 
         if (!viewModel.getAllData().isEmpty()) {
-            double targetLowerBound = viewModel.lowerBoundProperty().get();
-            double targetUpperBound = viewModel.upperBoundProperty().get();
-            double targetMinY = viewModel.minYProperty().get();
-            double targetMaxY = viewModel.maxYProperty().get();
+            final double targetLowerBound = viewModel.lowerBoundProperty().get();
+            final double targetUpperBound = viewModel.upperBoundProperty().get();
+            final double targetMinY = viewModel.minYProperty().get();
+            final double targetMaxY = viewModel.maxYProperty().get();
 
             if (animate) {
-                Timeline timeline = new Timeline();
+                final Timeline timeline = new Timeline();
 
                 xAxis.setAutoRanging(false);
                 yAxis.setAutoRanging(false);
 
-                KeyValue kvXLower = new KeyValue(xAxis.lowerBoundProperty(), targetLowerBound);
-                KeyValue kvXUpper = new KeyValue(xAxis.upperBoundProperty(), targetUpperBound);
-                KeyValue kvYLower = new KeyValue(yAxis.lowerBoundProperty(), targetMinY);
-                KeyValue kvYUpper = new KeyValue(yAxis.upperBoundProperty(), targetMaxY);
+                final KeyValue kvXLower = new KeyValue(xAxis.lowerBoundProperty(), targetLowerBound);
+                final KeyValue kvXUpper = new KeyValue(xAxis.upperBoundProperty(), targetUpperBound);
+                final KeyValue kvYLower = new KeyValue(yAxis.lowerBoundProperty(), targetMinY);
+                final KeyValue kvYUpper = new KeyValue(yAxis.upperBoundProperty(), targetMaxY);
 
-                KeyFrame kf = new KeyFrame(Duration.millis(500), kvXLower, kvXUpper, kvYLower, kvYUpper);
+                final KeyFrame kf = new KeyFrame(Duration.millis(ANIMATION_DURATION_MS),
+                        kvXLower, kvXUpper, kvYLower, kvYUpper);
                 timeline.getKeyFrames().add(kf);
                 timeline.play();
             } else {
@@ -446,12 +499,12 @@ public class SentimentViewPane extends StackPane {
     }
 
     private void startPeriodicUpdates() {
-        Timer timer = new Timer(true);
+        final Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
 
-                if (!"You".equals(meetingViewModel.currentUser.getDisplayName())) {
+                if (!"You".equals(meetingViewModel.getCurrentUser().getDisplayName())) {
 
                     // 1️⃣ Run all heavy work OFF the FX thread
                     CompletableFuture
@@ -479,7 +532,7 @@ public class SentimentViewPane extends StackPane {
                             });
                 }
             }
-        }, 0, 1000);
+        }, 0, TIMER_INTERVAL_MS);
     }
 
 }

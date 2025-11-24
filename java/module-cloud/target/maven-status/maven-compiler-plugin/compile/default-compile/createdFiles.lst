@@ -1,8 +1,8 @@
 functionapp/CloudDelete.class
 functionapp/CloudUpdate.class
 cosmosoperations/MockDbConnector.class
-interfaces/ICrashHandler.class
 functionapp/CloudCreate.class
+interfaces/ICrashHandler.class
 cosmosoperations/DbConnectorFactory.class
 cosmosoperations/CosmosOperations.class
 functionapp/CloudPost.class
@@ -10,7 +10,7 @@ datastructures/CloudResponse.class
 datastructures/Entity.class
 functionapp/CloudGet.class
 functionlibrary/CloudFunctionLibrary.class
-interfaces/IdbConnector.class
 functionapp/CloudHelper.class
+interfaces/IdbConnector.class
 datastructures/TimeRange.class
 crashhandler/CrashHandler.class

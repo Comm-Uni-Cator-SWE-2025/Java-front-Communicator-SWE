@@ -1,9 +1,7 @@
 package com.swe.ux.views;
 
 import com.swe.canvas.datamodel.canvas.CanvasState;
-import com.swe.controller.Meeting.UserProfile;
 import com.swe.canvas.datamodel.collaboration.CanvasNetworkService;
-import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.manager.ClientActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
 import com.swe.controller.Meeting.ParticipantRole;
@@ -11,18 +9,46 @@ import com.swe.screenNVideo.Utils;
 import com.swe.ux.App;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
-import com.swe.ux.ui.*;
-import com.swe.ux.viewmodels.*;
+import com.swe.ux.ui.FrostedBackgroundPanel;
+import com.swe.ux.ui.FrostedBadgeLabel;
+import com.swe.ux.ui.FrostedToolbarButton;
+import com.swe.ux.ui.MeetingControlButton;
+import com.swe.ux.ui.MeetingStageTabs;
+import com.swe.ux.ui.ModernTabbedPaneUI;
+import com.swe.ux.ui.QuickDoubtPopup;
+import com.swe.ux.ui.SoftCardPanel;
+import com.swe.ux.ui.ThemeToggleButton;
+import com.swe.ux.ui.FontUtil;
 import com.swe.ux.viewmodels.ChatViewModel;
 import com.swe.ux.viewmodels.MeetingViewModel;
 import com.swe.ux.viewmodels.ParticipantsViewModel;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -32,71 +58,187 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * MeetingPage
+ * MeetingPage.
  *
- * Stage on the left (tabs: Screen + Video, Canvas, AI Insights)
- * Right sidebar with internal tabs: Chat | Participants
+ * <p>Stage on the left (tabs: Screen + Video, Canvas, AI Insights)
+ * Right sidebar with internal tabs: Chat | Participants.
  *
- * - Participants button in header
+ * <p>- Participants button in header
  * - Chat button in bottom bar
  * - Hide Panels in header (toggles sidebar visibility)
  * - Theme-consistent and re-applies custom tab UI on theme changes
  */
 public class MeetingPage extends FrostedBackgroundPanel {
+    /** Minimum sidebar width. */
     private static final int SIDEBAR_MIN_WIDTH = 280;
+    /** Maximum sidebar width. */
     private static final int SIDEBAR_MAX_WIDTH = 520;
+    /** Default sidebar width. */
     private static final int SIDEBAR_DEFAULT_WIDTH = 360;
+    /** Accent blue color. */
     private static final Color ACCENT_BLUE = new Color(82, 140, 255);
+    /** Layout gap size. */
+    private static final int LAYOUT_GAP = 20;
+    /** Border padding size. */
+    private static final int BORDER_PADDING = 24;
+    /** Header card blur radius. */
+    private static final int HEADER_BLUR_RADIUS = 10;
+    /** Header corner radius. */
+    private static final int HEADER_CORNER_RADIUS = 18;
+    /** Header border padding. */
+    private static final int HEADER_BORDER_PADDING = 6;
+    /** Flow layout gap. */
+    private static final int FLOW_LAYOUT_GAP = 10;
+    /** Title font size. */
+    private static final float TITLE_FONT_SIZE = 20.0f;
+    /** Default font size. */
+    private static final float DEFAULT_FONT_SIZE = 12.0f;
+    /** Stage card blur radius. */
+    private static final int STAGE_BLUR_RADIUS = 18;
+    /** Stage layout gap. */
+    private static final int STAGE_LAYOUT_GAP = 12;
+    /** Stage corner radius. */
+    private static final int STAGE_CORNER_RADIUS = 26;
+    /** Stage preferred height. */
+    private static final int STAGE_PREFERRED_HEIGHT = 680;
+    /** Stage border padding. */
+    private static final int STAGE_BORDER_PADDING = 6;
+    /** Stage content border padding. */
+    private static final int STAGE_CONTENT_BORDER = 4;
+    /** Stage minimum width. */
+    private static final int STAGE_MIN_WIDTH = 400;
+    /** Sidebar blur radius. */
+    private static final int SIDEBAR_BLUR_RADIUS = 10;
+    /** Sidebar layout gap. */
+    private static final int SIDEBAR_LAYOUT_GAP = 8;
+    /** Panel blur radius. */
+    private static final int PANEL_BLUR_RADIUS = 12;
+    /** Controls bar blur radius. */
+    private static final int CONTROLS_BLUR_RADIUS = 14;
+    /** Controls corner radius. */
+    private static final int CONTROLS_CORNER_RADIUS = 36;
+    /** Controls layout gap horizontal. */
+    private static final int CONTROLS_GAP_H = 12;
+    /** Controls layout gap vertical. */
+    private static final int CONTROLS_GAP_V = 10;
+    /** Leave button red color component. */
+    private static final int LEAVE_RED = 229;
+    /** Leave button green color component. */
+    private static final int LEAVE_GREEN = 57;
+    /** Leave button blue color component. */
+    private static final int LEAVE_BLUE = 53;
+    /** Leave button alpha color component. */
+    private static final int LEAVE_ALPHA = 200;
+    /** Split pane divider size. */
+    private static final int SPLIT_DIVIDER_SIZE = 10;
+    /** Split pane resize weight. */
+    private static final double SPLIT_RESIZE_WEIGHT = 0.8;
+    /** Timer delay milliseconds. */
+    private static final int TIMER_DELAY_MS = 1000;
+    /** Copy feedback timer delay. */
+    private static final int COPY_FEEDBACK_DELAY_MS = 3000;
+    /** Icon size. */
+    private static final int ICON_SIZE = 18;
+    /** Icon bar width. */
+    private static final int ICON_BAR_WIDTH = 3;
+    /** Icon spacing. */
+    private static final int ICON_SPACING = 4;
+    /** Icon vertical offset. */
+    private static final int ICON_VERTICAL_OFFSET = 3;
+    /** Icon height adjustment. */
+    private static final int ICON_HEIGHT_ADJUST = 6;
+    /** Icon round corner. */
+    private static final int ICON_ROUND_CORNER = 4;
 
+    /** Meeting view model. */
     private final MeetingViewModel meetingViewModel;
 
-    // header / controls
+    /** Header card panel. */
     private SoftCardPanel headerCard;
+    /** Controls bar panel. */
     private SoftCardPanel controlsBar;
+    /** Sidebar toggle button. */
     private JButton sidebarToggleBtn;
+    /** Copy link button. */
     private FrostedToolbarButton btnCopyLink;
 
-    // stage (left)
+    /** Stage card panel. */
     private SoftCardPanel stageCard;
+    /** Stage tabs component. */
     private MeetingStageTabs stageTabs;
+    /** Stage content layout. */
     private CardLayout stageContentLayout;
+    /** Stage content panel. */
     private JPanel stageContentPanel;
 
-    // sidebar (right)
+    /** Center split pane. */
     private JSplitPane centerSplit;
+    /** Sidebar card panel. */
     private SoftCardPanel sidebarCard;
+    /** Sidebar tabs. */
     private JTabbedPane sidebarTabs;
+    /** Sidebar header label. */
     private JLabel sidebarHeaderLabel;
+    /** Chat panel. */
     private JPanel chatPanel;
+    /** Participants panel. */
     private JPanel participantsPanel;
+    /** Sidebar visibility flag. */
     private boolean sidebarVisible = false;
+    /** Last sidebar width. */
     private int lastSidebarWidth = SIDEBAR_DEFAULT_WIDTH;
 
-    // other controls
+    /** Camera control button. */
     private MeetingControlButton btnCamera;
+    /** Share control button. */
     private MeetingControlButton btnShare;
+    /** Leave control button. */
     private MeetingControlButton btnLeave;
+    /** Mute control button. */
     private MeetingControlButton btnMute;
+    /** Raise hand control button. */
     private MeetingControlButton btnRaiseHand;
+    /** Chat control button. */
     private MeetingControlButton btnChat;
+    /** People control button. */
     private MeetingControlButton btnPeople;
 
-    // badges / labels
+    /** Meeting ID badge. */
     private FrostedBadgeLabel meetingIdBadge;
+    /** Live clock label. */
     private JLabel liveClockLabel;
+    /** Role label. */
     private JLabel roleLabel;
+    /** Live timer. */
     private Timer liveTimer;
-    private QuickDoubtPopup quickDoubtPopup;
+    /** Quick doubt popup. */
+    private final QuickDoubtPopup quickDoubtPopup;
+    /** Hand raised flag. */
     private boolean isHandRaised = false;
 
-    public MeetingPage(MeetingViewModel meetingViewModel) {
-        this.meetingViewModel = meetingViewModel;
+    /**
+     * Creates a new MeetingPage.
+     *
+     * @param meetingViewModelParam the meeting view model
+     */
+    public MeetingPage(final MeetingViewModel meetingViewModelParam) {
+        this.meetingViewModel = meetingViewModelParam;
         initializeUI();
         quickDoubtPopup = new QuickDoubtPopup();
         quickDoubtPopup.addPopupMenuListener(new PopupMenuListener() {
-            @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e) { }
-            @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) { handleQuickDoubtClosed(); }
-            @Override public void popupMenuCanceled(PopupMenuEvent e) { handleQuickDoubtClosed(); }
+            @Override
+            public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
+                handleQuickDoubtClosed();
+            }
+
+            @Override
+            public void popupMenuCanceled(final PopupMenuEvent e) {
+                handleQuickDoubtClosed();
+            }
         });
         registerThemeListener();
         setupBindings();
@@ -105,8 +247,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
     }
 
     private void initializeUI() {
-        setLayout(new BorderLayout(20, 20));
-        setBorder(new EmptyBorder(24, 24, 24, 24));
+        setLayout(new BorderLayout(LAYOUT_GAP, LAYOUT_GAP));
+        setBorder(new EmptyBorder(BORDER_PADDING, BORDER_PADDING, BORDER_PADDING, BORDER_PADDING));
 
         // Header
         headerCard = buildHeader();
@@ -123,39 +265,39 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
     // ---------------- Header ----------------
     private SoftCardPanel buildHeader() {
-        SoftCardPanel card = new SoftCardPanel(10);
-        card.setCornerRadius(18);
-        JPanel row = new JPanel();
+        final SoftCardPanel card = new SoftCardPanel(HEADER_BLUR_RADIUS);
+        card.setCornerRadius(HEADER_CORNER_RADIUS);
+        final JPanel row = new JPanel();
         row.setOpaque(false);
         row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
-        row.setBorder(new EmptyBorder(0, 6, 0, 6));
+        row.setBorder(new EmptyBorder(0, HEADER_BORDER_PADDING, 0, HEADER_BORDER_PADDING));
 
-        JPanel leftCluster = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        final JPanel leftCluster = new JPanel(new FlowLayout(FlowLayout.LEFT, FLOW_LAYOUT_GAP, 0));
         leftCluster.setOpaque(false);
-        JLabel title = new JLabel("Live Meeting");
-        title.setFont(FontUtil.getJetBrainsMono(20f, Font.BOLD));
+        final JLabel title = new JLabel("Live Meeting");
+        title.setFont(FontUtil.getJetBrainsMono(TITLE_FONT_SIZE, Font.BOLD));
         leftCluster.add(title);
 
-        ThemeToggleButton toggle = new ThemeToggleButton();
+        final ThemeToggleButton toggle = new ThemeToggleButton();
         leftCluster.add(toggle);
 
         meetingIdBadge = new FrostedBadgeLabel("Meeting: --");
         leftCluster.add(meetingIdBadge);
 
-        FrostedBadgeLabel ipBadge = new FrostedBadgeLabel("IP: " + Utils.getSelfIP());
+        final FrostedBadgeLabel ipBadge = new FrostedBadgeLabel("IP: " + Utils.getSelfIP());
         leftCluster.add(ipBadge);
 
         roleLabel = new JLabel("Role: Guest");
-        roleLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        roleLabel.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE, Font.PLAIN));
         leftCluster.add(roleLabel);
 
         row.add(leftCluster);
         row.add(Box.createHorizontalGlue());
 
-        JPanel rightCluster = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        final JPanel rightCluster = new JPanel(new FlowLayout(FlowLayout.RIGHT, FLOW_LAYOUT_GAP, 0));
         rightCluster.setOpaque(false);
         liveClockLabel = new JLabel("Live: --:--");
-        liveClockLabel.setFont(FontUtil.getJetBrainsMono(12f, Font.PLAIN));
+        liveClockLabel.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE, Font.PLAIN));
         rightCluster.add(liveClockLabel);
 
         btnCopyLink = new FrostedToolbarButton("Copy Link");
@@ -181,17 +323,17 @@ public class MeetingPage extends FrostedBackgroundPanel {
         stageCard = buildStageCard();
         sidebarCard = buildSidebarCard();
 
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, stageCard, sidebarCard);
+        final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, stageCard, sidebarCard);
         split.setOpaque(false);
         split.setBorder(null);
-        split.setDividerSize(10);
-        split.setResizeWeight(0.8); // favor stage area
+        split.setDividerSize(SPLIT_DIVIDER_SIZE);
+        split.setResizeWeight(SPLIT_RESIZE_WEIGHT);
         split.setContinuousLayout(true);
         split.setOneTouchExpandable(false);
         attachSplitListeners(split);
 
-        stageCard.setMinimumSize(new Dimension(400, 0));
-        sidebarCard.setMinimumSize(new Dimension(280, 0));
+        stageCard.setMinimumSize(new Dimension(STAGE_MIN_WIDTH, 0));
+        sidebarCard.setMinimumSize(new Dimension(SIDEBAR_MIN_WIDTH, 0));
 
         // start collapsed
         sidebarCard.setVisible(false);
@@ -200,12 +342,12 @@ public class MeetingPage extends FrostedBackgroundPanel {
     }
 
     private SoftCardPanel buildStageCard() {
-        SoftCardPanel card = new SoftCardPanel(18);
-        card.setLayout(new BorderLayout(12, 12));
-        card.setCornerRadius(26);
-        card.setPreferredSize(new Dimension(0, 680));
+        final SoftCardPanel card = new SoftCardPanel(STAGE_BLUR_RADIUS);
+        card.setLayout(new BorderLayout(STAGE_LAYOUT_GAP, STAGE_LAYOUT_GAP));
+        card.setCornerRadius(STAGE_CORNER_RADIUS);
+        card.setPreferredSize(new Dimension(0, STAGE_PREFERRED_HEIGHT));
 
-        Map<String, String> tabs = new LinkedHashMap<>();
+        final Map<String, String> tabs = new LinkedHashMap<>();
         tabs.put("MEETING", "Meeting");
         tabs.put("CANVAS", "Canvas");
         tabs.put("INSIGHTS", "AI Insights");
@@ -215,26 +357,30 @@ public class MeetingPage extends FrostedBackgroundPanel {
         stageContentLayout = new CardLayout();
         stageContentPanel = new JPanel(stageContentLayout);
         stageContentPanel.setOpaque(false);
-        stageContentPanel.setBorder(new EmptyBorder(2, 2, 2, 6));
+        stageContentPanel.setBorder(new EmptyBorder(STAGE_CONTENT_BORDER, STAGE_CONTENT_BORDER,
+                STAGE_CONTENT_BORDER, STAGE_BORDER_PADDING));
 
-        ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
-        CanvasPage canvasPage;
-        String userId = meetingViewModel.currentUser != null
-                ? meetingViewModel.currentUser.getEmail()
-                : "user-" + System.nanoTime();
+        final ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
+        final CanvasPage canvasPage;
+        final String userId;
+        if (meetingViewModel.getCurrentUser() != null) {
+            userId = meetingViewModel.getCurrentUser().getEmail();
+        } else {
+            userId = "user-" + System.nanoTime();
+        }
 
-        if (meetingViewModel.currentUser.getRole() == ParticipantRole.INSTRUCTOR) {
-            CanvasState hostCanvasState = new CanvasState();
-            HostActionManager hostManager = new HostActionManager(userId, hostCanvasState,
-                    new CanvasNetworkService(meetingViewModel.rpc));
+        if (meetingViewModel.getCurrentUser().getRole() == ParticipantRole.INSTRUCTOR) {
+            final CanvasState hostCanvasState = new CanvasState();
+            final HostActionManager hostManager = new HostActionManager(userId, hostCanvasState,
+                    new CanvasNetworkService(meetingViewModel.getRpc()));
             canvasPage = new CanvasPage(hostManager, userId);
         } else {
-            CanvasState clientCanvasState = new CanvasState();
-            ClientActionManager clientManager = new ClientActionManager(userId, clientCanvasState,
-                    new CanvasNetworkService(meetingViewModel.rpc));
+            final CanvasState clientCanvasState = new CanvasState();
+            final ClientActionManager clientManager = new ClientActionManager(userId, clientCanvasState,
+                    new CanvasNetworkService(meetingViewModel.getRpc()));
             canvasPage = new CanvasPage(clientManager, userId);
         }
-        SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel(meetingViewModel);
+        final SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel(meetingViewModel);
 
         stageContentPanel.add(wrap(screenNVideo), "MEETING");
         stageContentPanel.add(wrap(canvasPage), "CANVAS");
@@ -247,16 +393,17 @@ public class MeetingPage extends FrostedBackgroundPanel {
         return card;
     }
 
-    private JPanel wrap(JPanel p) {
-        JPanel w = new JPanel(new BorderLayout());
+    private JPanel wrap(final JPanel p) {
+        final JPanel w = new JPanel(new BorderLayout());
         w.setOpaque(false);
         w.add(p, BorderLayout.CENTER);
         w.setMinimumSize(new Dimension(0, 0));
-        w.setBorder(new EmptyBorder(4, 4, 4, 4));
+        w.setBorder(new EmptyBorder(STAGE_CONTENT_BORDER, STAGE_CONTENT_BORDER,
+                STAGE_CONTENT_BORDER, STAGE_CONTENT_BORDER));
         return w;
     }
 
-    private void switchStageView(String tabKey) {
+    private void switchStageView(final String tabKey) {
         if (stageContentLayout == null || stageContentPanel == null) {
             return;
         }
@@ -268,16 +415,16 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
     // ---------------- Sidebar ----------------
     private SoftCardPanel buildSidebarCard() {
-        SoftCardPanel sb = new SoftCardPanel(10);
-        sb.setLayout(new BorderLayout(8, 8));
-        sb.setPreferredSize(new Dimension(360, 0));
-        sb.setVisible(false); // start hidden
+        final SoftCardPanel sb = new SoftCardPanel(SIDEBAR_BLUR_RADIUS);
+        sb.setLayout(new BorderLayout(SIDEBAR_LAYOUT_GAP, SIDEBAR_LAYOUT_GAP));
+        sb.setPreferredSize(new Dimension(SIDEBAR_DEFAULT_WIDTH, 0));
+        sb.setVisible(false);
 
-        JPanel sidebarHeader = new JPanel(new BorderLayout());
+        final JPanel sidebarHeader = new JPanel(new BorderLayout());
         sidebarHeader.setOpaque(false);
         sidebarHeaderLabel = new JLabel("Panels");
-        sidebarHeaderLabel.setFont(FontUtil.getJetBrainsMono(20f, Font.BOLD));
-        JButton closeSidebarBtn = new JButton("x");
+        sidebarHeaderLabel.setFont(FontUtil.getJetBrainsMono(TITLE_FONT_SIZE, Font.BOLD));
+        final JButton closeSidebarBtn = new JButton("x");
         closeSidebarBtn.setToolTipText("Hide panel");
         closeSidebarBtn.setFocusPainted(false);
         closeSidebarBtn.setBorderPainted(false);
@@ -303,38 +450,51 @@ public class MeetingPage extends FrostedBackgroundPanel {
     }
 
     private JPanel createParticipantsPanel() {
-        SoftCardPanel panel = new SoftCardPanel(12);
+        final SoftCardPanel panel = new SoftCardPanel(PANEL_BLUR_RADIUS);
         panel.setLayout(new BorderLayout());
-        ParticipantsViewModel pvm = new ParticipantsViewModel(meetingViewModel);
+        final ParticipantsViewModel pvm = new ParticipantsViewModel(meetingViewModel);
         panel.add(new ParticipantsView(pvm), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel createChatPanel() {
-        SoftCardPanel panel = new SoftCardPanel(12);
+        final SoftCardPanel panel = new SoftCardPanel(PANEL_BLUR_RADIUS);
         panel.setLayout(new BorderLayout());
 
-        if (meetingViewModel == null || meetingViewModel.rpc == null) {
-            JLabel fallback = new JLabel("<html><center>Chat unavailable<br>(no RPC connection)</center></html>",
+        if (meetingViewModel == null || meetingViewModel.getRpc() == null) {
+            final JLabel fallback = new JLabel("<html><center>Chat unavailable<br>(no RPC connection)</center></html>",
                     SwingConstants.CENTER);
-            fallback.setFont(FontUtil.getJetBrainsMono(14f, Font.PLAIN));
+            final float fallbackFontSize = 14.0f;
+            fallback.setFont(FontUtil.getJetBrainsMono(fallbackFontSize, Font.PLAIN));
             panel.add(fallback, BorderLayout.CENTER);
             return panel;
         }
 
-        ChatViewModel chatViewModel = new ChatViewModel(meetingViewModel.rpc, meetingViewModel.currentUser);
-        ChatView chatView = new ChatView(chatViewModel);
+        final ChatViewModel chatViewModel = new ChatViewModel(meetingViewModel.getRpc(),
+                meetingViewModel.getCurrentUser());
+        final ChatView chatView = new ChatView(chatViewModel);
         panel.add(chatView, BorderLayout.CENTER);
         return panel;
     }
 
-    private void openSidebarToTab(String tabName) {
-        int widthHint = sidebarCard.isVisible() ? getCurrentSidebarWidth() : lastSidebarWidth;
-        ensureSidebarShowing(widthHint <= 0 ? SIDEBAR_DEFAULT_WIDTH : widthHint);
+    private void openSidebarToTab(final String tabName) {
+        final int widthHint;
+        if (sidebarCard.isVisible()) {
+            widthHint = getCurrentSidebarWidth();
+        } else {
+            widthHint = lastSidebarWidth;
+        }
+        final int finalWidth;
+        if (widthHint <= 0) {
+            finalWidth = SIDEBAR_DEFAULT_WIDTH;
+        } else {
+            finalWidth = widthHint;
+        }
+        ensureSidebarShowing(finalWidth);
 
         // select tab if exists
         for (int i = 0; i < sidebarTabs.getTabCount(); i++) {
-            String title = sidebarTabs.getTitleAt(i);
+            final String title = sidebarTabs.getTitleAt(i);
             if (title != null && title.equalsIgnoreCase(tabName)) {
                 sidebarTabs.setSelectedIndex(i);
                 break;
@@ -345,18 +505,18 @@ public class MeetingPage extends FrostedBackgroundPanel {
             sidebarHeaderLabel.setText(tabName);
         }
         if (btnChat != null) {
-            btnChat.setActive(tabName.equalsIgnoreCase("Chat"));
+            btnChat.setActive("Chat".equalsIgnoreCase(tabName));
         }
         if (btnPeople != null) {
-            btnPeople.setActive(tabName.equalsIgnoreCase("Participants"));
+            btnPeople.setActive("Participants".equalsIgnoreCase(tabName));
         }
 
         refreshLayoutContainers();
     }
 
-    private void handleControlTabButton(String tabName) {
-        String current = getCurrentSidebarTab();
-        if (sidebarCard.isVisible() && current != null && current.equalsIgnoreCase(tabName)) {
+    private void handleControlTabButton(final String tabName) {
+        final String current = getCurrentSidebarTab();
+        if (sidebarCard.isVisible() && current != null && tabName.equalsIgnoreCase(current)) {
             toggleSidebarVisibility();
         } else {
             openSidebarToTab(tabName);
@@ -367,7 +527,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         if (sidebarTabs == null) {
             return null;
         }
-        int idx = sidebarTabs.getSelectedIndex();
+        final int idx = sidebarTabs.getSelectedIndex();
         if (idx < 0 || idx >= sidebarTabs.getTabCount()) {
             return null;
         }
@@ -387,13 +547,18 @@ public class MeetingPage extends FrostedBackgroundPanel {
             }
             collapseSidebarSpace();
         } else {
-            int widthHint = lastSidebarWidth <= 0 ? SIDEBAR_DEFAULT_WIDTH : lastSidebarWidth;
+            final int widthHint;
+            if (lastSidebarWidth <= 0) {
+                widthHint = SIDEBAR_DEFAULT_WIDTH;
+            } else {
+                widthHint = lastSidebarWidth;
+            }
             ensureSidebarShowing(widthHint);
         }
         refreshLayoutContainers();
     }
 
-    private void ensureSidebarShowing(int desiredWidth) {
+    private void ensureSidebarShowing(final int desiredWidth) {
         if (sidebarCard == null) {
             return;
         }
@@ -402,42 +567,52 @@ public class MeetingPage extends FrostedBackgroundPanel {
         setSidebarWidth(desiredWidth);
     }
 
-    private void setSidebarWidth(int desiredWidth) {
+    private void setSidebarWidth(final int desiredWidth) {
         if (centerSplit == null) {
             return;
         }
-        int widthHint = desiredWidth > 0 ? desiredWidth : SIDEBAR_DEFAULT_WIDTH;
+        final int widthHint;
+        if (desiredWidth > 0) {
+            widthHint = desiredWidth;
+        } else {
+            widthHint = SIDEBAR_DEFAULT_WIDTH;
+        }
         if (centerSplit.getWidth() <= 0) {
             final int targetWidth = widthHint;
             SwingUtilities.invokeLater(() -> setSidebarWidth(targetWidth));
             return;
         }
 
-        int totalWidth = centerSplit.getWidth();
-        int clamped = clampSidebarWidth(widthHint, totalWidth);
+        final int totalWidth = centerSplit.getWidth();
+        final int clamped = clampSidebarWidth(widthHint, totalWidth);
         setSidebarWidthInternal(clamped, totalWidth);
     }
 
-    private void setSidebarWidthInternal(int sidebarWidth, int totalWidth) {
+    private void setSidebarWidthInternal(final int sidebarWidth, final int totalWidth) {
         if (centerSplit == null) {
             return;
         }
-        int dividerSize = centerSplit.getDividerSize();
+        final int dividerSize = centerSplit.getDividerSize();
         int dividerLocation = Math.max(0, totalWidth - sidebarWidth - dividerSize);
         dividerLocation = Math.min(dividerLocation, centerSplit.getMaximumDividerLocation());
         centerSplit.setDividerLocation(dividerLocation);
         lastSidebarWidth = sidebarWidth;
     }
 
-    private int clampSidebarWidth(int desiredWidth, int totalWidth) {
-        int dividerSize = centerSplit != null ? centerSplit.getDividerSize() : 0;
-        int availableForSidebar = Math.max(0, totalWidth - dividerSize);
+    private int clampSidebarWidth(final int desiredWidth, final int totalWidth) {
+        final int dividerSize;
+        if (centerSplit != null) {
+            dividerSize = centerSplit.getDividerSize();
+        } else {
+            dividerSize = 0;
+        }
+        final int availableForSidebar = Math.max(0, totalWidth - dividerSize);
         int stageMin = 0;
         if (stageCard != null && stageCard.getMinimumSize() != null) {
             stageMin = stageCard.getMinimumSize().width;
         }
-        int maxAllowable = Math.max(0, availableForSidebar - stageMin);
-        int minWidth = Math.min(SIDEBAR_MIN_WIDTH, maxAllowable);
+        final int maxAllowable = Math.max(0, availableForSidebar - stageMin);
+        final int minWidth = Math.min(SIDEBAR_MIN_WIDTH, maxAllowable);
         int maxWidth = Math.min(SIDEBAR_MAX_WIDTH, maxAllowable);
         if (maxWidth < minWidth) {
             maxWidth = minWidth;
@@ -456,7 +631,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         if (sidebarCard == null) {
             return;
         }
-        int width = getCurrentSidebarWidth();
+        final int width = getCurrentSidebarWidth();
         if (width > 0) {
             lastSidebarWidth = width;
         }
@@ -466,12 +641,12 @@ public class MeetingPage extends FrostedBackgroundPanel {
         if (centerSplit == null) {
             return lastSidebarWidth;
         }
-        int totalWidth = centerSplit.getWidth();
+        final int totalWidth = centerSplit.getWidth();
         if (totalWidth <= 0) {
             return lastSidebarWidth;
         }
-        int dividerLocation = centerSplit.getDividerLocation();
-        int dividerSize = centerSplit.getDividerSize();
+        final int dividerLocation = centerSplit.getDividerLocation();
+        final int dividerSize = centerSplit.getDividerSize();
         return Math.max(0, totalWidth - dividerLocation - dividerSize);
     }
 
@@ -485,7 +660,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         if (sidebarCard == null) {
             return;
         }
-        Container centerPanel = sidebarCard.getParent();
+        final Container centerPanel = sidebarCard.getParent();
         if (centerPanel != null) {
             centerPanel.revalidate();
             centerPanel.repaint();
@@ -500,11 +675,11 @@ public class MeetingPage extends FrostedBackgroundPanel {
         });
     }
 
-    private void attachSplitListeners(JSplitPane split) {
+    private void attachSplitListeners(final JSplitPane split) {
         split.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, evt -> enforceSidebarBounds());
         split.addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized(ComponentEvent e) {
+            public void componentResized(final ComponentEvent e) {
                 enforceSidebarBounds();
             }
         });
@@ -514,16 +689,16 @@ public class MeetingPage extends FrostedBackgroundPanel {
         if (centerSplit == null || !sidebarCard.isVisible()) {
             return;
         }
-        int totalWidth = centerSplit.getWidth();
+        final int totalWidth = centerSplit.getWidth();
         if (totalWidth <= 0) {
             return;
         }
-        int dividerLocation = centerSplit.getDividerLocation();
+        final int dividerLocation = centerSplit.getDividerLocation();
         if (dividerLocation < 0) {
             return;
         }
-        int currentWidth = totalWidth - dividerLocation - centerSplit.getDividerSize();
-        int clamped = clampSidebarWidth(currentWidth, totalWidth);
+        final int currentWidth = totalWidth - dividerLocation - centerSplit.getDividerSize();
+        final int clamped = clampSidebarWidth(currentWidth, totalWidth);
         if (clamped != currentWidth) {
             setSidebarWidthInternal(clamped, totalWidth);
         } else {
@@ -533,9 +708,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
     // ---------------- Controls Bar ----------------
     private SoftCardPanel buildControlsBar() {
-        SoftCardPanel bar = new SoftCardPanel(14);
-        bar.setCornerRadius(36);
-        bar.setLayout(new FlowLayout(FlowLayout.CENTER, 12, 10));
+        final SoftCardPanel bar = new SoftCardPanel(CONTROLS_BLUR_RADIUS);
+        bar.setCornerRadius(CONTROLS_CORNER_RADIUS);
+        bar.setLayout(new FlowLayout(FlowLayout.CENTER, CONTROLS_GAP_H, CONTROLS_GAP_V));
 
         btnMute = new MeetingControlButton("Mute", MeetingControlButton.ControlIcon.MIC);
         btnMute.setAccentColor(ACCENT_BLUE);
@@ -554,8 +729,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
         btnRaiseHand.addActionListener(evt -> toggleQuickDoubt());
 
         btnLeave = new MeetingControlButton("Leave", MeetingControlButton.ControlIcon.LEAVE);
-        Color leaveAccent = new Color(229, 57, 53);
-        btnLeave.setActiveColorOverride(new Color(229, 57, 53, 200));
+        final Color leaveAccent = new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE);
+        btnLeave.setActiveColorOverride(new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE, LEAVE_ALPHA));
         btnLeave.setAccentColor(leaveAccent);
         btnLeave.addActionListener(e -> {
             meetingViewModel.endMeeting();
@@ -584,28 +759,41 @@ public class MeetingPage extends FrostedBackgroundPanel {
     // ---------------- Bindings & Theme ----------------
     private void setupBindings() {
         // update camera/share active states from viewmodel
-        meetingViewModel.isVideoEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
+        meetingViewModel.getIsVideoEnabled().addListener(PropertyListeners.onBooleanChanged(v ->
                 SwingUtilities.invokeLater(() -> btnCamera.setActive(Boolean.TRUE.equals(v)))));
 
-        meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
+        meetingViewModel.getIsScreenShareEnabled().addListener(PropertyListeners.onBooleanChanged(v ->
                 SwingUtilities.invokeLater(() -> btnShare.setActive(Boolean.TRUE.equals(v)))));
 
-        meetingViewModel.isAudioEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
+        meetingViewModel.getIsAudioEnabled().addListener(PropertyListeners.onBooleanChanged(v ->
                 SwingUtilities.invokeLater(() -> btnMute.setActive(Boolean.TRUE.equals(v)))));
 
-        meetingViewModel.meetingId.addListener(evt -> SwingUtilities.invokeLater(() -> meetingIdBadge.setText(
-                meetingViewModel.meetingId.get() == null || meetingViewModel.meetingId.get().isEmpty()
-                        ? "Meeting: --"
-                        : "Meeting: " + meetingViewModel.meetingId.get())));
+        meetingViewModel.getMeetingId().addListener(evt -> SwingUtilities.invokeLater(() -> {
+            final String meetingId = meetingViewModel.getMeetingId().get();
+            final String badgeText;
+            if (meetingId == null || meetingId.isEmpty()) {
+                badgeText = "Meeting: --";
+            } else {
+                badgeText = "Meeting: " + meetingId;
+            }
+            meetingIdBadge.setText(badgeText);
+        }));
 
-        meetingViewModel.role.addListener(evt -> SwingUtilities.invokeLater(() -> roleLabel.setText(
-                "Role: " + (meetingViewModel.role.get() == null || meetingViewModel.role.get().isEmpty() ? "Guest"
-                        : meetingViewModel.role.get()))));
+        meetingViewModel.getRole().addListener(evt -> SwingUtilities.invokeLater(() -> {
+            final String role = meetingViewModel.getRole().get();
+            final String roleText;
+            if (role == null || role.isEmpty()) {
+                roleText = "Role: Guest";
+            } else {
+                roleText = "Role: " + role;
+            }
+            roleLabel.setText(roleText);
+        }));
     }
 
     private void registerThemeListener() {
         try {
-            ThemeManager tm = ThemeManager.getInstance();
+            final ThemeManager tm = ThemeManager.getInstance();
             if (tm != null) {
                 tm.addThemeChangeListener(() -> SwingUtilities.invokeLater(() -> {
                     try {
@@ -627,16 +815,17 @@ public class MeetingPage extends FrostedBackgroundPanel {
     }
 
     private void startLiveClock() {
-        if (liveTimer != null)
+        if (liveTimer != null) {
             liveTimer.stop();
-        liveTimer = new Timer(1000,
+        }
+        liveTimer = new Timer(TIMER_DELAY_MS,
                 e -> liveClockLabel.setText("Live: " + new SimpleDateFormat("hh:mm:ss a").format(new Date())));
         liveTimer.setInitialDelay(0);
         liveTimer.start();
     }
 
     private void copyMeetingId() {
-        String id = meetingViewModel.meetingId.get();
+        final String id = meetingViewModel.getMeetingId().get();
         if (id != null && !id.isEmpty()) {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(id), null);
 
@@ -645,7 +834,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
             btnCopyLink.setEnabled(false);
 
             // Reset after 3 seconds
-            Timer resetTimer = new Timer(3000, e -> {
+            final Timer resetTimer = new Timer(COPY_FEEDBACK_DELAY_MS, e -> {
                 btnCopyLink.setText("Copy Link");
                 btnCopyLink.setEnabled(true);
             });
@@ -677,7 +866,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private void applyTheme() {
         try {
             if (ThemeManager.getInstance() != null) {
-                var theme = ThemeManager.getInstance().getCurrentTheme();
+                final com.swe.ux.theme.Theme theme = ThemeManager.getInstance().getCurrentTheme();
                 if (theme != null) {
                     setBackground(theme.getBackgroundColor());
                     ThemeManager.getInstance().applyThemeRecursively(headerCard);
@@ -710,30 +899,37 @@ public class MeetingPage extends FrostedBackgroundPanel {
         });
     }
 
+    /**
+     * Sidebar toggle icon implementation.
+     */
     private static class SidebarToggleIcon implements Icon {
-        private final int size = 18;
+        /** Icon size. */
+        private static final int SIZE = ICON_SIZE;
 
         @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2 = (Graphics2D) g.create();
+        public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+            final Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Color color = ThemeManager.getInstance().getCurrentTheme().getTextColor();
-            int barWidth = 3;
-            int spacing = 4;
-            for (int i = 0; i < 3; i++) {
-                g2.fillRoundRect(x + i * (barWidth + spacing), y + 3, barWidth, size - 6, 4, 4);
+            final Color color = ThemeManager.getInstance().getCurrentTheme().getTextColor();
+            g2.setColor(color);
+            final int barWidth = ICON_BAR_WIDTH;
+            final int spacing = ICON_SPACING;
+            final int numBars = 3;
+            for (int i = 0; i < numBars; i++) {
+                g2.fillRoundRect(x + i * (barWidth + spacing), y + ICON_VERTICAL_OFFSET, barWidth,
+                        SIZE - ICON_HEIGHT_ADJUST, ICON_ROUND_CORNER, ICON_ROUND_CORNER);
             }
             g2.dispose();
         }
 
         @Override
         public int getIconWidth() {
-            return size;
+            return SIZE;
         }
 
         @Override
         public int getIconHeight() {
-            return size;
+            return SIZE;
         }
     }
 }

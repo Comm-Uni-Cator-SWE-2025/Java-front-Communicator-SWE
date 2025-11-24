@@ -21,50 +21,138 @@ import datastructures.Entity;
 import datastructures.TimeRange;
 import functionlibrary.CloudFunctionLibrary;
 
+/**
+ * Manages theme switching and persistence across the application.
+ */
 public class ThemeManager {
-
+    /**
+     * Singleton instance.
+     */
     private static ThemeManager instance;
 
+    /**
+     * Current theme in use.
+     */
     private Theme currentTheme = new LightTheme();
+    /**
+     * Main frame reference.
+     */
     private JFrame mainFrame;
+    /**
+     * Application instance reference.
+     */
     private App app;
+    /**
+     * List of theme change listeners.
+     */
     private final List<Runnable> themeListeners = new ArrayList<>();
 
+    /**
+     * Cloud library for theme persistence.
+     */
     private final CloudFunctionLibrary cloudLibrary = new CloudFunctionLibrary();
+    /**
+     * Cloud container name for theme data.
+     */
     private static final String THEME_CONTAINER = "UX";
+    /**
+     * Cloud type identifier for theme.
+     */
     private static final String THEME_TYPE = "Theme";
+    /**
+     * Cloud key name for theme value.
+     */
     private static final String THEME_KEY = "color";
 
+    /**
+     * Gets the singleton instance of ThemeManager.
+     *
+     * @return the ThemeManager instance
+     */
     public static synchronized ThemeManager getInstance() {
-        return instance == null ? (instance = new ThemeManager()) : instance;
+        if (instance == null) {
+            instance = new ThemeManager();
+        }
+        return instance;
     }
 
-    public Theme getCurrentTheme() { return currentTheme; }
-    public void setMainFrame(JFrame frame) { this.mainFrame = frame; applyThemeToUIManager(); }
-    public void setApp(App app) { this.app = app; }
-    public void addThemeChangeListener(Runnable r) { if (r != null) themeListeners.add(r); }
+    /**
+     * Gets the current theme.
+     *
+     * @return current theme
+     */
+    public Theme getCurrentTheme() {
+        return currentTheme;
+    }
+
+    /**
+     * Sets the main frame reference.
+     *
+     * @param frame the main JFrame
+     */
+    public void setMainFrame(final JFrame frame) {
+        this.mainFrame = frame;
+        applyThemeToUIManager();
+    }
+
+    /**
+     * Sets the application reference.
+     *
+     * @param application the App instance
+     */
+    public void setApp(final App application) {
+        this.app = application;
+    }
+
+    /**
+     * Adds a theme change listener.
+     *
+     * @param r the Runnable to execute on theme change
+     */
+    public void addThemeChangeListener(final Runnable r) {
+        if (r != null) {
+            themeListeners.add(r);
+        }
+    }
 
 
     // ======================================
     // CLOUD LOAD & SAVE (SIMPLE)
     // ======================================
 
+    /**
+     * Loads theme preference from cloud storage.
+     */
     public void loadThemeFromCloud() {
-        if (app == null || app.getCurrentUser() == null) return;
+        if (app == null || app.getCurrentUser() == null) {
+            return;
+        }
 
-        String username = app.getCurrentUser().getEmail();
+        final String username = app.getCurrentUser().getEmail();
         System.out.println("Loading theme for user: " + username);
-        if (username == null || username.isEmpty()) return;
+        if (username == null || username.isEmpty()) {
+            return;
+        }
 
-        Entity req = new Entity(THEME_CONTAINER, THEME_TYPE, username, THEME_KEY, -1, new TimeRange(0, 0), null);
+        final Entity req = new Entity(THEME_CONTAINER, THEME_TYPE, username,
+                THEME_KEY, -1, new TimeRange(0, 0), null);
         cloudLibrary.cloudGet(req).thenAccept(res -> {
             System.out.println("Theme fetch response: " + res);
             if (res.data() != null) {
                 try {
-                    JsonNode dataNode = res.data();
-                    String themeStr = dataNode.isTextual() ? dataNode.asText() : dataNode.get(THEME_KEY).asText();
-                    
-                    currentTheme = "dark".equalsIgnoreCase(themeStr) ? new DarkTheme() : new LightTheme();
+                    final JsonNode dataNode = res.data();
+                    final String themeStr;
+                    if (dataNode.isTextual()) {
+                        themeStr = dataNode.asText();
+                    } else {
+                        themeStr = dataNode.get(THEME_KEY).asText();
+                    }
+
+                    if ("dark".equalsIgnoreCase(themeStr)) {
+                        currentTheme = new DarkTheme();
+                    } else {
+                        currentTheme = new LightTheme();
+                    }
                     System.out.println("Theme loaded from cloud: " + themeStr);
                     SwingUtilities.invokeLater(this::applyThemeToUI);
                 } catch (Exception e) {
@@ -85,18 +173,28 @@ public class ThemeManager {
     }
 
     private void saveThemeToCloud() {
-        if (app == null || app.getCurrentUser() == null) return;
+        if (app == null || app.getCurrentUser() == null) {
+            return;
+        }
 
         try {
-            String username = app.getCurrentUser().getEmail();
-            if (username == null || username.isEmpty()) return;
+            final String username = app.getCurrentUser().getEmail();
+            if (username == null || username.isEmpty()) {
+                return;
+            }
 
-            String themeValue = currentTheme.isDark() ? "dark" : "light";
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode dataNode = mapper.createObjectNode().put(THEME_KEY, themeValue);
+            final String themeValue;
+            if (currentTheme.isDark()) {
+                themeValue = "dark";
+            } else {
+                themeValue = "light";
+            }
+            final ObjectMapper mapper = new ObjectMapper();
+            final JsonNode dataNode = mapper.createObjectNode().put(THEME_KEY, themeValue);
 
-            Entity req = new Entity(THEME_CONTAINER, THEME_TYPE, username, THEME_KEY, -1, new TimeRange(0, 0), dataNode);
-            
+            final Entity req = new Entity(THEME_CONTAINER, THEME_TYPE, username,
+                    THEME_KEY, -1, new TimeRange(0, 0), dataNode);
+
             // Try to update first, if it fails (doesn't exist), then create it
             cloudLibrary.cloudUpdate(req).thenAccept(response -> {
                 System.out.println("Theme updated in cloud: " + themeValue);
@@ -120,8 +218,15 @@ public class ThemeManager {
     // THEME SWITCH
     // ======================================
 
+    /**
+     * Toggles between light and dark themes.
+     */
     public void toggleTheme() {
-        currentTheme = currentTheme instanceof LightTheme ? new DarkTheme() : new LightTheme();
+        if (currentTheme instanceof LightTheme) {
+            currentTheme = new DarkTheme();
+        } else {
+            currentTheme = new LightTheme();
+        }
         saveThemeToCloud();
         applyThemeToUI();
     }
@@ -142,13 +247,25 @@ public class ThemeManager {
             });
         }
 
-        themeListeners.forEach(r -> { try { r.run(); } catch (Exception ignored) {} });
-        if (app != null) app.refreshTheme();
+        themeListeners.forEach(r -> {
+            try {
+                r.run();
+            } catch (Exception ignored) {
+                // Ignore listener errors
+            }
+        });
+        if (app != null) {
+            app.refreshTheme();
+        }
     }
 
 
     private void applyThemeToUIManager() {
-        try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception ignored) {}
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (Exception ignored) {
+            // Continue with current look and feel
+        }
 
         UIManager.put("Panel.background", currentTheme.getBackgroundColor());
         UIManager.put("Panel.foreground", currentTheme.getTextColor());
@@ -157,22 +274,39 @@ public class ThemeManager {
         UIManager.put("Button.foreground", Color.WHITE);
     }
 
-    private void reapplyTabbedUIs(Container root) {
-        if (root == null) return;
+    private void reapplyTabbedUIs(final Container root) {
+        if (root == null) {
+            return;
+        }
         for (Component c : root.getComponents()) {
-            if (c instanceof JTabbedPane tp) {
+            if (c instanceof JTabbedPane) {
+                final JTabbedPane tp = (JTabbedPane) c;
                 tp.setUI(new ModernTabbedPaneUI());
             }
-            if (c instanceof Container child) reapplyTabbedUIs(child);
+            if (c instanceof Container) {
+                final Container child = (Container) c;
+                reapplyTabbedUIs(child);
+            }
         }
     }
 
 
-    public void applyThemeRecursively(JComponent root) {
-        if (root == null) return;
+    /**
+     * Applies theme recursively to a component tree.
+     *
+     * @param root the root JComponent
+     */
+    public void applyThemeRecursively(final JComponent root) {
+        if (root == null) {
+            return;
+        }
         root.setBackground(currentTheme.getBackgroundColor());
         root.setForeground(currentTheme.getTextColor());
-        for (Component child : root.getComponents())
-            if (child instanceof JComponent jc) applyThemeRecursively(jc);
+        for (Component child : root.getComponents()) {
+            if (child instanceof JComponent) {
+                final JComponent jc = (JComponent) child;
+                applyThemeRecursively(jc);
+            }
+        }
     }
 }

@@ -28,20 +28,74 @@ import com.swe.ux.theme.ThemeManager;
  * Lightweight floating popup used for quick doubt capture.
  */
 public class QuickDoubtPopup extends JPopupMenu {
-
     private static final long serialVersionUID = 1L;
+    /**
+     * Card name for input view.
+     */
     private static final String CARD_INPUT = "input";
+    /**
+     * Card name for summary view.
+     */
     private static final String CARD_SUMMARY = "summary";
+    /**
+     * Border size in pixels.
+     */
+    private static final int BORDER_SIZE = 12;
+    /**
+     * Number of rows for text area.
+     */
+    private static final int TEXT_ROWS = 4;
+    /**
+     * Number of columns for text area.
+     */
+    private static final int TEXT_COLS = 24;
+    /**
+     * Layout spacing in pixels.
+     */
+    private static final int LAYOUT_SPACING = 8;
+    /**
+     * Small layout spacing in pixels.
+     */
+    private static final int LAYOUT_SPACING_SMALL = 6;
+    /**
+     * Y offset in pixels.
+     */
+    private static final int Y_OFFSET = -8;
+    /**
+     * Divisor for calculations.
+     */
+    private static final int DIVISOR = 2;
 
+    /**
+     * Card layout for switching between input and summary.
+     */
     private final CardLayout cardLayout = new CardLayout();
+    /**
+     * Main card panel.
+     */
     private final JPanel cardPanel = new JPanel(cardLayout);
-    private final JTextArea inputArea = new JTextArea(4, 24);
+    /**
+     * Text area for input.
+     */
+    private final JTextArea inputArea = new JTextArea(TEXT_ROWS, TEXT_COLS);
+    /**
+     * Label showing summary.
+     */
     private final JLabel summaryLabel = new JLabel();
+    /**
+     * Label showing timestamp.
+     */
     private final JLabel timestampLabel = new JLabel();
+    /**
+     * Date time formatter.
+     */
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
 
+    /**
+     * Creates a new quick doubt popup.
+     */
     public QuickDoubtPopup() {
-        setBorder(new EmptyBorder(12, 12, 12, 12));
+        setBorder(new EmptyBorder(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE));
         setLightWeightPopupEnabled(true);
         setFocusable(true);
         buildInputCard();
@@ -50,28 +104,39 @@ public class QuickDoubtPopup extends JPopupMenu {
         cardLayout.show(cardPanel, CARD_INPUT);
 
         addPopupMenuListener(new PopupMenuListener() {
-            @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
-            @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) { reset(); }
-            @Override public void popupMenuCanceled(PopupMenuEvent e) { reset(); }
+            @Override
+            public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
+                // No action needed
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
+                reset();
+            }
+
+            @Override
+            public void popupMenuCanceled(final PopupMenuEvent e) {
+                reset();
+            }
         });
     }
 
     private void buildInputCard() {
-        JPanel inputCard = new JPanel(new BorderLayout(8, 8));
+        final JPanel inputCard = new JPanel(new BorderLayout(LAYOUT_SPACING, LAYOUT_SPACING));
         inputCard.setOpaque(false);
-        JLabel title = new JLabel("Quick Doubt");
+        final JLabel title = new JLabel("Quick Doubt");
         title.setFont(title.getFont().deriveFont(title.getFont().getStyle() | Font.BOLD));
         inputCard.add(title, BorderLayout.NORTH);
 
         inputArea.setWrapStyleWord(true);
         inputArea.setLineWrap(true);
-        JScrollPane scrollPane = new JScrollPane(inputArea);
+        final JScrollPane scrollPane = new JScrollPane(inputArea);
         scrollPane.setBorder(new EmptyBorder(0, 0, 0, 0));
         inputCard.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        final JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, LAYOUT_SPACING, 0));
         actionRow.setOpaque(false);
-        JButton send = new JButton("Send");
+        final JButton send = new JButton("Send");
         send.addActionListener(e -> handleSend());
         actionRow.add(send);
 
@@ -80,7 +145,8 @@ public class QuickDoubtPopup extends JPopupMenu {
     }
 
     private void buildSummaryCard() {
-        JPanel summaryCard = new JPanel(new BorderLayout(6, 6));
+        final JPanel summaryCard = new JPanel(new BorderLayout(LAYOUT_SPACING_SMALL,
+                LAYOUT_SPACING_SMALL));
         summaryCard.setOpaque(false);
         summaryLabel.setOpaque(false);
         timestampLabel.setOpaque(false);
@@ -98,21 +164,29 @@ public class QuickDoubtPopup extends JPopupMenu {
         cardLayout.show(cardPanel, CARD_SUMMARY);
     }
 
-    private String sanitize(String text) {
+    private String sanitize(final String text) {
         return text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
 
-    public void showAbove(Component parent) {
+    /**
+     * Shows the popup above a parent component.
+     *
+     * @param parent the parent component
+     */
+    public void showAbove(final Component parent) {
         if (parent == null) {
             return;
         }
-        Dimension size = getPreferredSize();
-        int x = (parent.getWidth() - size.width) / 2;
-        int y = -size.height - 8;
+        final Dimension size = getPreferredSize();
+        final int x = (parent.getWidth() - size.width) / DIVISOR;
+        final int y = -size.height + Y_OFFSET;
         show(parent, Math.max(x, -parent.getWidth()), y);
         SwingUtilities.invokeLater(() -> inputArea.requestFocusInWindow());
     }
 
+    /**
+     * Resets the popup to initial state.
+     */
     public void reset() {
         inputArea.setText("");
         cardLayout.show(cardPanel, CARD_INPUT);
@@ -121,9 +195,9 @@ public class QuickDoubtPopup extends JPopupMenu {
     @Override
     public void updateUI() {
         super.updateUI();
-        Theme theme = ThemeManager.getInstance().getCurrentTheme();
+        final Theme theme = ThemeManager.getInstance().getCurrentTheme();
         if (theme != null && cardPanel != null) {
-            Color bg = theme.getPanelBackground();
+            final Color bg = theme.getPanelBackground();
             cardPanel.setBackground(bg);
             setBackground(bg);
         }

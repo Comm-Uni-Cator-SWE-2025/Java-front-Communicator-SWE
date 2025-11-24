@@ -23,25 +23,46 @@ import com.swe.canvas.datamodel.shape.Shape;
  */
 public class ClientActionManager implements ActionManager {
 
+    /** User ID for this client. */
     private final String userId;
-    private final CanvasState canvasState; // Local mirror
+    /** Local mirror of the canvas state. */
+    private final CanvasState canvasState;
+    /** Factory for creating action instances. */
     private final ActionFactory actionFactory;
+    /** Manager for undo/redo operations. */
     private final UndoRedoManager undoRedoManager;
+    /** Network service for communicating with the host. */
     private final NetworkService networkService;
-    private Runnable onUpdateCallback = () -> {}; // No-op default
+    /** Callback to invoke when updates occur. */
+    private Runnable onUpdateCallback = () -> { }; // No-op default
 
-    public ClientActionManager(final String userId, final CanvasState canvasState, final NetworkService networkService) {
-        this.userId = userId;
-        this.canvasState = canvasState;
-        this.networkService = networkService;
+    /**
+     * Creates a new client action manager.
+     *
+     * @param userIdentifier User ID for this client.
+     * @param canvas Local canvas state.
+     * @param network Network service for communication.
+     */
+    public ClientActionManager(final String userIdentifier, final CanvasState canvas,
+                               final NetworkService network) {
+        this.userId = userIdentifier;
+        this.canvasState = canvas;
+        this.networkService = network;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
         this.networkService.registerClientHandler(this::processIncomingMessage);
     }
 
-    public ClientActionManager(final String userId, final CanvasState canvasState,
+    /**
+     * Creates a new client action manager with RPC.
+     *
+     * @param userIdentifier User ID for this client.
+     * @param canvas Local canvas state.
+     * @param rpc RPC service for communication.
+     */
+    public ClientActionManager(final String userIdentifier, final CanvasState canvas,
                                final AbstractRPC rpc) {
-        this(userId, canvasState, new CanvasNetworkService(rpc));
+        this(userIdentifier, canvas, new CanvasNetworkService(rpc));
     }
 
     @Override
@@ -108,7 +129,7 @@ public class ClientActionManager implements ActionManager {
             final Action inverseAction = actionFactory.createInverseAction(actionToUndo, userId);
             sendActionToHost(inverseAction, MessageType.UNDO);
         } else {
-             System.out.println("[Client " + userId + "] Nothing to undo.");
+            System.out.println("[Client " + userId + "] Nothing to undo.");
         }
     }
 

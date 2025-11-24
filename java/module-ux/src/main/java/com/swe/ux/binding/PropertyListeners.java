@@ -49,6 +49,15 @@ public final class PropertyListeners {
     }
     
     /**
+     * Creates a property change listener that calls the given runnable when the property changes.
+     * @param runnable The runnable to call when the property changes
+     * @return A PropertyChangeListener
+     */
+    public static PropertyChangeListener onChanged(final Runnable runnable) {
+        return (final PropertyChangeEvent evt) -> runnable.run();
+    }
+    
+    /**
      * Creates a property change listener for boolean properties.
      * @param consumer The consumer to call with the new boolean value when the property changes
      * @return A PropertyChangeListener
@@ -84,14 +93,5 @@ public final class PropertyListeners {
      */
     public static PropertyChangeListener onUserProfileChanged(final Consumer<UserProfile> consumer) {
         return onChanged(consumer);
-    }
-    
-    /**
-     * Creates a property change listener that calls the given runnable when the property changes.
-     * @param runnable The runnable to call when the property changes
-     * @return A PropertyChangeListener
-     */
-    public static PropertyChangeListener onChanged(final Runnable runnable) {
-        return (final PropertyChangeEvent evt) -> runnable.run();
     }
 }

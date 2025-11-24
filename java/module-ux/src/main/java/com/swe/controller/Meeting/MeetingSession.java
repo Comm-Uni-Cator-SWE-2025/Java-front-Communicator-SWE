@@ -49,23 +49,23 @@ public class MeetingSession {
     /**
      * Creates a meeting session from JSON deserialization.
      *
-     * @param meetingId the meeting ID
-     * @param createdBy the creator's email
-     * @param createdAt the creation timestamp
-     * @param sessionMode the session mode
-     * @param participants the participants map
+     * @param mtgId the meeting ID
+     * @param creator the creator's email
+     * @param creationTime the creation timestamp
+     * @param mode the session mode
+     * @param participantMap the participants map
      */
     @JsonCreator
     public MeetingSession(
-            @JsonProperty("meetingId") final String meetingId,
-            @JsonProperty("createdBy") final String createdBy,
-            @JsonProperty("createdAt") final long createdAt,
-            @JsonProperty("sessionMode") final SessionMode sessionMode,
-            @JsonProperty("participants") final Map<String, UserProfile> participants) {
-        this.meetingId = meetingId;
-        this.createdBy = createdBy;
-        this.createdAt = createdAt;
-        this.sessionMode = sessionMode;
+            @JsonProperty("meetingId") final String mtgId,
+            @JsonProperty("createdBy") final String creator,
+            @JsonProperty("createdAt") final long creationTime,
+            @JsonProperty("sessionMode") final SessionMode mode,
+            @JsonProperty("participants") final Map<String, UserProfile> participantMap) {
+        this.meetingId = mtgId;
+        this.createdBy = creator;
+        this.createdAt = creationTime;
+        this.sessionMode = mode;
     }
 
     /**

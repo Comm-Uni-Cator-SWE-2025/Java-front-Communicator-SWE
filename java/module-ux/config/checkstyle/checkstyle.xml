@@ -8,12 +8,6 @@
     <property name="severity" value="error"/>
     <property name="fileExtensions" value="java"/>
 
-    <!-- Suppression filter -->
-    <module name="SuppressionFilter">
-        <property name="file" value="${config_loc}/suppressions.xml"/>
-        <property name="optional" value="false"/>
-    </module>
-
     <!-- Checks for whitespace issues -->
     <module name="FileTabCharacter">
         <property name="eachLine" value="true"/>

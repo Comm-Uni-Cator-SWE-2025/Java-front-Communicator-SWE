@@ -1,26 +1,23 @@
 package com.swe.ux.viewmodels;
 
+import com.swe.chat.ChatMessageSerializer;
 import com.swe.chat.FileMessageSerializer;
 import com.swe.chat.MessageVM;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.controller.RPC;
 import com.swe.ux.model.ChatMessage;
-import com.swe.controller.RPC;
-import com.swe.chat.ChatMessageSerializer;
 import com.swe.ux.model.FileMessage;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.time.ZoneId;
-import java.time.LocalDateTime;
-import java.time.Instant;
 
 /**
  * The ViewModel for the Chat module.
@@ -29,30 +26,48 @@ import java.time.Instant;
 public class ChatViewModel {
 
     // --- Dependencies & State ---
-    private static ChatViewModel INSTANCE;
+    /** Singleton instance. */
+    private static ChatViewModel instance;
+    /** RPC instance. */
     private final AbstractRPC rpc;
-    // TODO: In a real app, get this from your AuthService
+    /** User email. */
     private final String userEmail;
+    /** User display name. */
     private final String userDisplayName;
 
 //    private static final long MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
+    /** Message history map. */
     private final Map<String, MessageVM> messageHistory = new ConcurrentHashMap<>();
+    /** Current reply ID. */
     private String currentReplyId = null;
+    /** Attached file. */
     private File attachedFile = null;
 
     // --- View Callbacks ---
+    /** Message added callback. */
     private Consumer<MessageVM> onMessageAdded;
+    /** Reply state change callback. */
     private Consumer<String> onReplyStateChange;
+    /** Clear input callback. */
     private Runnable onClearInput;
+    /** Message removed callback. */
     private Consumer<String> onMessageRemoved;
+    /** Attachment set callback. */
     private Consumer<String> onAttachmentSet;
+    /** Show error dialog callback. */
     private Consumer<String> onShowErrorDialog;
+    /** Show success dialog callback. */
     private Consumer<String> onShowSuccessDialog;
 
     // --- Constructor (Dependency Injection) ---
-    public ChatViewModel(AbstractRPC RPC, UserProfile userProfile) {
-        this.rpc = RPC;
+    /**
+     * Creates a new ChatViewModel.
+     * @param rpcParam The RPC instance
+     * @param userProfile The user profile
+     */
+    public ChatViewModel(final AbstractRPC rpcParam, final UserProfile userProfile) {
+        this.rpc = rpcParam;
         this.userEmail = userProfile.getEmail();
         this.userDisplayName = userProfile.getDisplayName();
         // Subscribe to incoming messages broadcast from the Core
@@ -65,8 +80,15 @@ public class ChatViewModel {
 
 
     // Add this helper method inside ChatViewModel
-    private String formatToLocalTime(LocalDateTime utcDateTime) {
-        if (utcDateTime == null) return "";
+    /**
+     * Formats UTC date time to local time.
+     * @param utcDateTime The UTC date time
+     * @return Formatted local time string
+     */
+    private String formatToLocalTime(final LocalDateTime utcDateTime) {
+        if (utcDateTime == null) {
+            return "";
+        }
         return utcDateTime.atZone(ZoneId.of("UTC"))
                 .withZoneSameInstant(ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
@@ -86,7 +108,13 @@ public class ChatViewModel {
                 System.out.println("------------------------------------------------");
                 System.out.println("ID        : " + vm.getMessageId());
                 System.out.println("Time      : " + vm.getTimestamp());
-                System.out.println("Sender    : " + vm.getUsername() + (vm.isSentByMe() ? " (Me)" : ""));
+                final String senderLabel;
+                if (vm.isSentByMe()) {
+                    senderLabel = " (Me)";
+                } else {
+                    senderLabel = "";
+                }
+                System.out.println("Sender    : " + vm.getUsername() + senderLabel);
 
                 if (vm.isFileMessage()) {
                     System.out.println("Type      : FILE");
@@ -104,12 +132,14 @@ public class ChatViewModel {
     }
 
     /**
-     * HANDLER 1: Text Message from Backend
+     * HANDLER 1: Text Message from Backend.
+     * @param data The message data
+     * @return Empty byte array
      */
-    private byte[] handleBackendTextMessage(byte[] data) {
-        ChatMessage message = ChatMessageSerializer.deserialize(data);
+    private byte[] handleBackendTextMessage(final byte[] data) {
+        final ChatMessage message = ChatMessageSerializer.deserialize(data);
         // Convert UTC LocalDateTime to User's System Default TimeZone
-        String localTime = formatToLocalTime(message.getTimestamp());
+        final String localTime = formatToLocalTime(message.getTimestamp());
 
         handleIncomingMessage(
                 message.getMessageId(),
@@ -126,15 +156,20 @@ public class ChatViewModel {
     }
 
     /**
-     * HANDLER 2: File Metadata from Backend (KEY!)
+     * HANDLER 2: File Metadata from Backend (KEY!).
      *
-     * Backend sends ONLY metadata - NO file data
+     * <p>Backend sends ONLY metadata - NO file data</p>
      */
-    private byte[] handleBackendFileMetadata(byte[] data) {
+    /**
+     * Handles file metadata from backend.
+     * @param data The file metadata data
+     * @return Empty byte array
+     */
+    private byte[] handleBackendFileMetadata(final byte[] data) {
         System.out.println("[FRONT] Received file metadata (no data attached)");
 
         try {
-            FileMessage message = FileMessageSerializer.deserialize(data);
+            final FileMessage message = FileMessageSerializer.deserialize(data);
 
             if (message == null || message.getFileName() == null) {
                 System.err.println("[FRONT] Invalid file metadata");
@@ -142,12 +177,15 @@ public class ChatViewModel {
             }
 
             // Extract compressed size for UI display
-            long compressedSize = (message.getFileContent() != null)
-                    ? message.getFileContent().length
-                    : 0;
+            final long compressedSize;
+            if (message.getFileContent() != null) {
+                compressedSize = message.getFileContent().length;
+            } else {
+                compressedSize = 0;
+            }
 
             // Convert UTC to Local Time
-            String localTime = formatToLocalTime(message.getTimestamp());
+            final String localTime = formatToLocalTime(message.getTimestamp());
 
             handleIncomingMessage(
                     message.getMessageId(),
@@ -169,10 +207,12 @@ public class ChatViewModel {
     }
 
     /**
-     * HANDLER 3: File Save Success
+     * HANDLER 3: File Save Success.
+     * @param data The success message data
+     * @return Empty byte array
      */
-    private byte[] handleFileSaveSuccess(byte[] data) {
-        String message = new String(data, StandardCharsets.UTF_8);
+    private byte[] handleFileSaveSuccess(final byte[] data) {
+        final String message = new String(data, StandardCharsets.UTF_8);
         if (onShowSuccessDialog != null) {
             onShowSuccessDialog.accept("File saved successfully!\n" + message);
         }
@@ -180,42 +220,45 @@ public class ChatViewModel {
     }
 
     /**
-     * HANDLER 4: File Save Error
+     * HANDLER 4: File Save Error.
+     * @param data The error message data
+     * @return Empty byte array
      */
-    private byte[] handleFileSaveError(byte[] data) {
-        String message = new String(data, StandardCharsets.UTF_8);
+    private byte[] handleFileSaveError(final byte[] data) {
+        final String message = new String(data, StandardCharsets.UTF_8);
         if (onShowErrorDialog != null) {
             onShowErrorDialog.accept("Failed to save file: " + message);
         }
         return new byte[0];
     }
 
-    private byte[] handleBackendDelete(byte[] data) {
+    /**
+     * Handles backend delete message.
+     * @param data The message ID data
+     * @return Empty byte array
+     */
+    private byte[] handleBackendDelete(final byte[] data) {
         try {
             // 1. Decode the ID
-            String rawId = new String(data, StandardCharsets.UTF_8);
+            final String rawId = new String(data, StandardCharsets.UTF_8);
 
             // 2. SANITIZE: Important! Trim whitespace/newlines that might break the match
-            String messageId = rawId.trim();
+            final String messageId = rawId.trim();
 
             System.out.println("[FRONT] Received DELETE signal for ID: '" + messageId + "'");
 
             // 3. Look up the message
-            MessageVM oldMsg = messageHistory.get(messageId);
+            final MessageVM oldMsg = messageHistory.get(messageId);
 
             if (oldMsg != null) {
                 // 4. Create the "Deleted" replacement
-                MessageVM deletedMsg = new MessageVM(
+                final MessageVM deletedMsg = new MessageVM(
                         oldMsg.getMessageId(),
                         oldMsg.getUsername(),
                         "<i>This message was deleted</i>", // The specific text your View looks for
-                        null,           // Clear filename
-                        0,              // Clear size
-                        null,           // Clear file content
+                        null,           // Clear file attachment
                         oldMsg.getTimestamp(),
-                        oldMsg.isSentByMe(),
-                        null,           // Remove quote
-                        null            // Remove reply ID
+                        new MessageVM.ReplyContext(oldMsg.isSentByMe(), null, null)
                 );
 
                 // 5. Update History
@@ -238,32 +281,42 @@ public class ChatViewModel {
         return new byte[0];
     }
 
-    public void send(String messageText) {
+    /**
+     * Sends a message.
+     * @param messageText The message text
+     */
+    public void send(final String messageText) {
         if (this.attachedFile != null) {
             sendFileMessage(this.attachedFile, messageText);
         } else if (messageText != null && !messageText.trim().isEmpty()) {
             sendTextMessage(messageText);
         }
 
-        if (onClearInput != null) onClearInput.run();
+        if (onClearInput != null) {
+            onClearInput.run();
+        }
         cancelReply();
         cancelAttachment();
     }
 
-    private void sendTextMessage(String messageText) {
+    /**
+     * Sends a text message.
+     * @param messageTextParam The message text
+     */
+    private void sendTextMessage(final String messageTextParam) {
         final String messageId = UUID.randomUUID().toString();
         final ChatMessage messageToSend = new ChatMessage(
                 messageId,
                 this.userEmail,
                 this.userDisplayName,
-                messageText,
+                messageTextParam,
                 this.currentReplyId
         );
 
-        byte[] messageBytes = ChatMessageSerializer.serialize(messageToSend);
+        final byte[] messageBytes = ChatMessageSerializer.serialize(messageToSend);
         sendRpc("chat:send-text", messageBytes);
 
-        String localTimeFormatted = formatToLocalTime(messageToSend.getTimestamp());
+        final String localTimeFormatted = formatToLocalTime(messageToSend.getTimestamp());
 
         // Optimistic update
         handleIncomingMessage(
@@ -279,9 +332,11 @@ public class ChatViewModel {
     }
 
     /**
-     * SEND FILE - Sends ONLY the path to backend
+     * SEND FILE - Sends ONLY the path to backend.
+     * @param file The file to send
+     * @param caption The file caption
      */
-    private void sendFileMessage(File file, String caption) {
+    private void sendFileMessage(final File file, final String caption) {
         String cleanPath = file.getAbsolutePath().trim();
         if (cleanPath.startsWith("*")) {
             cleanPath = cleanPath.substring(1).trim();
@@ -307,7 +362,7 @@ public class ChatViewModel {
                 this.currentReplyId
         );
 
-        byte[] messageBytes = FileMessageSerializer.serialize(messageToSend);
+        final byte[] messageBytes = FileMessageSerializer.serialize(messageToSend);
         sendRpc("chat:send-file", messageBytes);
 
         // Optimistic UI update
@@ -325,7 +380,11 @@ public class ChatViewModel {
     }
 
 
-    public void downloadFile(MessageVM fileMessage) {
+    /**
+     * Downloads a file message.
+     * @param fileMessage The file message to download
+     */
+    public void downloadFile(final MessageVM fileMessage) {
         if (fileMessage == null || !fileMessage.isFileMessage()) {
             if (onShowErrorDialog != null) {
                 onShowErrorDialog.accept("Invalid file message");
@@ -335,7 +394,7 @@ public class ChatViewModel {
 
         System.out.println("[FRONT] User clicked 'Save'. Requesting backend to decompress and save.");
 
-        byte[] messageIdBytes = fileMessage.getMessageId().getBytes(StandardCharsets.UTF_8);
+        final byte[] messageIdBytes = fileMessage.getMessageId().getBytes(StandardCharsets.UTF_8);
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -356,47 +415,77 @@ public class ChatViewModel {
         });
     }
 
+    /**
+     * Handles incoming message.
+     * @param messageIdParam The message ID
+     * @param userEmailParam The user email
+     * @param senderDisplayNameParam The sender display name
+     * @param formattedTimeParam The formatted time
+     * @param replyToIdParam The reply to ID
+     * @param contentParam The content
+     * @param fileNameParam The file name
+     * @param compressedFileSizeParam The compressed file size
+     * @param fileContentParam The file content
+     */
     private void handleIncomingMessage(
-            String messageId, String userEmail, String senderDisplayName,
-            String formattedTime, String replyToId,
-            String content,              // Text or Caption
-            String fileName,             // File name
-            long compressedFileSize,     // Compressed size (metadata)
-            byte[] fileContent           // NULL except when needed
+            final String messageIdParam, final String userEmailParam, final String senderDisplayNameParam,
+            final String formattedTimeParam, final String replyToIdParam,
+            final String contentParam,              // Text or Caption
+            final String fileNameParam,             // File name
+            final long compressedFileSizeParam,     // Compressed size (metadata)
+            final byte[] fileContentParam           // NULL except when needed
     ) {
-        if (messageHistory.containsKey(messageId)) {
-            System.out.println("[FRONT] Duplicate message ignored: " + messageId);
+        if (messageHistory.containsKey(messageIdParam)) {
+            System.out.println("[FRONT] Duplicate message ignored: " + messageIdParam);
             return;
         }
 
-        final boolean isSentByMe = userEmail.equals(this.userEmail);
-        final String username = isSentByMe ? "You" : senderDisplayName;
+        final boolean isSentByMe = userEmailParam.equals(this.userEmail);
+        final String username;
+        if (isSentByMe) {
+            username = "You";
+        } else {
+            username = senderDisplayNameParam;
+        }
 
         String quotedContent = null;
-        if (replyToId != null) {
-            final MessageVM repliedTo = messageHistory.get(replyToId);
+        if (replyToIdParam != null) {
+            final MessageVM repliedTo = messageHistory.get(replyToIdParam);
             if (repliedTo != null) {
-                String sender = repliedTo.isSentByMe() ? "You" : repliedTo.getUsername();
-                String contentSnippet = repliedTo.isFileMessage() ?
-                        "File: " + repliedTo.getFileName() :
-                        repliedTo.getContent().substring(0, Math.min(repliedTo.getContent().length(), 20)) + "...";
+                final String sender;
+                if (repliedTo.isSentByMe()) {
+                    sender = "You";
+                } else {
+                    sender = repliedTo.getUsername();
+                }
+                final String contentSnippet;
+                if (repliedTo.isFileMessage()) {
+                    contentSnippet = "File: " + repliedTo.getFileName();
+                } else {
+                    final int maxLength = 20;
+                    final int contentLength = repliedTo.getContent().length();
+                    final int endIndex = Math.min(contentLength, maxLength);
+                    contentSnippet = repliedTo.getContent().substring(0, endIndex) + "...";
+                }
                 quotedContent = "Replying to " + sender + ": " + contentSnippet;
             } else {
                 quotedContent = "Reply to unavailable message";
             }
         }
 
-        MessageVM vm = new MessageVM(
-                messageId,
+        // Create file attachment if needed
+        MessageVM.FileAttachment attachment = null;
+        if (fileNameParam != null) {
+            attachment = new MessageVM.FileAttachment(fileNameParam, compressedFileSizeParam, fileContentParam);
+        }
+
+        final MessageVM vm = new MessageVM(
+                messageIdParam,
                 username,
-                content,
-                fileName,
-                compressedFileSize,
-                fileContent,  // Usually NULL!
-                formattedTime,
-                isSentByMe,
-                quotedContent,
-                replyToId
+                contentParam,
+                attachment,
+                formattedTimeParam,
+                new MessageVM.ReplyContext(isSentByMe, quotedContent, replyToIdParam)
         );
 
         messageHistory.put(vm.getMessageId(), vm);
@@ -406,8 +495,14 @@ public class ChatViewModel {
         printMessageHistory();
     }
 
-    public void userSelectedFileToAttach(File selectedFile) {
-        if (selectedFile == null) return;
+    /**
+     * Handles user file selection for attachment.
+     * @param selectedFile The selected file
+     */
+    public void userSelectedFileToAttach(final File selectedFile) {
+        if (selectedFile == null) {
+            return;
+        }
 
         if (selectedFile.length() == 0) {
             if (onShowErrorDialog != null) {
@@ -429,28 +524,28 @@ public class ChatViewModel {
         }
     }
 
-    // In ChatViewModel.java
-
-    public void deleteMessage(MessageVM messageToDelete) {
-        if (messageToDelete == null || !messageToDelete.isSentByMe()) return;
+    /**
+     * Deletes a message.
+     * @param messageToDelete The message to delete
+     */
+    public void deleteMessage(final MessageVM messageToDelete) {
+        if (messageToDelete == null || !messageToDelete.isSentByMe()) {
+            return;
+        }
 
         // 1. Send RPC to backend (keep this)
-        byte[] messageIdBytes = messageToDelete.getMessageId().getBytes(StandardCharsets.UTF_8);
+        final byte[] messageIdBytes = messageToDelete.getMessageId().getBytes(StandardCharsets.UTF_8);
         sendRpc("chat:delete-message", messageIdBytes);
 
         // 2. CREATE THE "DELETED" VERSION OF THE MESSAGE
         // We convert the file or text message into a simple text message with italics
-        MessageVM deletedMsg = new MessageVM(
+        final MessageVM deletedMsg = new MessageVM(
                 messageToDelete.getMessageId(),
                 messageToDelete.getUsername(),
                 "<i>This message was deleted</i>", // HTML italics for styling
-                null,           // FileName is gone
-                0,              // Size is 0
-                null,           // Content is null
+                null,           // No file attachment
                 messageToDelete.getTimestamp(),
-                messageToDelete.isSentByMe(),
-                null,
-                null// Remove any quoted reply content
+                new MessageVM.ReplyContext(messageToDelete.isSentByMe(), null, null)
         );
 
         // 3. UPDATE THE HISTORY (Do not remove!)
@@ -472,15 +567,25 @@ public class ChatViewModel {
 
 
 
+    /**
+     * Cancels the attachment.
+     */
     public void cancelAttachment() {
         this.attachedFile = null;
-        if (onAttachmentSet != null) onAttachmentSet.accept(null);
+        if (onAttachmentSet != null) {
+            onAttachmentSet.accept(null);
+        }
     }
 
-    private void sendRpc(String endpoint, byte[] data) {
+    /**
+     * Sends an RPC call.
+     * @param endpointParam The endpoint
+     * @param dataParam The data
+     */
+    private void sendRpc(final String endpointParam, final byte[] dataParam) {
         CompletableFuture.runAsync(() -> {
             try {
-                this.rpc.call(endpoint, data)
+                this.rpc.call(endpointParam, dataParam)
                         .thenAccept(responseBytes -> {
                             if (responseBytes != null && responseBytes.length > 0) {
                                 System.out.println("[FRONT] Received response from backend");
@@ -502,17 +607,30 @@ public class ChatViewModel {
 
     // --- User Actions ---
 
-    public void startReply(MessageVM messageToReply) {
-        this.currentReplyId = messageToReply.getMessageId();
+    /**
+     * Starts a reply to a message.
+     * @param messageToReplyParam The message to reply to
+     */
+    public void startReply(final MessageVM messageToReplyParam) {
+        this.currentReplyId = messageToReplyParam.getMessageId();
         if (onReplyStateChange != null) {
-            String quoteText = messageToReply.isFileMessage() ?
-                    "Replying to file: " + messageToReply.getFileName() :
-                    "Replying to " + messageToReply.getUsername() + ": " +
-                            messageToReply.getContent().substring(0, Math.min(messageToReply.getContent().length(), 20)) + "...";
+            final String quoteText;
+            final int maxLength = 20;
+            if (messageToReplyParam.isFileMessage()) {
+                quoteText = "Replying to file: " + messageToReplyParam.getFileName();
+            } else {
+                final int contentLength = messageToReplyParam.getContent().length();
+                final int endIndex = Math.min(contentLength, maxLength);
+                quoteText = "Replying to " + messageToReplyParam.getUsername() + ": "
+                        + messageToReplyParam.getContent().substring(0, endIndex) + "...";
+            }
             onReplyStateChange.accept(quoteText);
         }
     }
 
+    /**
+     * Cancels the reply.
+     */
     public void cancelReply() {
         this.currentReplyId = null;
         if (onReplyStateChange != null) {
@@ -521,11 +639,59 @@ public class ChatViewModel {
     }
 
     // --- View Bindings ---
-    public void setOnMessageAdded(Consumer<MessageVM> listener) { this.onMessageAdded = listener; }
-    public void setOnReplyStateChange(Consumer<String> listener) { this.onReplyStateChange = listener; }
-    public void setOnClearInput(Runnable listener) { this.onClearInput = listener; }
-    public void setOnMessageRemoved(Consumer<String> listener) { this.onMessageRemoved = listener; }
-    public void setOnAttachmentSet(Consumer<String> listener) { this.onAttachmentSet = listener; }
-    public void setOnShowErrorDialog(Consumer<String> listener) { this.onShowErrorDialog = listener; }
-    public void setOnShowSuccessDialog(Consumer<String> listener) { this.onShowSuccessDialog = listener; }
+    /**
+     * Sets the message added listener.
+     * @param listener The listener
+     */
+    public void setOnMessageAdded(final Consumer<MessageVM> listener) {
+        this.onMessageAdded = listener;
+    }
+
+    /**
+     * Sets the reply state change listener.
+     * @param listener The listener
+     */
+    public void setOnReplyStateChange(final Consumer<String> listener) {
+        this.onReplyStateChange = listener;
+    }
+
+    /**
+     * Sets the clear input listener.
+     * @param listener The listener
+     */
+    public void setOnClearInput(final Runnable listener) {
+        this.onClearInput = listener;
+    }
+
+    /**
+     * Sets the message removed listener.
+     * @param listener The listener
+     */
+    public void setOnMessageRemoved(final Consumer<String> listener) {
+        this.onMessageRemoved = listener;
+    }
+
+    /**
+     * Sets the attachment set listener.
+     * @param listener The listener
+     */
+    public void setOnAttachmentSet(final Consumer<String> listener) {
+        this.onAttachmentSet = listener;
+    }
+
+    /**
+     * Sets the show error dialog listener.
+     * @param listener The listener
+     */
+    public void setOnShowErrorDialog(final Consumer<String> listener) {
+        this.onShowErrorDialog = listener;
+    }
+
+    /**
+     * Sets the show success dialog listener.
+     * @param listener The listener
+     */
+    public void setOnShowSuccessDialog(final Consumer<String> listener) {
+        this.onShowSuccessDialog = listener;
+    }
 }

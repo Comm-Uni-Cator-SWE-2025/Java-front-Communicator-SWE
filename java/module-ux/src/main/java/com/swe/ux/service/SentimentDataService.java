@@ -13,46 +13,67 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Service for fetching and parsing sentiment data from the core module.
+ */
 public class SentimentDataService {
-    private static final List<String> jsonList = new ArrayList<>();
+    /**
+     * List of JSON sentiment strings.
+     */
+    private static final List<String> JSON_LIST = new ArrayList<>();
+    /**
+     * Current index for cycling through sentiment data.
+     */
     private int currentIndex = 0;
 
-    public String fetchNextData(AbstractRPC rpc) {
+    /**
+     * Fetches the next sentiment data from the core module.
+     *
+     * @param rpc the RPC interface to communicate with core
+     * @return the sentiment data string
+     */
+    public String fetchNextData(final AbstractRPC rpc) {
         String data = null;
         try {
             System.out.println("Fetching Sentiment Data from Core Module...");
-            byte[] json = rpc.call("core/AiSentiment", new byte[0]).get();
+            final byte[] json = rpc.call("core/AiSentiment", new byte[0]).get();
             System.out.println("Received Sentiment Data: " + new String(json));
-            if(json != null){
+            if (json != null) {
                 data = DataSerializer.deserialize(json, String.class);
             }
         } catch (InterruptedException | ExecutionException | JsonProcessingException e) {
             e.printStackTrace();
         }
 
-        if(data == null || data.isEmpty()) {
+        if (data == null || data.isEmpty()) {
             return "";
         }
         
-        jsonList.add(data);
+        JSON_LIST.add(data);
 
-        String response = jsonList.get(currentIndex);
-        currentIndex = (currentIndex + 1) % jsonList.size();
+        final String response = JSON_LIST.get(currentIndex);
+        currentIndex = (currentIndex + 1) % JSON_LIST.size();
         return response;
     }
 
-    public List<SentimentPoint> parseJson(String json) {
-        List<SentimentPoint> points = new ArrayList<>();
+    /**
+     * Parses JSON string to extract sentiment points.
+     *
+     * @param json the JSON string to parse
+     * @return list of sentiment points
+     */
+    public List<SentimentPoint> parseJson(final String json) {
+        final List<SentimentPoint> points = new ArrayList<>();
         
-        String[] parts = json.split("\\{");
-        for (String part : parts) {
+        final String[] parts = json.split("\\{");
+        for (final String part : parts) {
             if (part.contains("sentiment")) {
                 try {
-                    String timePart = part.split("\"time\":")[1].split(",")[0].trim();
-                    String time = timePart.replace("\"", "").replace("Z", "").trim();
+                    final String timePart = part.split("\"time\":")[1].split(",")[0].trim();
+                    final String time = timePart.replace("\"", "").replace("Z", "").trim();
 
-                    String sentimentPart = part.split("\"sentiment\":")[1].split("}")[0].trim();
-                    double sentiment = Double.parseDouble(sentimentPart.replace(",", ""));
+                    final String sentimentPart = part.split("\"sentiment\":")[1].split("}")[0].trim();
+                    final double sentiment = Double.parseDouble(sentimentPart.replace(",", ""));
 
                     points.add(new SentimentPoint(time, sentiment));
                 } catch (Exception e) {

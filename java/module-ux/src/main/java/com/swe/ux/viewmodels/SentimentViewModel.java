@@ -19,28 +19,49 @@ import javafx.collections.ObservableList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * ViewModel for sentiment analytics.
+ */
 public class SentimentViewModel {
+    /** Window size constant. */
+    private static final int WINDOW_SIZE = 10;
+    /** Half window constant. */
+    private static final int HALF_WINDOW = 2;
+    
+    /** Data service for sentiment analytics. */
     private final SentimentDataService dataService;
     
+    /** All sentiment data. */
     private final ObservableList<SentimentPoint> allData;
+    /** Current start index property. */
     private final IntegerProperty currentStartIndex;
+    /** Auto mode property. */
     private final BooleanProperty autoMode;
+    /** Window size property. */
     private final IntegerProperty windowSize;
     
-    // Observable properties for UI binding
+    /** Minimum Y property for UI binding. */
     private final DoubleProperty minY;
+    /** Maximum Y property for UI binding. */
     private final DoubleProperty maxY;
+    /** Lower bound property for UI binding. */
     private final IntegerProperty lowerBound;
+    /** Upper bound property for UI binding. */
     private final IntegerProperty upperBound;
+    /** RPC instance. */
     private final AbstractRPC rpc;
 
-    public SentimentViewModel(AbstractRPC rpc) {
-        this.rpc = rpc;
+    /**
+     * Creates a new SentimentViewModel.
+     * @param rpcParam The RPC instance
+     */
+    public SentimentViewModel(final AbstractRPC rpcParam) {
+        this.rpc = rpcParam;
         this.dataService = new SentimentDataService();
         this.allData = FXCollections.observableArrayList();
         this.currentStartIndex = new SimpleIntegerProperty(0);
         this.autoMode = new SimpleBooleanProperty(true);
-        this.windowSize = new SimpleIntegerProperty(10);
+        this.windowSize = new SimpleIntegerProperty(WINDOW_SIZE);
         
         this.minY = new SimpleDoubleProperty(0);
         this.maxY = new SimpleDoubleProperty(0);
@@ -48,8 +69,11 @@ public class SentimentViewModel {
         this.upperBound = new SimpleIntegerProperty(0);
     }
 
+    /**
+     * Fetches and updates sentiment data.
+     */
     public void fetchAndUpdateData() {
-        String json = dataService.fetchNextData(rpc);
+        final String json = dataService.fetchNextData(rpc);
         
         if (!json.isEmpty()) {
             System.out.println("Updating Sentiment Data with: " + json);
@@ -60,15 +84,15 @@ public class SentimentViewModel {
         calculateViewBounds();
     }
 
-    private void updateData(String json) {
+    private void updateData(final String json) {
         String lastTime = "";
         if (!allData.isEmpty()) {
             lastTime = allData.get(allData.size() - 1).getTime();
         }
 
-        List<SentimentPoint> newPoints = dataService.parseJson(json);
+        final List<SentimentPoint> newPoints = dataService.parseJson(json);
         
-        for (SentimentPoint point : newPoints) {
+        for (final SentimentPoint point : newPoints) {
             if (lastTime.isEmpty() || point.getTime().compareTo(lastTime) > 0) {
                 allData.add(point);
             }
@@ -78,21 +102,25 @@ public class SentimentViewModel {
     }
 
     private void calculateViewBounds() {
-        int n = allData.size();
+        final int n = allData.size();
         
         if (autoMode.get()) {
-            currentStartIndex.set(Math.max(0, n - (windowSize.get() / 2)));
+            currentStartIndex.set(Math.max(0, n - (windowSize.get() / HALF_WINDOW)));
         }
         
-        int end = Math.min(currentStartIndex.get() + windowSize.get(), allData.size());
+        final int end = Math.min(currentStartIndex.get() + windowSize.get(), allData.size());
         
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
         
         for (int i = currentStartIndex.get(); i < end; i++) {
-            double sentiment = allData.get(i).getSentiment();
-            if (sentiment < min) min = sentiment;
-            if (sentiment > max) max = sentiment;
+            final double sentiment = allData.get(i).getSentiment();
+            if (sentiment < min) {
+                min = sentiment;
+            }
+            if (sentiment > max) {
+                max = sentiment;
+            }
         }
         
         minY.set(min - 1);
@@ -101,62 +129,107 @@ public class SentimentViewModel {
         upperBound.set(currentStartIndex.get() + windowSize.get() - 1);
     }
 
+    /**
+     * Moves to next data window.
+     */
     public void moveNext() {
         autoMode.set(false);
-        if (currentStartIndex.get() + (windowSize.get() / 2) < allData.size()) {
-            currentStartIndex.set(currentStartIndex.get() + (windowSize.get() / 2));
+        if (currentStartIndex.get() + (windowSize.get() / HALF_WINDOW) < allData.size()) {
+            currentStartIndex.set(currentStartIndex.get() + (windowSize.get() / HALF_WINDOW));
             calculateViewBounds();
         }
     }
 
+    /**
+     * Moves to previous data window.
+     */
     public void movePrevious() {
         autoMode.set(false);
-        if (currentStartIndex.get() - (windowSize.get() / 2) >= 0) {
-            currentStartIndex.set(currentStartIndex.get() - (windowSize.get() / 2));
+        if (currentStartIndex.get() - (windowSize.get() / HALF_WINDOW) >= 0) {
+            currentStartIndex.set(currentStartIndex.get() - (windowSize.get() / HALF_WINDOW));
             calculateViewBounds();
         }
     }
 
+    /**
+     * Gets the data in the current window.
+     * @return Observable list of sentiment points
+     */
     public ObservableList<SentimentPoint> getWindowData() {
-        int end = Math.min(currentStartIndex.get() + windowSize.get(), allData.size());
+        final int end = Math.min(currentStartIndex.get() + windowSize.get(), allData.size());
         return FXCollections.observableArrayList(
             allData.subList(currentStartIndex.get(), end)
         );
     }
 
-    // Getters for properties
+    /**
+     * Gets all data.
+     * @return All sentiment data
+     */
     public ObservableList<SentimentPoint> getAllData() {
         return allData;
     }
 
+    /**
+     * Returns the current start index property.
+     * @return Current start index property
+     */
     public IntegerProperty currentStartIndexProperty() {
         return currentStartIndex;
     }
 
+    /**
+     * Gets the current start index.
+     * @return Current start index value
+     */
     public int getCurrentStartIndex() {
         return currentStartIndex.get();
     }
 
+    /**
+     * Returns the auto mode property.
+     * @return Auto mode property
+     */
     public BooleanProperty autoModeProperty() {
         return autoMode;
     }
 
+    /**
+     * Returns the window size property.
+     * @return Window size property
+     */
     public IntegerProperty windowSizeProperty() {
         return windowSize;
     }
 
+    /**
+     * Returns the minimum Y property.
+     * @return Minimum Y property
+     */
     public DoubleProperty minYProperty() {
         return minY;
     }
 
+    /**
+     * Returns the maximum Y property.
+     * @return Maximum Y property
+     */
     public DoubleProperty maxYProperty() {
         return maxY;
     }
 
+    /**
+     * Returns the lower bound property.
+     * @return Lower bound property
+     */
     public IntegerProperty lowerBoundProperty() {
         return lowerBound;
     }
 
+    /**
+     * Returns the upper bound property.
+     * @return Upper bound property
+     */
     public IntegerProperty upperBoundProperty() {
         return upperBound;
     }

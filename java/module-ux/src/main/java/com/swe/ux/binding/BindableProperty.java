@@ -9,18 +9,25 @@ import java.util.Objects;
  * @param <T> The type of the property value
  */
 public class BindableProperty<T> {
+    /** The current value of the property. */
     private T value;
+    /** Support for property change notifications. */
     private final PropertyChangeSupport propertyChangeSupport;
+    /** The name of this property. */
     private final String propertyName;
 
     /**
      * Creates a new BindableProperty with an initial value and property name.
      * @param initialValue The initial value of the property
-     * @param propertyName The name of the property (used for change events)
+     * @param name The name of the property (used for change events)
      */
-    public BindableProperty(final T initialValue, final String propertyName) {
+    public BindableProperty(final T initialValue, final String name) {
         this.value = initialValue;
-        this.propertyName = propertyName != null ? propertyName : "";
+        if (name != null) {
+            this.propertyName = name;
+        } else {
+            this.propertyName = "";
+        }
         this.propertyChangeSupport = new PropertyChangeSupport(this);
     }
 

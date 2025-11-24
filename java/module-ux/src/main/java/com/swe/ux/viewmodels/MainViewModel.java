@@ -11,57 +11,74 @@ import com.swe.ux.binding.BindableProperty;
  * ViewModel for the main application screen.
  */
 public class MainViewModel extends BaseViewModel {
-    AbstractRPC rpc;
+    /** RPC instance. */
+    private final AbstractRPC rpc;
     
-    // Bindable properties
-    public final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
-    public final BindableProperty<Boolean> logoutRequested = new BindableProperty<>(false, "logoutRequested");
-    public final BindableProperty<Boolean> startMeetingRequested = new BindableProperty<>(false, "startMeetingRequested");
-    public final BindableProperty<Boolean> joinMeetingRequested = new BindableProperty<>(false, "joinMeetingRequested");
-    public final BindableProperty<String> meetingCode = new BindableProperty<>("", "meetingCode");
+    /** Current user property. */
+    private final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
+    /** Logout requested property. */
+    private final BindableProperty<Boolean> logoutRequested = new BindableProperty<>(false, "logoutRequested");
+    /** Start meeting requested property. */
+    private final BindableProperty<Boolean> startMeetingRequested = 
+        new BindableProperty<>(false, "startMeetingRequested");
+    /** Join meeting requested property. */
+    private final BindableProperty<Boolean> joinMeetingRequested = 
+        new BindableProperty<>(false, "joinMeetingRequested");
+    /** Meeting code property. */
+    private final BindableProperty<String> meetingCode = new BindableProperty<>("", "meetingCode");
     
     /**
      * Creates a new MainViewModel.
+     * @param rpcParam The RPC instance for communication
      */
-    public MainViewModel(AbstractRPC rpc) {
-        this.rpc = rpc;
+    public MainViewModel(final AbstractRPC rpcParam) {
+        this.rpc = rpcParam;
     }
     
     /**
      * Sets the current user and updates the UI accordingly.
      * @param user The current user, or null if logged out
      */
-    public void setCurrentUser(UserProfile user) {
+    public void setCurrentUser(final UserProfile user) {
         this.currentUser.set(user);
     }
 
+    /**
+     * Starts a new meeting.
+     * @return The meeting ID, or null if failed
+     */
     public String startMeeting() {
         try {
-            byte[] response = rpc.call("core/createMeeting", new byte[0]).get();
+            final byte[] response = rpc.call("core/createMeeting", new byte[0]).get();
             if (response != null && response.length > 0) {
-                MeetingSession meetingSession = DataSerializer.deserialize(response, MeetingSession.class);
+                final MeetingSession meetingSession = DataSerializer.deserialize(response, MeetingSession.class);
                 if (meetingSession != null && meetingSession.getMeetingId() != null) {
                     meetingCode.set(meetingSession.getMeetingId());
                     return meetingSession.getMeetingId();
                 }
             }
-            System.err.println("MainViewModel: createMeeting RPC returned empty payload, falling back to local session");
-        } catch (Exception e) {
+            System.err.println(
+                "MainViewModel: createMeeting RPC returned empty payload, falling back to local session");
+        } catch (final Exception e) {
             System.err.println("MainViewModel: createMeeting RPC failed - " + e.getMessage());
         }
 
         // Fall back to a local meeting so the instructor can still start the session
-        MeetingSession localSession = createLocalMeetingSession();
+        final MeetingSession localSession = createLocalMeetingSession();
         meetingCode.set(localSession.getMeetingId());
         System.out.println("MainViewModel: Using locally generated meeting ID " + localSession.getMeetingId());
         return localSession.getMeetingId();
     }
 
-    public void joinMeeting(String meetingCode_) {
+    /**
+     * Joins an existing meeting.
+     * @param meetingCodeParam The meeting code to join
+     */
+    public void joinMeeting(final String meetingCodeParam) {
         joinMeetingRequested.set(true);
         try {
-            byte[] _response = rpc.call("core/joinMeeting", DataSerializer.serialize(meetingCode_)).get();
-        } catch (Exception e) {
+            final byte[] response = rpc.call("core/joinMeeting", DataSerializer.serialize(meetingCodeParam)).get();
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
@@ -75,12 +92,57 @@ public class MainViewModel extends BaseViewModel {
     }
 
     private MeetingSession createLocalMeetingSession() {
-        UserProfile host = currentUser.get();
-        String createdBy = host != null && host.getEmail() != null ? host.getEmail() : "demo-user@example.com";
-        MeetingSession session = new MeetingSession(createdBy, SessionMode.CLASS);
+        final UserProfile host = currentUser.get();
+        final String createdBy;
+        if (host != null && host.getEmail() != null) {
+            createdBy = host.getEmail();
+        } else {
+            createdBy = "demo-user@example.com";
+        }
+        final MeetingSession session = new MeetingSession(createdBy, SessionMode.CLASS);
         if (host != null) {
             session.addParticipant(host);
         }
         return session;
+    }
+
+    /**
+     * Gets the current user property.
+     * @return The current user property
+     */
+    public BindableProperty<UserProfile> getCurrentUser() {
+        return currentUser;
+    }
+
+    /**
+     * Gets the logout requested property.
+     * @return The logout requested property
+     */
+    public BindableProperty<Boolean> getLogoutRequested() {
+        return logoutRequested;
+    }
+
+    /**
+     * Gets the start meeting requested property.
+     * @return The start meeting requested property
+     */
+    public BindableProperty<Boolean> getStartMeetingRequested() {
+        return startMeetingRequested;
+    }
+
+    /**
+     * Gets the join meeting requested property.
+     * @return The join meeting requested property
+     */
+    public BindableProperty<Boolean> getJoinMeetingRequested() {
+        return joinMeetingRequested;
+    }
+
+    /**
+     * Gets the meeting code property.
+     * @return The meeting code property
+     */
+    public BindableProperty<String> getMeetingCode() {
+        return meetingCode;
     }
 }

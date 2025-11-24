@@ -35,11 +35,11 @@ public final class ShapeId implements Serializable {
     /**
      * Constructs a ShapeId from a given string.
      *
-     * @param id_ The string ID.
+     * @param identifier The string ID.
      * @throws NullPointerException if the id is null.
      */
-    public ShapeId(final String id_) {
-        this.id = Objects.requireNonNull(id_, "ID cannot be null");
+    public ShapeId(final String identifier) {
+        this.id = Objects.requireNonNull(identifier, "ID cannot be null");
     }
 
     /**

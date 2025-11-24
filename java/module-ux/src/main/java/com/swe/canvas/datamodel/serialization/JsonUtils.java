@@ -27,6 +27,9 @@ public final class JsonUtils {
 
     /**
      * Converts a java.awt.Color to an ARGB hex string (e.g., "#FF000000").
+     *
+     * @param color The color to convert.
+     * @return The hex string representation.
      */
     public static String colorToHex(final Color color) {
         if (color == null) {
@@ -82,7 +85,10 @@ public final class JsonUtils {
         final Pattern pattern = Pattern.compile(Pattern.quote("\"" + key + "\"") + ":\"(.*?)\"");
         final Matcher matcher = pattern.matcher(content);
         final int one = 1;
-        return matcher.find() ? matcher.group(one) : null;
+        if (matcher.find()) {
+            return matcher.group(one);
+        }
+        return null;
     }
 
     /**
@@ -123,7 +129,10 @@ public final class JsonUtils {
         final Matcher matcher = pattern.matcher(content);
         final int one = 1;
         final long zeroL = 0L;
-        return matcher.find() ? Long.parseLong(matcher.group(one)) : zeroL;
+        if (matcher.find()) {
+            return Long.parseLong(matcher.group(one));
+        }
+        return zeroL;
     }
 
     /**
@@ -196,7 +205,7 @@ public final class JsonUtils {
         }
 
         // Must be an object, find start '{'
-        int objectStart = content.indexOf('{', startIndex);
+        final int objectStart = content.indexOf('{', startIndex);
         if (objectStart == minusOne) {
             return null;
         }
