@@ -20,9 +20,6 @@
   <!-- ===================================================== -->
   <modules>
     <module>module-ux</module>
-    <module>module-app</module>
-    <module>module-networking</module>
-    <module>module-canvas</module>
     <module>module-cloud</module>
   </modules>
 
@@ -78,6 +75,9 @@
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <failsOnError>true</failsOnError>
+            <propertyExpansion>
+              config_loc=${session.executionRootDirectory}/config/checkstyle
+            </propertyExpansion>
           </configuration>
           <executions>
             <execution>
@@ -157,6 +157,9 @@
         <configuration>
           <configLocation>${session.executionRootDirectory}/config/checkstyle/checkstyle.xml</configLocation>
           <suppressionsLocation>${session.executionRootDirectory}/config/checkstyle/suppressions.xml</suppressionsLocation>
+          <propertyExpansion>
+            config_loc=${session.executionRootDirectory}/config/checkstyle
+          </propertyExpansion>
         </configuration>
       </plugin>
 
