@@ -5,13 +5,13 @@ import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.model.analytics.SentimentPoint;
 import com.swe.ux.service.MessageDataService;
 import com.swe.ux.viewmodels.MeetingViewModel;
-import com.swe.ux.viewmodels.ShapeViewModel;
-import com.swe.ux.viewmodels.SentimentViewModel;
 import com.swe.ux.viewmodels.ScreenVideoTelemetryViewModel;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.chart.BarChart;
@@ -82,6 +82,7 @@ public class SentimentViewPane extends StackPane {
     private final MessageDataService messageDataService;
     /** All messages list. */
     private final List<String> allMessages;
+    private final IntegerProperty messageUpdateTrigger;
 
     /** Root grid pane. */
     private GridPane root;
@@ -128,12 +129,14 @@ public class SentimentViewPane extends StackPane {
         this.telemetryViewModel = new ScreenVideoTelemetryViewModel();
         this.messageDataService = new MessageDataService();
         this.allMessages = new ArrayList<>();
+        this.messageUpdateTrigger = new SimpleIntegerProperty(0);
 
         setPadding(new Insets(DEFAULT_PADDING));
         setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
 
         buildLayout();
         bindPaneSizing();
+        setupBindings();
         startPeriodicUpdates();
     }
 
@@ -283,14 +286,27 @@ public class SentimentViewPane extends StackPane {
         bottomLeftPane.getChildren().addAll(titleLabel, messageScrollPane);
     }
 
-    private void updateMessages() {
-        final String json = messageDataService.fetchNextData(rpc);
-        final List<String> messages = messageDataService.parseJson(json);
+    /**
+     * Fetches new message data from the service.
+     * Triggers UI update via observable property.
+     */
+    private void fetchMessages() {
+        String json = messageDataService.fetchNextData(rpc);
+        List<String> messages = messageDataService.parseJson(json);
 
         for (int i = messages.size() - 1; i >= 0; i--) {
             allMessages.add(0, messages.get(i));
         }
 
+        // Trigger UI update via observable property
+        messageUpdateTrigger.set(messageUpdateTrigger.get() + 1);
+    }
+
+    /**
+     * Refreshes the message UI based on current message data.
+     * Called automatically when messageUpdateTrigger changes.
+     */
+    private void refreshMessagesUI() {
         messageContainer.getChildren().clear();
 
         final int stepSize = 2;
@@ -370,12 +386,9 @@ public class SentimentViewPane extends StackPane {
         barChart.setLegendVisible(true);
     }
 
-    private void updateBarChart() {
-        updateBarChartWithAnimation(false);
-    }
 
-    private void updateBarChartWithAnimation(final boolean animate) {
-        final ObservableList<ShapeCount> windowData = shapeViewModel.getWindowData();
+    private void updateBarChartWithAnimation(boolean animate) {
+        ObservableList<ShapeCount> windowData = shapeViewModel.getWindowData();
 
         barChart.getData().clear();
 
@@ -446,12 +459,8 @@ public class SentimentViewPane extends StackPane {
         });
     }
 
-    private void updateChart() {
-        updateChartWithAnimation(false);
-    }
-
-    private void updateChartWithAnimation(final boolean animate) {
-        final XYChart.Series<Number, Number> series = new XYChart.Series<>();
+    private void updateChartWithAnimation(boolean animate) {
+        XYChart.Series<Number, Number> series = new XYChart.Series<>();
         series.setName("Sentiment Trend");
 
         final int startIndex = viewModel.getCurrentStartIndex();
@@ -498,39 +507,50 @@ public class SentimentViewPane extends StackPane {
         chart.getData().add(series);
     }
 
+    /**
+     * Setup bindings between ViewModels and UI components.
+     * UI updates happen automatically when ViewModel data changes.
+     */
+    private void setupBindings() {
+        // Bind sentiment data changes to chart updates
+        viewModel.getAllData().addListener((javafx.collections.ListChangeListener<SentimentPoint>) change -> {
+            System.out.println("Sentiment data changed, updating chart...");
+            Platform.runLater(() -> updateChartWithAnimation(false));
+        });
+
+        // Bind shape data changes to bar chart updates
+        shapeViewModel.getAllData().addListener((javafx.collections.ListChangeListener<ShapeCount>) change -> {
+            System.out.println("Shape data changed, updating bar chart...");
+            Platform.runLater(() -> updateBarChartWithAnimation(false));
+        });
+
+        // Bind telemetry data changes to telemetry view refresh
+        telemetryViewModel.latestSnapshotProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                Platform.runLater(() -> telemetryView.refresh());
+            }
+        });
+
+        // Bind message updates to UI refresh
+        messageUpdateTrigger.addListener((obs, oldVal, newVal) -> {
+            Platform.runLater(this::refreshMessagesUI);
+        });
+    }
+
     private void startPeriodicUpdates() {
         final Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-
-                if (!"You".equals(meetingViewModel.getCurrentUser().getDisplayName())) {
-
-                    // 1️⃣ Run all heavy work OFF the FX thread
-                    CompletableFuture
-                            .supplyAsync(() -> {
-
-                                System.out.println("Fetching full data update...");
-
-                                viewModel.fetchAndUpdateData();
-                                shapeViewModel.fetchAndUpdateData();
-                                telemetryViewModel.fetchAndUpdateData();
-
-                                System.out.println("Background work complete.");
-
-                                return true;
-                            })
-
-                            // 2️⃣ Once done, switch to JavaFX UI thread
-                            .thenAccept(result -> {
-                                Platform.runLater(() -> {
-                                    telemetryView.refresh();
-                                    updateChartWithAnimation(false);
-                                    updateMessages();
-                                    updateBarChartWithAnimation(false);
-                                });
-                            });
-                }
+                Platform.runLater(() -> {
+                    if (meetingViewModel.currentUser.getDisplayName() != "You") {
+                        // Only fetch data - UI updates happen automatically via bindings
+                        viewModel.fetchAndUpdateData();
+                        shapeViewModel.fetchAndUpdateData();
+                        telemetryViewModel.fetchAndUpdateData();
+                        fetchMessages();
+                    }
+                });
             }
         }, 0, TIMER_INTERVAL_MS);
     }

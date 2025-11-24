@@ -37,7 +37,7 @@ public class MessageDataService {
             System.out.println("Fetching Message Data from Core Module...");
             final byte[] json = rpc.call("core/AiAction", new byte[0]).get();
             System.out.println("Received Message Data: " + new String(json));
-            if (json != null) {
+            if (json != null ) {
                 data = DataSerializer.deserialize(json, String.class);
             }
         } catch (InterruptedException | ExecutionException | JsonProcessingException e) {

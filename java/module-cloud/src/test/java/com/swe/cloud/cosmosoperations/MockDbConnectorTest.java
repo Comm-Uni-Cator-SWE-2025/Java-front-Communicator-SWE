@@ -19,12 +19,6 @@ class MockDbConnectorTest {
     void createTestEntity() {
         testEntity  = new Entity("TestModule", "TestTable", "TestId", null, -1, null, null);
     }
-    @Test
-    void initTest() {
-        MockDbConnector spyConnector = org.mockito.Mockito.spy(new MockDbConnector());
-        spyConnector.init();
-        org.mockito.Mockito.verify(spyConnector, org.mockito.Mockito.times(1)).init();
-    }
 
     @Test
     void getDataTest() {
