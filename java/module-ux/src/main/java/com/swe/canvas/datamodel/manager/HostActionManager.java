@@ -21,6 +21,7 @@ import com.swe.canvas.datamodel.collaboration.MessageType;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.collaboration.NetworkService;
 import com.swe.canvas.datamodel.serialization.NetActionSerializer;
+
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
@@ -60,7 +61,7 @@ public class HostActionManager implements ActionManager {
      * Service for network communication.
      */
     private final NetworkService networkService;
-
+    
     /**
      * Callback to run when the state updates.
      */

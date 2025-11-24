@@ -1,3 +1,14 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: CanvasNetworkService.java
+ * Owner: Bhogaraju Shanmukha Sri Krishna
+ * Roll Number: 112201013
+ * Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
+
 package com.swe.canvas.datamodel.collaboration;
 
 import com.swe.controller.RPCinterface.AbstractRPC;

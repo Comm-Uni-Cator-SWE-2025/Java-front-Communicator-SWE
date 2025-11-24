@@ -57,6 +57,8 @@ public class ClientActionManager implements ActionManager {
      */
     private final NetworkService networkService;
 
+    
+
     /**
      * Callback to run when the state updates.
      */
@@ -206,6 +208,7 @@ public class ClientActionManager implements ActionManager {
 
         // 2. Handle Normal Actions
         try {
+            // final String sa = new SerializedAction(message.getSerializedAction());
             final Action action = NetActionSerializer.deserializeAction(message.getSerializedAction().toString());
             if (action == null) {
                 return;

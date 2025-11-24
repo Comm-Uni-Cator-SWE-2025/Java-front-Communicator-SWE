@@ -9,7 +9,6 @@
 
 package com.swe.canvas.datamodel.collaboration;
 
-import com.swe.canvas.datamodel.manager.ActionManager;
 
 /**
  * Abstract interface for the network layer.

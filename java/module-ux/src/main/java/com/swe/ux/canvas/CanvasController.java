@@ -14,7 +14,7 @@ import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.manager.ActionManager;
 // Need to import HostActionManager to check type (or add an isHost() method to interface)
 import com.swe.canvas.datamodel.manager.HostActionManager;
-import com.swe.canvas.ui.util.ColorConverter;
+import com.swe.ux.canvas.util.ColorConverter;
 import com.swe.ux.viewmodels.CanvasViewModel;
 import com.swe.ux.viewmodels.ToolType;
 
