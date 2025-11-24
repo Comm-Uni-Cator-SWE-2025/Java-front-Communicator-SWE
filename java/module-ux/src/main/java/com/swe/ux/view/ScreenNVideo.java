@@ -284,6 +284,7 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
         }
         SwingUtilities.invokeLater(() -> {
             activeParticipantPanel.setImage(null);
+            activeParticipantPanel.setDataRate(0);
         });
     }
 
@@ -313,8 +314,9 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
         SwingUtilities.invokeLater(() -> {
             try {
-                System.out.println("Client FPS : " + (int)(1000.0 / ((System.nanoTime() - start) / 1_000_000.0)));
+//                System.out.println("Client FPS : " + (int)(1000.0 / ((System.nanoTime() - start) / 1_000_000.0)));
                 activeParticipantPanel.setImage(bufferedImage);
+                activeParticipantPanel.setDataRate(uiImage.dataRate());
                 start = System.nanoTime();
             } finally {
                 // release flag so next frame can proceed
@@ -349,8 +351,12 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
             // Handle participant addition
             participants.forEach(participant -> {
-                System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + participant.getIp());
-                addParticipant(participant.getDisplayName(), participant.getIp());
+                String ip = meetingViewModel.ipToMail.get(participant.getEmail());
+                if (ip == null) {
+                    return;
+                }
+                System.out.println("Adding participant: " + participant.getDisplayName() + " with ip: " + ip);
+                addParticipant(participant.getDisplayName(), ip);
             });
         }));
 
