@@ -1,7 +1,6 @@
 /*
  * -----------------------------------------------------------------------------
  * File: ShapeStateTest.java
- * Location: module-canvas/src/test/java/com/swe/canvas/datamodel/canvas/ShapeStateTest.java
  * -----------------------------------------------------------------------------
  */
 

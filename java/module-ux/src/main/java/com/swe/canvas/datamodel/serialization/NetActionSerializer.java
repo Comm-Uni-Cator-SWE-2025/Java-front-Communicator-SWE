@@ -1,6 +1,5 @@
 package com.swe.canvas.datamodel.serialization;
 
-
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionType;
 import com.swe.canvas.datamodel.action.CreateShapeAction;
@@ -17,7 +16,9 @@ public class NetActionSerializer {
 
     /**
      * Manually serializes an Action object, including nested ShapeState objects.
-     * Fields included: actionId, actionType, prevState, newState (and others from the base class).
+     * Fields included: actionId, actionType, prevState, newState (and others from
+     * the base class).
+     * 
      * @param action The action to serialize.
      * @return A JSON string.
      */
@@ -30,10 +31,10 @@ public class NetActionSerializer {
         sb.append("{");
 
         // 1. Core Metadata Fields
-        sb.append(JsonUtils.jsonEscape("ActionId")).append(":").append(JsonUtils.jsonEscape(action.getActionId())).append(",");
-        sb.append(JsonUtils.jsonEscape("ActionType")).append(":").append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
-        
-        
+        sb.append(JsonUtils.jsonEscape("ActionId")).append(":")
+                .append(JsonUtils.jsonEscape(action.getActionId())).append(",");
+        sb.append(JsonUtils.jsonEscape("ActionType")).append(":")
+                .append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
 
         // 2. PrevState (nested ShapeState JSON)
         final String prevStateJson = ShapeSerializer.serializeShape(action.getPrevState());
@@ -53,8 +54,9 @@ public class NetActionSerializer {
         } else {
             sb.append("null");
         }
-        
-        // NOTE: The 'next' field is omitted as it is not present in the base Action class.
+
+        // NOTE: The 'next' field is omitted as it is not present in the base Action
+        // class.
 
         sb.append("}");
         return sb.toString();
@@ -79,7 +81,7 @@ public class NetActionSerializer {
             final String actionTypeString = JsonUtils.extractString(content, "ActionType");
 
             final ActionType actionType = ActionType.valueOf(actionTypeString);
-            
+
             // 2. Extract nested JSON strings for PrevState and NewState
             final String prevStateJson = JsonUtils.extractNestedJson(content, "Prev");
             final String newStateJson = JsonUtils.extractNestedJson(content, "Next");
@@ -91,7 +93,6 @@ public class NetActionSerializer {
             if (actionId == null || actionType == null || newState == null) {
                 throw new SerializationException("Missing crucial action field during deserialization.");
             }
-
 
             final String userId = newState.getShape().getLastUpdatedBy();
             final long timestamp = newState.getLastModified();
@@ -117,6 +118,3 @@ public class NetActionSerializer {
         }
     }
 }
-
-
-

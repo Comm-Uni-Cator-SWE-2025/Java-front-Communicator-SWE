@@ -1,14 +1,22 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: DefaultActionSerializer.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module: Canvas
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.serialization;
 
-import java.nio.charset.StandardCharsets;
-
 import com.swe.canvas.datamodel.action.Action;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Default implementation of {@link ActionSerializer}.
  *
  * <p>This implementation now uses manual JSON serialization via
- * {@link ManualJsonConverter}, replacing the need for Java's
+ * {@link NetActionSerializer}, replacing the need for Java's
  * built-in binary serialization.
  * </p>
  */

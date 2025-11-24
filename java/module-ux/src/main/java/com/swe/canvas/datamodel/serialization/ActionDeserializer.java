@@ -1,3 +1,12 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: ActionDeserializer.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module: Canvas
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.serialization;
 
 import com.swe.canvas.datamodel.action.Action;
@@ -8,8 +17,6 @@ import com.swe.canvas.datamodel.action.Action;
  * <p><b>Design Pattern:</b> Interface Segregation</p>
  *
  * @author Gajjala Bhavani Shankar
- 
- 
  */
 @FunctionalInterface
 public interface ActionDeserializer {

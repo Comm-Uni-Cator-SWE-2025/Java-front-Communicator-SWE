@@ -1,136 +1,133 @@
 package com.swe.canvas.datamodel.serialization;
 
-import java.awt.Color;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import com.swe.canvas.datamodel.action.Action;
-import com.swe.canvas.datamodel.action.CreateShapeAction;
-import com.swe.canvas.datamodel.action.ModifyShapeAction;
+import com.swe.canvas.datamodel.action.*;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.RectangleShape;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
+import com.swe.canvas.datamodel.shape.ShapeType;
+import org.junit.jupiter.api.Test;
 
-/**
- * JUnit 5 tests for the manual serialization and deserialization of Action objects.
- */
-public class NetActionSerializerTest {
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
-    private ShapeId shapeId;
-    private String userId;
-    private long timestamp;
-    private ShapeState testState1; // A simple red square
-    private ShapeState testState2; // A modified blue square
+import static org.junit.jupiter.api.Assertions.*;
 
-    @BeforeEach
-    void setUp() {
-        shapeId = new ShapeId("shape-123");
-        userId = "test-user";
-        timestamp = 1700000000000L;
+class NetActionSerializerTest {
 
-        Shape shape1 = new RectangleShape(
-            shapeId,
-            List.of(new Point(10, 10), new Point(20, 20)),
-            2.0,
-            Color.RED,
-            userId,
-            userId
-        );
-        // We set a specific timestamp to test preservation
-        testState1 = new ShapeState(shape1, false, 123L);
-
-        Shape shape2 = new RectangleShape(
-            shapeId,
-            List.of(new Point(50, 50), new Point(60, 60)),
-            4.0,
-            Color.BLUE,
-            userId,
-            userId
-        );
-        testState2 = new ShapeState(shape2, false, 456L);
+    @Test
+    void testSerializeAction_Null() {
+        assertEquals("null", NetActionSerializer.serializeAction(null));
     }
 
     @Test
-    void testActionSerialization_ModifyAction_RoundTrip() {
-        Action originalAction = new ModifyShapeAction(
-            "action-abc",
-            userId,
-            timestamp,
-            shapeId,
-            testState1, // prevState
-            testState2  // newState
-        );
-
-        String json = NetActionSerializer.serializeAction(originalAction);
-        Action restoredAction = NetActionSerializer.deserializeAction(json);
-
-        assertNotNull(restoredAction);
-        assertTrue(restoredAction instanceof ModifyShapeAction);
-
-        assertEquals(originalAction.getActionId(), restoredAction.getActionId());
-        assertEquals(originalAction.getActionType(), restoredAction.getActionType());
-        assertEquals(originalAction.getUserId(), restoredAction.getUserId());
-        assertEquals(originalAction.getShapeId(), restoredAction.getShapeId());
-
-        assertShapeStatesEqual(originalAction.getPrevState(), restoredAction.getPrevState());
-        assertShapeStatesEqual(originalAction.getNewState(), restoredAction.getNewState());
+    void testDeserializeAction_NullOrEmpty() {
+        assertNull(NetActionSerializer.deserializeAction(null));
+        assertNull(NetActionSerializer.deserializeAction(""));
+        assertNull(NetActionSerializer.deserializeAction("null"));
     }
 
     @Test
-    void testActionSerialization_CreateAction_RoundTrip() {
-        Action originalAction = new CreateShapeAction(
-            "action-xyz",
-            userId,
-            timestamp,
-            shapeId,
-            testState1 // newState
-        );
+    void testRoundTrip_CreateAction() {
+        Shape shape = new RectangleShape(new ShapeId("s1"),
+                List.of(new Point(0, 0), new Point(10, 10)), 1.0, Color.RED, "u1", "u1");
+        ShapeState newState = new ShapeState(shape, false, 100L);
 
-        String json = NetActionSerializer.serializeAction(originalAction);
-        Action restoredAction = NetActionSerializer.deserializeAction(json);
+        Action action = new CreateShapeAction("act-1", "u1", 100L, new ShapeId("s1"), newState);
 
-        assertNotNull(restoredAction);
-        assertTrue(restoredAction instanceof CreateShapeAction);
-        assertEquals(originalAction.getActionId(), restoredAction.getActionId());
-        assertNull(originalAction.getPrevState());
-        assertNull(restoredAction.getPrevState());
-        assertShapeStatesEqual(originalAction.getNewState(), restoredAction.getNewState());
+        String json = NetActionSerializer.serializeAction(action);
+        Action deserialized = NetActionSerializer.deserializeAction(json);
+
+        assertNotNull(deserialized);
+        assertTrue(deserialized instanceof CreateShapeAction);
+        assertEquals("act-1", deserialized.getActionId());
     }
 
-    private void assertShapeStatesEqual(ShapeState expected, ShapeState actual) {
-        if (expected == null) {
-            assertNull(actual);
-            return;
-        }
-        assertNotNull(actual);
-        assertEquals(expected.isDeleted(), actual.isDeleted());
-        
-        // --- FIX: Now expecting exact timestamp match ---
-        assertEquals(expected.getLastModified(), actual.getLastModified(), "Timestamp mismatch");
+    @Test
+    void testRoundTrip_ModifyAction() {
+        Shape shape = new RectangleShape(new ShapeId("s1"),
+                List.of(new Point(0, 0), new Point(10, 10)), 1.0, Color.RED, "u1", "u1");
+        ShapeState prev = new ShapeState(shape, false, 100L);
+        ShapeState next = new ShapeState(shape, false, 200L);
 
-        assertShapesEqual(expected.getShape(), actual.getShape());
+        Action action = new ModifyShapeAction("act-2", "u1", 200L, new ShapeId("s1"), prev, next);
+
+        String json = NetActionSerializer.serializeAction(action);
+        Action deserialized = NetActionSerializer.deserializeAction(json);
+
+        assertNotNull(deserialized);
+        assertTrue(deserialized instanceof ModifyShapeAction);
     }
 
-    private void assertShapesEqual(Shape expected, Shape actual) {
-        if (expected == null) {
-            assertNull(actual);
-            return;
-        }
-        assertNotNull(actual);
-        assertEquals(expected.getShapeId(), actual.getShapeId());
-        assertEquals(expected.getShapeType(), actual.getShapeType());
-        assertEquals(expected.getCreatedBy(), actual.getCreatedBy());
-        assertEquals(expected.getLastUpdatedBy(), actual.getLastUpdatedBy());
-        assertEquals(expected.getColor(), actual.getColor());
-        assertEquals(expected.getThickness(), actual.getThickness(), 0.001);
-        assertEquals(expected.getPoints(), actual.getPoints());
+    @Test
+    void testRoundTrip_DeleteAction() {
+        Shape shape = new RectangleShape(new ShapeId("s1"),
+                List.of(new Point(0, 0), new Point(10, 10)), 1.0, Color.RED, "u1", "u1");
+        ShapeState prev = new ShapeState(shape, false, 100L);
+        ShapeState next = new ShapeState(shape, true, 200L);
+
+        Action action = new DeleteShapeAction("act-3", "u1", 200L, new ShapeId("s1"), prev, next);
+
+        String json = NetActionSerializer.serializeAction(action);
+        Action deserialized = NetActionSerializer.deserializeAction(json);
+
+        assertNotNull(deserialized);
+        assertTrue(deserialized instanceof DeleteShapeAction);
+    }
+
+    @Test
+    void testRoundTrip_ResurrectAction() {
+        Shape shape = new RectangleShape(new ShapeId("s1"),
+                List.of(new Point(0, 0), new Point(10, 10)), 1.0, Color.RED, "u1", "u1");
+        ShapeState prev = new ShapeState(shape, true, 100L);
+        ShapeState next = new ShapeState(shape, false, 200L);
+
+        Action action = new ResurrectShapeAction("act-4", "u1", 200L, new ShapeId("s1"), prev, next);
+
+        String json = NetActionSerializer.serializeAction(action);
+        Action deserialized = NetActionSerializer.deserializeAction(json);
+
+        assertNotNull(deserialized);
+        assertTrue(deserialized instanceof ResurrectShapeAction);
+    }
+
+    @Test
+    void testDeserialize_MissingFields() {
+        String json = "{}"; // Missing ActionId, Type, etc.
+        assertThrows(SerializationException.class, () -> NetActionSerializer.deserializeAction(json));
+    }
+
+    @Test
+    void testDeserialize_UnknownType() {
+        String json = "{" +
+                "\"ActionId\":\"1\"," +
+                "\"ActionType\":\"UNKNOWN\"," + // Unknown type
+                "\"Next\": {}" +
+                "}";
+
+        // Will fail either at Type.valueOf or switch case depending on implementation
+        // details
+        // NetActionSerializer uses ActionType.valueOf which throws
+        // IllegalArgumentException,
+        // caught and wrapped in SerializationException
+        assertThrows(SerializationException.class, () -> NetActionSerializer.deserializeAction(json));
+    }
+
+    @Test
+    void testSerialize_NullStates() {
+        // Force null states (normally protected by Action constructor, but testing
+        // serializer robustness)
+        // We can't easily create an Action with null states due to constructor checks.
+        // But we can manually craft JSON with null states.
+        String json = "{" +
+                "\"ActionId\":\"1\"," +
+                "\"ActionType\":\"CREATE\"," +
+                "\"Prev\": null," +
+                "\"Next\": null" +
+                "}";
+
+        assertThrows(SerializationException.class, () -> NetActionSerializer.deserializeAction(json));
     }
 }

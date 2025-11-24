@@ -3,7 +3,7 @@
  * File: ActionManager.java
  * Owner: Gajjala Bhavani Shankar
  * Roll Number : 112201026
- * Module: Canvas
+ * Module : Canvas
  * -----------------------------------------------------------------------------
  */
 

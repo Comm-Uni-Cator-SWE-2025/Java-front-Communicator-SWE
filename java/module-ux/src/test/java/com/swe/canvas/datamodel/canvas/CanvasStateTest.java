@@ -1,7 +1,6 @@
 /*
  * -----------------------------------------------------------------------------
  * File: CanvasStateTest.java
- * Location: module-canvas/src/test/java/com/swe/canvas/datamodel/canvas/CanvasStateTest.java
  * -----------------------------------------------------------------------------
  */
 

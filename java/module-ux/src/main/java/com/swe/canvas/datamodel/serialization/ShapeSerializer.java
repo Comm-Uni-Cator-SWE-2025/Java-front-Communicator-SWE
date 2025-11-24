@@ -12,12 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.swe.canvas.datamodel.action.Action;
-import com.swe.canvas.datamodel.action.ActionType;
-import com.swe.canvas.datamodel.action.CreateShapeAction;
-import com.swe.canvas.datamodel.action.DeleteShapeAction;
-import com.swe.canvas.datamodel.action.ModifyShapeAction;
-import com.swe.canvas.datamodel.action.ResurrectShapeAction;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.EllipseShape;
 import com.swe.canvas.datamodel.shape.FreehandShape;
@@ -31,7 +25,8 @@ import com.swe.canvas.datamodel.shape.TriangleShape;
 
 public final class ShapeSerializer {
 
-    private ShapeSerializer() { }
+    private ShapeSerializer() {
+    }
 
     /**
      * Serializes a ShapeState to JSON.
@@ -46,8 +41,10 @@ public final class ShapeSerializer {
 
         sb.append("{");
 
-        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":").append(JsonUtils.jsonEscape(shape.getShapeId().getValue())).append(",");
-        sb.append(JsonUtils.jsonEscape("Type")).append(":").append(JsonUtils.jsonEscape(shape.getShapeType().toString())).append(",");
+        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getShapeId().getValue())).append(",");
+        sb.append(JsonUtils.jsonEscape("Type")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getShapeType().toString())).append(",");
 
         sb.append(JsonUtils.jsonEscape("Points")).append(":[");
         final List<Point> points = shape.getPoints();
@@ -63,16 +60,21 @@ public final class ShapeSerializer {
         }
         sb.append("],");
 
-        sb.append(JsonUtils.jsonEscape("Color")).append(":").append(JsonUtils.jsonEscape(JsonUtils.colorToHex(shape.getColor()))).append(",");
-        sb.append(JsonUtils.jsonEscape("Thickness")).append(":").append((int) shape.getThickness()).append(",");
+        sb.append(JsonUtils.jsonEscape("Color")).append(":")
+                .append(JsonUtils.jsonEscape(JsonUtils.colorToHex(shape.getColor()))).append(",");
+        sb.append(JsonUtils.jsonEscape("Thickness")).append(":")
+                .append((int) shape.getThickness()).append(",");
 
-        sb.append(JsonUtils.jsonEscape("CreatedBy")).append(":").append(JsonUtils.jsonEscape(shape.getCreatedBy())).append(",");
-        sb.append(JsonUtils.jsonEscape("LastModifiedBy")).append(":").append(JsonUtils.jsonEscape(shape.getLastUpdatedBy())).append(",");
-        
-        // --- ADDED: LastModified ---
-        sb.append(JsonUtils.jsonEscape("LastModified")).append(":").append(shapeState.getLastModified()).append(",");
-        
-        sb.append(JsonUtils.jsonEscape("IsDeleted")).append(":").append(shapeState.isDeleted());
+        sb.append(JsonUtils.jsonEscape("CreatedBy")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getCreatedBy())).append(",");
+        sb.append(JsonUtils.jsonEscape("LastModifiedBy")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getLastUpdatedBy())).append(",");
+
+        sb.append(JsonUtils.jsonEscape("LastModified")).append(":")
+                .append(shapeState.getLastModified()).append(",");
+
+        sb.append(JsonUtils.jsonEscape("IsDeleted")).append(":")
+                .append(shapeState.isDeleted());
 
         sb.append("}");
         return sb.toString();
@@ -96,13 +98,12 @@ public final class ShapeSerializer {
             final String createdBy = JsonUtils.extractString(content, "CreatedBy");
             final String lastModifiedBy = JsonUtils.extractString(content, "LastModifiedBy");
             final boolean isDeleted = JsonUtils.extractBoolean(content, "IsDeleted");
-            
-            // --- ADDED: LastModified ---
             final long lastModified = JsonUtils.extractLong(content, "LastModified");
 
             final List<Point> points = JsonUtils.extractPoints(content);
 
-            if (shapeId == null || typeName == null || createdBy == null || lastModifiedBy == null || points == null) {
+            if (shapeId == null || typeName == null || createdBy == null
+                    || lastModifiedBy == null || points == null) {
                 throw new SerializationException("Missing crucial shape field.");
             }
 
@@ -112,24 +113,32 @@ public final class ShapeSerializer {
 
             final Shape newShape;
             switch (shapeType) {
-                case FREEHAND: newShape = new FreehandShape(id, points, thickness, color, createdBy, lastModifiedBy); break;
-                case RECTANGLE: newShape = new RectangleShape(id, points, thickness, color, createdBy, lastModifiedBy); break;
-                case TRIANGLE: newShape = new TriangleShape(id, points, thickness, color, createdBy, lastModifiedBy); break;
-                case LINE: newShape = new LineShape(id, points, thickness, color, createdBy, lastModifiedBy); break;
-                case ELLIPSE: newShape = new EllipseShape(id, points, thickness, color, createdBy, lastModifiedBy); break;
-                default: throw new SerializationException("Unknown ShapeType: " + typeName);
+                case FREEHAND:
+                    newShape = new FreehandShape(id, points, thickness, color, createdBy, lastModifiedBy);
+                    break;
+                case RECTANGLE:
+                    newShape = new RectangleShape(id, points, thickness, color, createdBy, lastModifiedBy);
+                    break;
+                case TRIANGLE:
+                    newShape = new TriangleShape(id, points, thickness, color, createdBy, lastModifiedBy);
+                    break;
+                case LINE:
+                    newShape = new LineShape(id, points, thickness, color, createdBy, lastModifiedBy);
+                    break;
+                case ELLIPSE:
+                    newShape = new EllipseShape(id, points, thickness, color, createdBy, lastModifiedBy);
+                    break;
+                default:
+                    throw new SerializationException("Unknown ShapeType: " + typeName);
             }
 
-            // Pass the deserialized timestamp instead of 0L
             return new ShapeState(newShape, isDeleted, lastModified);
 
         } catch (Exception e) {
             throw new SerializationException("Failed to deserialize ShapeState: " + e.getMessage(), e);
         }
     }
-    
-    // ... [Rest of the file: serializeShapesMap, deserializeShapesMap - keep exactly as they were] ...
-    
+
     public static String serializeShapesMap(final Map<ShapeId, ShapeState> shapes) {
         if (shapes == null || shapes.isEmpty()) {
             return "{}";
@@ -175,7 +184,8 @@ public final class ShapeSerializer {
         final int length = content.length();
 
         while (index < length) {
-            while (index < length && (Character.isWhitespace(content.charAt(index)) || content.charAt(index) == ',')) {
+            while (index < length
+                    && (Character.isWhitespace(content.charAt(index)) || content.charAt(index) == ',')) {
                 index++;
             }
             if (index >= length) {
@@ -192,14 +202,15 @@ public final class ShapeSerializer {
             }
 
             index = keyEnd + 1;
-            while (index < length && (Character.isWhitespace(content.charAt(index)) || content.charAt(index) == ':')) {
+            while (index < length
+                    && (Character.isWhitespace(content.charAt(index)) || content.charAt(index) == ':')) {
                 index++;
             }
 
             if (index < length && content.charAt(index - 1) != '{') {
-                 while (index < length && content.charAt(index) != '{') {
-                     index++;
-                 }
+                while (index < length && content.charAt(index) != '{') {
+                    index++;
+                }
             }
 
             if (index < length && content.charAt(index) == '{') {

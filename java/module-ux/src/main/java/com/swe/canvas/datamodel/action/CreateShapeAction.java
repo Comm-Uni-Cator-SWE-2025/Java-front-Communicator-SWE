@@ -39,20 +39,20 @@ public class CreateShapeAction extends Action {
     /**
      * Constructs a CreateShapeAction.
      *
-     * @param actionId  A unique ID for this action.
-     * @param userId    The user performing the action.
-     * @param timestamp The time of action creation.
-     * @param shapeId   The target shape's ID.
-     * @param newState  The state after the action (shape created, isDeleted=false).
+     * @param actionIdVal  A unique ID for this action.
+     * @param userIdVal    The user performing the action.
+     * @param timestampVal The time of action creation.
+     * @param shapeIdVal   The target shape's ID.
+     * @param newStateVal  The state after the action (shape created, isDeleted=false).
      */
-    public CreateShapeAction(final String actionId,
-                             final String userId,
-                             final long timestamp,
-                             final ShapeId shapeId,
-                             final ShapeState newState) {
-        super(actionId, userId, timestamp, ActionType.CREATE, shapeId, null, newState);
+    public CreateShapeAction(final String actionIdVal,
+                             final String userIdVal,
+                             final long timestampVal,
+                             final ShapeId shapeIdVal,
+                             final ShapeState newStateVal) {
+        super(actionIdVal, userIdVal, timestampVal, ActionType.CREATE, shapeIdVal, null, newStateVal);
 
-        if (newState.isDeleted()) {
+        if (newStateVal.isDeleted()) {
             throw new IllegalArgumentException("CreateShapeAction newState cannot be 'deleted'.");
         }
     }

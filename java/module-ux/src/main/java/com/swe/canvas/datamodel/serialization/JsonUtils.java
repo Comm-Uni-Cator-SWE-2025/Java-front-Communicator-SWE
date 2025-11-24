@@ -11,7 +11,6 @@ import com.swe.canvas.datamodel.shape.Point;
 /**
  * A utility class containing low-level static helper methods for manually
  * parsing and constructing JSON strings, without any external libraries.
- * Updated to handle Integers and Whitespace/Newlines from .NET JSON.
  */
 public final class JsonUtils {
 
@@ -106,10 +105,8 @@ public final class JsonUtils {
             final String pointsArrayContent = arrayMatcher.group(1);
 
             // Pattern for individual points: "X" \s* : \s* num , \s* "Y" \s* : \s* num
-            // We use a broader regex to catch { "X": 1, "Y": 2 } with spaces/newlines
             final Pattern pointPattern = Pattern.compile(
-                    "(?s)\\{\\s*\"X\"\\s*:\\s*([\\-0-9\\.]+)\\s*,\\s*\"Y\"\\s*:\\s*([\\-0-9\\.]+)\\s*\\}"
-            );
+                    "(?s)\\{\\s*\"X\"\\s*:\\s*([\\-0-9\\.]+)\\s*,\\s*\"Y\"\\s*:\\s*([\\-0-9\\.]+)\\s*\\}");
             final Matcher pointMatcher = pointPattern.matcher(pointsArrayContent);
 
             while (pointMatcher.find()) {
@@ -129,11 +126,15 @@ public final class JsonUtils {
         // Find "key"
         String searchKey = "\"" + key + "\"";
         int keyIndex = content.indexOf(searchKey);
-        if (keyIndex == -1) return null;
+        if (keyIndex == -1) {
+            return null;
+        }
 
         // Find colon after key
         int colonIndex = content.indexOf(':', keyIndex + searchKey.length());
-        if (colonIndex == -1) return null;
+        if (colonIndex == -1) {
+            return null;
+        }
 
         // Scan for start of value (skip whitespace)
         int valueStart = -1;
@@ -144,13 +145,19 @@ public final class JsonUtils {
                 break;
             }
         }
-        if (valueStart == -1) return null;
+        if (valueStart == -1) {
+            return null;
+        }
 
         // Check for 'null'
-        if (content.startsWith("null", valueStart)) return "null";
+        if (content.startsWith("null", valueStart)) {
+            return "null";
+        }
 
         // Must be '{'
-        if (content.charAt(valueStart) != '{') return null;
+        if (content.charAt(valueStart) != '{') {
+            return null;
+        }
 
         // Brace counting
         int balance = 0;

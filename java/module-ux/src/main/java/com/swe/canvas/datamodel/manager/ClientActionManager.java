@@ -9,8 +9,6 @@
 
 package com.swe.canvas.datamodel.manager;
 
-import java.util.Map;
-
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
@@ -18,18 +16,19 @@ import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.collaboration.MessageType;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.collaboration.NetworkService;
-import com.swe.canvas.datamodel.serialization.DefaultActionDeserializer;
-import com.swe.canvas.datamodel.serialization.DefaultActionSerializer;
-import com.swe.canvas.datamodel.serialization.SerializedAction;
+import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
+import java.util.Map;
 
 /**
  * The ActionManager implementation for the Client role.
  *
- * <p>Clients send their local requests to the Host for validation and
- * apply updates only when they receive the broadcasted confirmation.</p>
+ * <p>
+ * Clients send their local requests to the Host for validation and
+ * apply updates only when they receive the broadcasted confirmation.
+ * </p>
  */
 public class ClientActionManager implements ActionManager {
 
@@ -59,19 +58,10 @@ public class ClientActionManager implements ActionManager {
     private final NetworkService networkService;
 
     /**
-     * Serializer for converting actions to bytes.
-     */
-    private final DefaultActionSerializer serializer;
-
-    /**
-     * Deserializer for converting bytes to actions.
-     */
-    private final DefaultActionDeserializer deserializer;
-
-    /**
      * Callback to run when the state updates.
      */
-    private Runnable onUpdateCallback = () -> { };
+    private Runnable onUpdateCallback = () -> {
+    };
 
     /**
      * Constructs a new ClientActionManager.
@@ -81,16 +71,13 @@ public class ClientActionManager implements ActionManager {
      * @param netService The network service for communicating with the host.
      */
     public ClientActionManager(final String clientId,
-                               final CanvasState state,
-                               final NetworkService netService) {
+            final CanvasState state,
+            final NetworkService netService) {
         this.userId = clientId;
         this.canvasState = state;
         this.networkService = netService;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
-        this.serializer = new DefaultActionSerializer();
-        this.deserializer = new DefaultActionDeserializer();
-     
     }
 
     @Override
@@ -115,10 +102,16 @@ public class ClientActionManager implements ActionManager {
         }
     }
 
+    /**
+     * Serializes and sends an action to the host.
+     *
+     * @param action The action to send.
+     * @param type   The type of message (NORMAL, UNDO, REDO).
+     */
     private void sendActionToHost(final Action action, final MessageType type) {
         try {
-            final SerializedAction serializedAction = serializer.serialize(action);
-            final NetworkMessage message = new NetworkMessage(type, serializedAction.getData());
+            final String serializedAction = NetActionSerializer.serializeAction(action);
+            final NetworkMessage message = new NetworkMessage(type, serializedAction.getBytes());
             networkService.sendMessageToHost(message);
         } catch (Exception e) {
             System.err.println("Client failed to send message: " + e.getMessage());
@@ -160,9 +153,9 @@ public class ClientActionManager implements ActionManager {
     @Override
     public void requestUndo() {
         try {
-            final Action a = undoRedoManager.getActionToUndo();
-            if (a != null) {
-                final Action inverse = actionFactory.createInverseAction(a, userId);
+            final Action action = undoRedoManager.getActionToUndo();
+            if (action != null) {
+                final Action inverse = actionFactory.createInverseAction(action, userId);
                 sendActionToHost(inverse, MessageType.UNDO);
             }
         } catch (Exception e) {
@@ -173,9 +166,9 @@ public class ClientActionManager implements ActionManager {
     @Override
     public void requestRedo() {
         try {
-            final Action a = undoRedoManager.getActionToRedo();
-            if (a != null) {
-                sendActionToHost(a, MessageType.REDO);
+            final Action action = undoRedoManager.getActionToRedo();
+            if (action != null) {
+                sendActionToHost(action, MessageType.REDO);
             }
         } catch (Exception e) {
             System.err.println("Client redo request failed: " + e.getMessage());
@@ -200,8 +193,7 @@ public class ClientActionManager implements ActionManager {
         if (message.getMessageType() == MessageType.RESTORE) {
             if (message.getPayload() != null) {
                 try {
-                    final Map<ShapeId, ShapeState> newMap =
-                            ShapeSerializer.deserializeShapesMap(message.getPayload());
+                    final Map<ShapeId, ShapeState> newMap = ShapeSerializer.deserializeShapesMap(message.getPayload());
                     canvasState.setAllStates(newMap);
                     undoRedoManager.clear();
                     onUpdateCallback.run();
@@ -214,15 +206,14 @@ public class ClientActionManager implements ActionManager {
 
         // 2. Handle Normal Actions
         try {
-            final SerializedAction sa = new SerializedAction(message.getSerializedAction());
-            final Action action = deserializer.deserialize(sa);
+            final Action action = NetActionSerializer.deserializeAction(message.getSerializedAction().toString());
             if (action == null) {
                 return;
             }
 
             final boolean isMyAction = action.getNewState()
                     .getShape().getLastUpdatedBy().equals(userId);
-            
+
             canvasState.applyState(action.getShapeId(), action.getNewState());
 
             if (isMyAction) {
@@ -230,7 +221,8 @@ public class ClientActionManager implements ActionManager {
                     case NORMAL -> undoRedoManager.push(action);
                     case UNDO -> undoRedoManager.applyHostUndo();
                     case REDO -> undoRedoManager.applyHostRedo();
-                    default -> { }
+                    default -> {
+                    }
                 }
             }
             onUpdateCallback.run();

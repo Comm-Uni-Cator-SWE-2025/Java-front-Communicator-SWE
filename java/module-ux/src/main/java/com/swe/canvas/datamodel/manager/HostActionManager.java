@@ -20,9 +20,7 @@ import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.collaboration.MessageType;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.collaboration.NetworkService;
-import com.swe.canvas.datamodel.serialization.DefaultActionDeserializer;
-import com.swe.canvas.datamodel.serialization.DefaultActionSerializer;
-import com.swe.canvas.datamodel.serialization.SerializedAction;
+import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
@@ -64,20 +62,9 @@ public class HostActionManager implements ActionManager {
     private final NetworkService networkService;
 
     /**
-     * Serializer for converting actions to bytes.
-     */
-    private final DefaultActionSerializer serializer;
-
-    /**
-     * Deserializer for converting bytes to actions.
-     */
-    private final DefaultActionDeserializer deserializer;
-
-    /**
      * Callback to run when the state updates.
      */
-    private Runnable onUpdateCallback = () -> {
-    };
+    private Runnable onUpdateCallback = () -> { };
 
     /**
      * Constructs a new HostActionManager.
@@ -87,16 +74,13 @@ public class HostActionManager implements ActionManager {
      * @param netService The network service for broadcasting.
      */
     public HostActionManager(final String hostId,
-            final CanvasState state,
-            final NetworkService netService) {
+                             final CanvasState state,
+                             final NetworkService netService) {
         this.userId = hostId;
         this.canvasState = state;
         this.networkService = netService;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
-        this.serializer = new DefaultActionSerializer();
-        this.deserializer = new DefaultActionDeserializer();
-
     }
 
     @Override
@@ -145,8 +129,8 @@ public class HostActionManager implements ActionManager {
     public void requestCreate(final Shape newShape) {
         try {
             final Action action = actionFactory.createCreateAction(newShape, userId);
-            final SerializedAction sa = serializer.serialize(action);
-            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getData()));
+            final String sa = NetActionSerializer.serializeAction(action);
+            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getBytes()));
         } catch (Exception e) {
             System.err.println("Host failed to create shape: " + e.getMessage());
         }
@@ -157,8 +141,8 @@ public class HostActionManager implements ActionManager {
         try {
             final Action action = actionFactory.createModifyAction(
                     canvasState, prevState.getShapeId(), modifiedShape, userId);
-            final SerializedAction sa = serializer.serialize(action);
-            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getData()));
+            final String sa = NetActionSerializer.serializeAction(action);
+            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getBytes()));
         } catch (Exception e) {
             System.err.println("Host failed to modify shape: " + e.getMessage());
         }
@@ -169,8 +153,8 @@ public class HostActionManager implements ActionManager {
         try {
             final Action action = actionFactory.createDeleteAction(
                     canvasState, shapeToDelete.getShapeId(), userId);
-            final SerializedAction sa = serializer.serialize(action);
-            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getData()));
+            final String sa = NetActionSerializer.serializeAction(action);
+            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getBytes()));
         } catch (Exception e) {
             System.err.println("Host failed to delete shape: " + e.getMessage());
         }
@@ -182,8 +166,8 @@ public class HostActionManager implements ActionManager {
             final Action actionToUndo = undoRedoManager.getActionToUndo();
             if (actionToUndo != null) {
                 final Action inverse = actionFactory.createInverseAction(actionToUndo, userId);
-                final SerializedAction sa = serializer.serialize(inverse);
-                processIncomingMessage(new NetworkMessage(MessageType.UNDO, sa.getData()));
+                final String sa = NetActionSerializer.serializeAction(inverse);
+                processIncomingMessage(new NetworkMessage(MessageType.UNDO, sa.getBytes()));
             }
         } catch (Exception e) {
             System.err.println("Host failed to process undo: " + e.getMessage());
@@ -195,8 +179,8 @@ public class HostActionManager implements ActionManager {
         try {
             final Action actionToRedo = undoRedoManager.getActionToRedo();
             if (actionToRedo != null) {
-                final SerializedAction sa = serializer.serialize(actionToRedo);
-                processIncomingMessage(new NetworkMessage(MessageType.REDO, sa.getData()));
+                final String sa = NetActionSerializer.serializeAction(actionToRedo);
+                processIncomingMessage(new NetworkMessage(MessageType.REDO, sa.getBytes()));
             }
         } catch (Exception e) {
             System.err.println("Host failed to process redo: " + e.getMessage());
@@ -236,8 +220,7 @@ public class HostActionManager implements ActionManager {
         }
 
         try {
-            final SerializedAction serializedData = new SerializedAction(message.getSerializedAction());
-            final Action action = deserializer.deserialize(serializedData);
+            final Action action = NetActionSerializer.deserializeAction(message.getSerializedAction().toString());
 
             if (action == null) {
                 return;
@@ -252,8 +235,7 @@ public class HostActionManager implements ActionManager {
                         case NORMAL -> undoRedoManager.push(action);
                         case UNDO -> undoRedoManager.applyHostUndo();
                         case REDO -> undoRedoManager.applyHostRedo();
-                        default -> {
-                        }
+                        default -> { }
                     }
                 }
                 applyAndBroadcast(action, message);

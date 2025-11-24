@@ -1,14 +1,22 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: DefaultActionDeserializer.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module: Canvas
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.serialization;
 
-import java.nio.charset.StandardCharsets;
-
 import com.swe.canvas.datamodel.action.Action;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Default implementation of {@link ActionDeserializer}.
  *
  * <p>This implementation now uses manual JSON deserialization via
- * {@link ManualJsonConverter}, replacing the need for Java's
+ * {@link NetActionSerializer}, replacing the need for Java's
  * built-in binary serialization.
  * </p>
  */
@@ -38,7 +46,7 @@ public class DefaultActionDeserializer implements ActionDeserializer {
                 throw new SerializationException("Deserialized object is null or not of type Action.");
             }
 
-        } catch (SerializationException e) {
+        } catch (Exception e) {
             throw new SerializationException("Failed to manually deserialize action from bytes.", e);
         }
     }
