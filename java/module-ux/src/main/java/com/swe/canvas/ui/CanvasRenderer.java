@@ -1,3 +1,13 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: CanvasRenderer.java
+ * Owner: Gajula Sri Siva Sai Shashank
+ * Roll Number: 112201014
+ * Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.ui;
 
 import java.util.List;
@@ -28,6 +38,7 @@ public class CanvasRenderer {
 
     /**
      * Constructor for renderer
+     * 
      * @param canvas_: Instance of the canvas
      */
     public CanvasRenderer(final Canvas canvas_) {
@@ -37,12 +48,15 @@ public class CanvasRenderer {
 
     /**
      * Main Rendering logic
-     * @param state current state
-     * @param transientShape The "ghost" shape awaiting network confirmation
-     * @param selectedShapeId id of the shape selected
-     * @param isDraggingSelection dragging or not (Note: isDragging is now part of transientShape logic)
+     * 
+     * @param state               current state
+     * @param transientShape      The "ghost" shape awaiting network confirmation
+     * @param selectedShapeId     id of the shape selected
+     * @param isDraggingSelection dragging or not (Note: isDragging is now part of
+     *                            transientShape logic)
      */
-    public void render(final CanvasState state, final Shape transientShape, final ShapeId selectedShapeId, final boolean isDraggingSelection) {
+    public void render(final CanvasState state, final Shape transientShape, final ShapeId selectedShapeId,
+            final boolean isDraggingSelection) {
         // We must use the canvas's fixed width/height, not the container's
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
@@ -67,10 +81,10 @@ public class CanvasRenderer {
             if (selectedState != null && !selectedState.isDeleted()) {
                 // If we are dragging the selected shape, draw box around the ghost
                 if (transientShape != null && transientShape.getShapeId().equals(selectedShapeId)) {
-                     drawBoundingBox(transientShape);
+                    drawBoundingBox(transientShape);
                 } else {
-                     // Otherwise draw around the shape in the main state
-                     drawBoundingBox(selectedState.getShape());
+                    // Otherwise draw around the shape in the main state
+                    drawBoundingBox(selectedState.getShape());
                 }
             }
         }
