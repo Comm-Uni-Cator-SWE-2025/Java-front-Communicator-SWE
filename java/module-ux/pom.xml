@@ -41,23 +41,7 @@
     <dependencies>
 
         <!-- Internal project module dependencies -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>module-app</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>module-networking</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>module-canvas</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>${project.groupId}</groupId>
