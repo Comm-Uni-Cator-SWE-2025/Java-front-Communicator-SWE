@@ -15,17 +15,17 @@ public class MainViewModel extends BaseViewModel {
     private final AbstractRPC rpc;
     
     /** Current user property. */
-    private final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
+    public final BindableProperty<UserProfile> currentUser = new BindableProperty<>(null, "currentUser");
     /** Logout requested property. */
-    private final BindableProperty<Boolean> logoutRequested = new BindableProperty<>(false, "logoutRequested");
+    public final BindableProperty<Boolean> logoutRequested = new BindableProperty<>(false, "logoutRequested");
     /** Start meeting requested property. */
-    private final BindableProperty<Boolean> startMeetingRequested = 
+    public final BindableProperty<Boolean> startMeetingRequested = 
         new BindableProperty<>(false, "startMeetingRequested");
     /** Join meeting requested property. */
-    private final BindableProperty<Boolean> joinMeetingRequested = 
+    public final BindableProperty<Boolean> joinMeetingRequested = 
         new BindableProperty<>(false, "joinMeetingRequested");
     /** Meeting code property. */
-    private final BindableProperty<String> meetingCode = new BindableProperty<>("", "meetingCode");
+    public final BindableProperty<String> meetingCode = new BindableProperty<>("", "meetingCode");
     
     /**
      * Creates a new MainViewModel.
