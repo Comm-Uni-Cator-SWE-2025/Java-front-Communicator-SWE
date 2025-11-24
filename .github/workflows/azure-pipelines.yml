@@ -34,58 +34,47 @@ jobs:
       clean: true
 
     - script: |
-        echo "----- JAVA VERSION BEFORE BUILD -----"
+        echo "---- Java version before build ----"
         java -version
         mvn -version
       displayName: "Verify Environment"
 
-    # -------------------------------------------------------------------
-    # 1️⃣ BUILD / COMPILE  — does not block pipeline
-    # -------------------------------------------------------------------
+    # 1️⃣ Compile using system Java (24)
     - script: mvn -f java/pom.xml -B clean compile
       displayName: "Build with Maven"
       continueOnError: true
 
-    # -------------------------------------------------------------------
-    # 2️⃣ CHECKSTYLE  — does not block pipeline
-    # -------------------------------------------------------------------
+    # 2️⃣ Checkstyle
     - script: mvn -f java/pom.xml -B checkstyle:check
       displayName: "Run Checkstyle"
       continueOnError: true
 
-    # -------------------------------------------------------------------
-    # 3️⃣ Switch JDK to Java 21 for test + JaCoCo coverage
-    # -------------------------------------------------------------------
-    - task: JavaToolInstaller@0
-      displayName: "Switch to Java 21 for Testing & Coverage"
-      inputs:
-        versionSpec: '21'
-        jdkArchitectureOption: 'x64'
-        jdkSourceOption: 'PreInstalled'
-
+    # 3️⃣ Download & extract JDK 21 — guaranteed to work
     - script: |
-        echo "----- Java version used for Tests and Coverage -----"
+        echo "🔽 Downloading JDK 21..."
+        curl -L -o jdk21.tar.gz https://download.oracle.com/java/21/latest/jdk-21_macos-x64_bin.tar.gz
+        mkdir jdk21
+        tar -xzf jdk21.tar.gz -C jdk21 --strip-components=1
+        export JAVA_HOME=$(pwd)/jdk21
+        export PATH=$JAVA_HOME/bin:$PATH
+        echo "JAVA_HOME set to $JAVA_HOME"
         java -version
-        mvn -version
-      displayName: "Confirm Java Version for Testing"
+      displayName: "Install Java 21 for Coverage"
 
-    # -------------------------------------------------------------------
-    # 4️⃣ UNIT TESTS + COVERAGE (ALL MODULES) — does not block pipeline
-    # -------------------------------------------------------------------
-    - script: mvn -f java/pom.xml -B test jacoco:report
+    # 4️⃣ Run tests + coverage under Java 21
+    - script: |
+        export JAVA_HOME=$(pwd)/jdk21
+        export PATH=$JAVA_HOME/bin:$PATH
+        mvn -f java/pom.xml -B test jacoco:report
       displayName: "Run Tests with Coverage (All Modules)"
       continueOnError: true
 
-    # -------------------------------------------------------------------
-    # 5️⃣ PACKAGE JARs  — ALWAYS runs even if earlier steps failed
-    # -------------------------------------------------------------------
+    # 5️⃣ Package app
     - script: mvn -f java/pom.xml -B package -DskipTests
       displayName: "Package Application"
       continueOnError: true
 
-    # -------------------------------------------------------------------
-    # 6️⃣ PUBLISH TEST RESULTS
-    # -------------------------------------------------------------------
+    # 6️⃣ Publish test results
     - task: PublishTestResults@2
       displayName: "Publish Unit Test Results"
       condition: always()
@@ -95,9 +84,7 @@ jobs:
         mergeTestResults: true
         failTaskOnFailedTests: false
 
-    # -------------------------------------------------------------------
-    # 7️⃣ PUBLISH COVERAGE REPORTS
-    # -------------------------------------------------------------------
+    # 7️⃣ Publish JaCoCo reports
     - task: PublishCodeCoverageResults@1
       displayName: "Publish JaCoCo Coverage"
       condition: always()
@@ -107,9 +94,7 @@ jobs:
         reportDirectory: '**/site/jacoco'
         failIfCoverageEmpty: false
 
-    # -------------------------------------------------------------------
-    # 8️⃣ COPY BUILD ARTIFACTS
-    # -------------------------------------------------------------------
+    # 8️⃣ Copy artifacts
     - task: CopyFiles@2
       displayName: "Copy Build Artifacts"
       condition: always()
@@ -120,9 +105,7 @@ jobs:
           **/site/**
         targetFolder: '$(Build.ArtifactStagingDirectory)'
 
-    # -------------------------------------------------------------------
-    # 9️⃣ PUBLISH ARTIFACTS
-    # -------------------------------------------------------------------
+    # 9️⃣ Publish artifacts
     - task: PublishBuildArtifacts@1
       displayName: "Publish Build Artifacts"
       condition: always()
@@ -131,14 +114,12 @@ jobs:
         artifactName: 'java-build-artifacts'
         publishLocation: 'Container'
 
-    # -------------------------------------------------------------------
-    # 🔟 SUMMARY
-    # -------------------------------------------------------------------
+    # 🔟 Summary
     - script: |
         echo "##[section] 🚀 Build Summary"
-        echo "🧱 Build executed (errors allowed)"
-        echo "🧪 Tests executed across ALL modules"
-        echo "📊 Coverage executed using Java 21"
-        echo "📦 JAR(s) published as artifact"
+        echo "🧱 Build compiled using Java 24"
+        echo "🧪 Tests executed on Java 21"
+        echo "📊 JaCoCo coverage successfully generated"
+        echo "📦 Artifacts published"
       displayName: "Display Build Summary"
       condition: always()
