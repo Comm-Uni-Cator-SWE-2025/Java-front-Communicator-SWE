@@ -21,9 +21,11 @@ import com.swe.controller.serialize.DataSerializer;
 import com.swe.screenNVideo.Utils;
 import com.swe.ux.theme.ThemeManager;
 
+import com.swe.ux.view.BypassAuthPage;
 import com.swe.ux.view.LoginPage;
 import com.swe.ux.view.MainPage;
 import com.swe.ux.view.MeetingPage;
+import com.swe.ux.viewmodel.BypassAuthViewModel;
 import com.swe.ux.viewmodel.LoginViewModel;
 import com.swe.ux.viewmodel.MainViewModel;
 import com.swe.ux.viewmodel.MeetingViewModel;
@@ -31,6 +33,7 @@ import com.swe.ux.viewmodel.MeetingViewModel;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
@@ -49,6 +52,7 @@ public class App extends JFrame {
 
     // View names
     public static final String LOGIN_VIEW = "LOGIN";
+    public static final String BYPASS_AUTH_VIEW = "BYPASS_AUTH";
     public static final String MAIN_VIEW = "MAIN";
     public static final String MEETING_VIEW = "MEETING";
 
@@ -58,9 +62,11 @@ public class App extends JFrame {
 
     // ViewModel references for resetting on logout
     private LoginViewModel loginViewModel;
+    private BypassAuthViewModel bypassAuthViewModel;
     private MainViewModel mainViewModel;
 
     private AbstractRPC rpc;
+    private static boolean bypassAuthMode = false;
 
     /**
      * Gets the singleton instance of the application.
@@ -78,6 +84,8 @@ public class App extends JFrame {
     private App(AbstractRPC rpc) {
         // Initialize services
         this.rpc = rpc;
+        // Initialize RPC in Utils for IP retrieval
+        com.swe.screenNVideo.Utils.initializeRPC(rpc);
         // Set up the main panel with card layout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
@@ -103,8 +111,12 @@ public class App extends JFrame {
         themeManager.setMainFrame(this);
         themeManager.setApp(this);
 
-        // Show login view by default
-        showView(LOGIN_VIEW);
+        // Show login view or bypass auth view based on mode
+        if (bypassAuthMode) {
+            showView(BYPASS_AUTH_VIEW);
+        } else {
+            showView(LOGIN_VIEW);
+        }
 
         // Center the window
         setLocationRelativeTo(null);
@@ -135,28 +147,31 @@ public class App extends JFrame {
     private void initViews() {
         // Initialize ViewModels
         loginViewModel = new LoginViewModel(rpc);
+        bypassAuthViewModel = new BypassAuthViewModel(rpc);
         mainViewModel = new MainViewModel(rpc);
-        System.out.println("Meeting");
-
-        final UserProfile newUser = new UserProfile(Utils.getSelfIP(), "You", ParticipantRole.STUDENT);
-        // Will be set when user joins a meeting
-        MeetingViewModel meetingViewModel = new MeetingViewModel(newUser, rpc);
 
         // Initialize Views with their respective ViewModels
         LoginPage loginView = new LoginPage(loginViewModel);
+        BypassAuthPage bypassAuthView = new BypassAuthPage(bypassAuthViewModel);
         MainPage mainView = new MainPage(mainViewModel);
-        MeetingPage meetingView = new MeetingPage(meetingViewModel);
-
+        // MeetingPage and MeetingViewModel will be created lazily when needed
 
         // Add views to card layout
         mainPanel.add(loginView, LOGIN_VIEW);
+        mainPanel.add(bypassAuthView, BYPASS_AUTH_VIEW);
         mainPanel.add(mainView, MAIN_VIEW);
-        mainPanel.add(meetingView, MEETING_VIEW);
-
-
-        meetingViewModel.startMeeting();
+        // MEETING_VIEW will be added when meeting is actually started/joined
         // Set up navigation listeners
         loginViewModel.currentUser.addListener(PropertyListeners.onUserProfileChanged(user -> {
+            if (user != null) {
+                this.currentUser = user;
+                mainViewModel.setCurrentUser(currentUser);
+                showView(MAIN_VIEW);
+            }
+        }));
+
+        // Set up bypass auth navigation listener
+        bypassAuthViewModel.currentUser.addListener(PropertyListeners.onUserProfileChanged(user -> {
             if (user != null) {
                 this.currentUser = user;
                 mainViewModel.setCurrentUser(currentUser);
@@ -173,10 +188,12 @@ public class App extends JFrame {
         }));
 
         // Use an array to hold the meeting view reference for use in lambda
-        MeetingPage[] meetingViewRef = new MeetingPage[] { meetingView };
+        // Will be initialized when meeting is actually started/joined
+        MeetingPage[] meetingViewRef = new MeetingPage[] { null };
 
         // Use an array to hold the current active meeting view model reference
-        MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { meetingViewModel };
+        // Will be initialized when meeting is actually started/joined
+        MeetingViewModel[] activeMeetingViewModelRef = new MeetingViewModel[] { null };
 
 
 
@@ -191,10 +208,15 @@ public class App extends JFrame {
 
         rpc.subscribe("core/updateParticipants", (data) -> {
             try {
+                // Only process if meeting view model exists (meeting is active)
+                if (activeMeetingViewModelRef[0] == null) {
+                    return new byte[0];
+                }
                 Map<ClientNode, UserProfile> participantsMap = DataSerializer.deserialize(data, new TypeReference<Map<ClientNode, UserProfile>>() {});
                 System.out.println("App: participantsMap: " + participantsMap);
                 participantsMap.forEach((clientNode, userProfile) -> {
                     System.out.println("App: clientNode: " + clientNode + " userProfile: " + userProfile);
+                    activeMeetingViewModelRef[0].ipToMail.put(userProfile.getEmail(), clientNode.hostName());
                     // Use the currently active meeting view model
                     activeMeetingViewModelRef[0].addParticipant(userProfile);
                     System.out.println("App: participants: " + activeMeetingViewModelRef[0].participants.get());
@@ -250,7 +272,18 @@ public class App extends JFrame {
                     }
                 }));
 
-                mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                // Add meeting view to card layout if not already added
+                // Check if component already exists to avoid duplicate additions
+                boolean viewExists = false;
+                for (Component comp : mainPanel.getComponents()) {
+                    if (comp == meetingViewRef[0]) {
+                        viewExists = true;
+                        break;
+                    }
+                }
+                if (!viewExists) {
+                    mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                }
                 showView(MEETING_VIEW);
 
                 // Reset the flag
@@ -309,22 +342,23 @@ public class App extends JFrame {
                     }
                 }));
 
-                mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                // Add meeting view to card layout if not already added
+                // Check if component already exists to avoid duplicate additions
+                boolean viewExists = false;
+                for (Component comp : mainPanel.getComponents()) {
+                    if (comp == meetingViewRef[0]) {
+                        viewExists = true;
+                        break;
+                    }
+                }
+                if (!viewExists) {
+                    mainPanel.add(meetingViewRef[0], MEETING_VIEW);
+                }
                 showView(MEETING_VIEW);
 
                 // Reset the flag and meeting code
                 mainViewModel.joinMeetingRequested.set(false);
                 mainViewModel.meetingCode.set("");
-            }
-        }));
-
-        // Update the original reference when the array changes
-        meetingView = meetingViewRef[0];
-
-        // When meeting ends (for initial meeting view model), go back to main view
-        meetingViewModel.isMeetingActive.addListener(PropertyListeners.onBooleanChanged(isActive -> {
-            if (!isActive) {
-                showView(MAIN_VIEW);
             }
         }));
     }
@@ -359,14 +393,37 @@ public class App extends JFrame {
      */
     public static void main(String[] args) {
         int portNumber = 6942;
+        boolean bypassAuth = false;
 
-        if (args.length > 0) { 
-            String port = args[0];
-            portNumber = Integer.parseInt(port);
+        // Parse CLI arguments
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if ("--bypass-auth".equals(arg) || "-b".equals(arg)) {
+                bypassAuth = true;
+            } else {
+                // Try to parse as port number
+                try {
+                    portNumber = Integer.parseInt(arg);
+                } catch (NumberFormatException e) {
+                    // Ignore non-numeric arguments
+                }
+            }
         }
+
+        bypassAuthMode = bypassAuth;
 
         final AbstractRPC rpc = new RPC();
 
+        rpc.subscribe("core/updateParticipants", (data) -> {return new byte[0];});
+        rpc.subscribe("chat:new-message", (d) -> {return new byte[0];});
+        rpc.subscribe("chat:file-metadata-received", (d) -> {return new byte[0];});
+        rpc.subscribe("chat:file-saved-success", (d) -> {return new byte[0];});
+        rpc.subscribe("chat:file-saved-error", (d) -> {return new byte[0];});
+        rpc.subscribe("chat:message-deleted", (d) -> {return new byte[0];});
+
+        rpc.subscribe("updateUI", (d) -> {return new byte[0];});
+        rpc.subscribe("stopShare", (d) -> {return new byte[0];});
+    
         App app = App.getInstance(rpc);
 
         // Create and show the application window
@@ -421,7 +478,11 @@ public class App extends JFrame {
         if (user != null) {
             showView(MAIN_VIEW);
         } else {
-            showView(LOGIN_VIEW);
+            if (bypassAuthMode) {
+                showView(BYPASS_AUTH_VIEW);
+            } else {
+                showView(LOGIN_VIEW);
+            }
         }
     }
 
@@ -448,13 +509,22 @@ public class App extends JFrame {
             loginViewModel.reset();
         }
 
+        // Reset BypassAuthViewModel to ensure clean state
+        if (bypassAuthViewModel != null) {
+            bypassAuthViewModel.reset();
+        }
+
         // Logout from auth service (this will clear all user data)
         // TODO USE RPC TO LOGOUT
 
         // Clear view history
         viewHistory.clear();
 
-        // Navigate to login view - this will trigger reset on LoginPage
-        showView(LOGIN_VIEW);
+        // Navigate to appropriate auth view based on mode
+        if (bypassAuthMode) {
+            showView(BYPASS_AUTH_VIEW);
+        } else {
+            showView(LOGIN_VIEW);
+        }
     }
 }

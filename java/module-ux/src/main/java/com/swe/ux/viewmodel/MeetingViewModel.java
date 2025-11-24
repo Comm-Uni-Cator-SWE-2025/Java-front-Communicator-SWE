@@ -19,6 +19,7 @@
 package com.swe.ux.viewmodel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.swe.controller.Meeting.UserProfile;
@@ -34,6 +35,8 @@ public class MeetingViewModel extends BaseViewModel {
     private final UserProfile currentUser;
     private Meeting currentMeeting = new Meeting("Meeting");
     public AbstractRPC rpc;
+
+    public HashMap<String, String> ipToMail;
     
     // Bindable properties
     public final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
@@ -51,12 +54,14 @@ public class MeetingViewModel extends BaseViewModel {
         System.out.println("User  " + currentUser);
         this.currentUser = currentUser;
         this.rpc = rpc;
+        ipToMail = new HashMap<>();
     }
     
     public MeetingViewModel(UserProfile currentUser, String role, AbstractRPC rpc) {
         this.currentUser = currentUser;
         this.rpc = rpc;
         this.role.set(role);
+        ipToMail = new HashMap<>();
     }
 
     /**
@@ -93,7 +98,9 @@ public class MeetingViewModel extends BaseViewModel {
         }
         currentMeeting.setMeetingTitle(title);
         currentMeeting.addParticipant(currentUser);
-        
+
+        ipToMail.put(currentUser.getEmail(), Utils.getSelfIP());
+
         isMeetingActive.set(true);
         updateParticipants();
         addSystemMessage("Meeting started with ID: " + newMeetingId);

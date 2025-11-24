@@ -1,7 +1,10 @@
 /**
- *  Contributed by Priyanshu Pandey.
+ * Contributed by Priyanshu Pandey.
  */
+
 package com.swe.screenNVideo;
+
+import com.swe.controller.RPCinterface.AbstractRPC;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -9,6 +12,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Utility class for ScreenN Video.
@@ -59,34 +64,9 @@ public class Utils {
      */
     public static final String MODULE_REMOTE_KEY = "screenNVideo";
     /**
-     * Key constant for unsubscribe_as_viewer.
+     * bytes in 1 kb.
      */
-    public static final int BUFFER_SIZE = 1024 * 10; // 10 kb
-    /**
-     * Scale factor for X axis.
-     */
-    public static final int SCALE_X = 7;
-    /**
-     * Scale factor for Y axis.
-     */
-    public static final int SCALE_Y = 5;
-    /**
-     * PaddingX for the videoCapture to stitch to the ScreenCapture.
-     */
-    public static final int VIDEO_PADDING_X = 20;
-    /**
-     * PaddingY for the videoCapture to stitch to the ScreenCapture.
-     */
-    public static final int VIDEO_PADDING_Y = 20;
-
-    /**
-     * Width of the server.
-     */
-    public static final int SERVER_WIDTH = 800;
-    /**
-     * Height of the server.
-     */
-    public static final int SERVER_HEIGHT = 600;
+    public static final double KB = 1_024.0;
     /**
      * Width of the client.
      */
@@ -105,17 +85,16 @@ public class Utils {
     public static final int INT_MASK_8 = 8;
 
 
-    
     /**
      * Seconds in milliseconds.
      */
     public static final int SEC_IN_MS = 1000;
-    
+
     /**
      * Milli-seconds in nanoseconds.
      */
     public static final int MSEC_IN_NS = 1_000_000;
-    
+
     /**
      * Maximum tries to serialize the compressed packets.
      */
@@ -126,7 +105,7 @@ public class Utils {
      * @param bufferOut the buffer to write to
      * @param data the data to write
      */
-    public  static void writeInt(final ByteArrayOutputStream bufferOut, final int data) {
+    public static void writeInt(final ByteArrayOutputStream bufferOut, final int data) {
         bufferOut.write((data >> INT_MASK_24) & Utils.BYTE_MASK);
         bufferOut.write((data >> INT_MASK_16) & Utils.BYTE_MASK);
         bufferOut.write((data >> INT_MASK_8) & Utils.BYTE_MASK);
@@ -149,6 +128,41 @@ public class Utils {
     }
 
 
+    // Static RPC instance and cached IP
+    private static AbstractRPC rpcInstance = null;
+    private static String cachedIP = null;
+
+    /**
+     * Initializes the RPC instance for IP retrieval.
+     * Should be called once during application startup.
+     * @param rpc The RPC instance to use for IP retrieval
+     */
+    public static void initializeRPC(AbstractRPC rpc) {
+        rpcInstance = rpc;
+    }
+
+    public static String getSelfIP() {
+        // Return cached IP if available
+        if (cachedIP != null) {
+            return cachedIP;
+        }
+
+        // Use RPC to get IP address
+        if (rpcInstance == null) {
+            throw new RuntimeException("RPC instance not initialized. Call Utils.initializeRPC() first.");
+        }
+
+        try {
+            byte[] response = rpcInstance.call("core/ip", new byte[0]).get();
+            cachedIP = new String(response, StandardCharsets.UTF_8).trim();
+            return cachedIP;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Failed to get IP address via RPC", e);
+        }
+    }
+
+    // Old implementation - commented out
+    /*
     public static String getSelfIP() {
         // Get IP address as string
         try (DatagramSocket socket = new DatagramSocket()) {
@@ -158,5 +172,6 @@ public class Utils {
             throw new RuntimeException(e);
         }
     }
+    */
 
 }
