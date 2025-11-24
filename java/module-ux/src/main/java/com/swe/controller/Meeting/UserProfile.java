@@ -32,9 +32,6 @@ public class UserProfile {
     @JsonProperty("role")
     private ParticipantRole role;
 
-    @JsonIgnore
-    private String ip = "";
-
     /**
      * Default constructor.
      * Required for frameworks like Jackson for deserialization.
@@ -55,17 +52,8 @@ public class UserProfile {
             final String finalDisplayName,
             final ParticipantRole finalUserRole) {
         this.email = finalEmail;
-        this.ip = finalEmail;
         this.displayName = finalDisplayName;
         this.role = finalUserRole;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
     }
 
     // --- Getters (These match the methods expected by the rest of the code) ---
