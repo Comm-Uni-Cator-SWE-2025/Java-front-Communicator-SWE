@@ -91,7 +91,7 @@ public class MeetingControlButton extends JButton {
         g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
 
         int padding = 8;
-        Font labelFont = getFont().deriveFont(Font.BOLD, 11f);
+        Font labelFont = FontUtil.getJetBrainsMono(13.5f, Font.BOLD);
         FontMetrics fm = g2.getFontMetrics(labelFont);
         g2.setFont(labelFont);
         g2.setColor(foreground);
