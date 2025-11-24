@@ -40,6 +40,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
+
+import javax.swing.SwingUtilities;
 
 /**
  * JavaFX pane that renders the Sentiment + Shape analytics dashboard.
@@ -447,21 +450,36 @@ public class SentimentViewPane extends StackPane {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Platform.runLater(() -> {
-                    if (meetingViewModel.currentUser.getDisplayName() != "You") {
-                        viewModel.fetchAndUpdateData();
-                        updateChartWithAnimation(false);
 
-                        shapeViewModel.fetchAndUpdateData();
-                        updateBarChartWithAnimation(false);
+                if (!"You".equals(meetingViewModel.currentUser.getDisplayName())) {
 
-                        telemetryViewModel.fetchAndUpdateData();
-                        telemetryView.refresh();
+                    // 1️⃣ Run all heavy work OFF the FX thread
+                    CompletableFuture
+                            .supplyAsync(() -> {
 
-                        updateMessages();   
-                    }
-                });
+                                System.out.println("Fetching full data update...");
+
+                                viewModel.fetchAndUpdateData();
+                                shapeViewModel.fetchAndUpdateData();
+                                telemetryViewModel.fetchAndUpdateData();
+
+                                System.out.println("Background work complete.");
+
+                                return true;
+                            })
+
+                            // 2️⃣ Once done, switch to JavaFX UI thread
+                            .thenAccept(result -> {
+                                Platform.runLater(() -> {
+                                    telemetryView.refresh();
+                                    updateChartWithAnimation(false);
+                                    updateMessages();
+                                    updateBarChartWithAnimation(false);
+                                });
+                            });
+                }
             }
-        }, 0, 100000);
+        }, 0, 1000);
     }
+
 }
