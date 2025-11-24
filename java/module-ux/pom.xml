@@ -59,11 +59,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>module-cloud</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- JavaFX -->
         <dependency>

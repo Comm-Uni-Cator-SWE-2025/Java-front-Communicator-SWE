@@ -23,9 +23,7 @@ public class CanvasNetworkService implements NetworkService {
     public CanvasNetworkService(final AbstractRPC rpc, final NetworkFront network) {
         this.rpc = rpc;
         this.network = network;
-        if (this.rpc != null) {
-            this.rpc.subscribe("canvas:getHostIp", this::handleSubscribeRPC);
-        }
+
     }
 
     ClientNode deserializeClientNodee(byte[] data) {
@@ -39,11 +37,11 @@ public class CanvasNetworkService implements NetworkService {
         return new ClientNode(ip, port);
     }
 
-    private byte[] handleSubscribeRPC(byte[] params) {
-        ClientNode hostNode = deserializeClientNodee(params);
+    private byte[] handleCallRPC(byte[] data) {
+        ClientNode hostNode = deserializeClientNodee(data);
         this.hostNode = hostNode;
 
-        return params;
+        return data;
     }
 
     @Override
@@ -55,12 +53,21 @@ public class CanvasNetworkService implements NetworkService {
         }
 
         ClientNode[] host = {hostNode};
-        network.sendData(serializedMessage.getBytes(), host, 2, 0);
+//        network.sendData(serializedMessage.getBytes(), host, 2, 0);
+
+        if (this.rpc != null) {
+            this.rpc.call("canvas:sendToHost", serializedMessage.getBytes());
+        }
     }
 
     @Override
     public void broadcastMessage(NetworkMessage message) {
         String serializedMessage = message.serialize();
-        network.broadcast(serializedMessage.getBytes(), 2, 0);
+
+        // network.broadcast(serializedMessage.getBytes(), 2, 0);
+    
+        if (this.rpc != null) {
+            this.rpc.call("canvas:broadcast", serializedMessage.getBytes());
+        }
     }
 }

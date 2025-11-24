@@ -158,7 +158,7 @@ public class App extends JFrame {
                 mainViewModel.setCurrentUser(currentUser);
                 
                 // Load theme from cloud after user is logged in
-                ThemeManager.getInstance().loadThemeFromCloud();
+//                ThemeManager.getInstance().loadThemeFromCloud();
                 System.out.println("App: Theme loaded from cloud");
                 System.out.println("App: Theme: " + ThemeManager.getInstance().getCurrentTheme());
                 showView(MAIN_VIEW);
