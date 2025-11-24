@@ -24,7 +24,7 @@ public class MeetingControlButton extends JButton {
     private static final long serialVersionUID = 1L;
 
     public enum ControlIcon {
-        MIC, VIDEO, SHARE, HAND, LEAVE, CHAT, PARTICIPANTS;
+        MIC, VIDEO, SHARE, HAND, LEAVE, CHAT, PEOPLE;
     }
 
     private final ControlIcon iconType;
