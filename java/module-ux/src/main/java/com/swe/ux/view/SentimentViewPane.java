@@ -9,6 +9,7 @@ import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.model.analytics.SentimentPoint;
 import com.swe.ux.service.MessageDataService;
 import com.swe.ux.viewmodel.ShapeViewModel;
+import com.swe.ux.viewmodel.MeetingViewModel;
 import com.swe.ux.viewmodel.SentimentViewModel;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -62,9 +63,11 @@ public class SentimentViewPane extends StackPane {
     private CategoryAxis categoryAxis;
     private NumberAxis barYAxis;
     AbstractRPC rpc;
+    MeetingViewModel meetingViewModel;
 
-    public SentimentViewPane(AbstractRPC rpc) {
-        this.rpc = rpc;
+    public SentimentViewPane(MeetingViewModel meetingViewModel) {
+        this.rpc = meetingViewModel.rpc;
+        this.meetingViewModel = meetingViewModel;
         this.viewModel = new SentimentViewModel(rpc);
         this.shapeViewModel = new ShapeViewModel();
         this.messageDataService = new MessageDataService();
@@ -434,15 +437,17 @@ public class SentimentViewPane extends StackPane {
             @Override
             public void run() {
                 Platform.runLater(() -> {
-                    viewModel.fetchAndUpdateData();
-                    updateChartWithAnimation(false);
+                    if (meetingViewModel.currentUser.getDisplayName() != "You") {
+                        viewModel.fetchAndUpdateData();
+                        updateChartWithAnimation(false);
 
-                    shapeViewModel.fetchAndUpdateData();
-                    updateBarChartWithAnimation(false);
+                        shapeViewModel.fetchAndUpdateData();
+                        updateBarChartWithAnimation(false);
 
-                    updateMessages();
+                        updateMessages();
+                    }
                 });
             }
-        }, 0, 10000);
+        }, 0, 100000);
     }
 }

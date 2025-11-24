@@ -35,7 +35,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
     // header / controls
     private SoftCardPanel headerCard;
     private SoftCardPanel controlsBar;
-    private FrostedToolbarButton btnParticipants;   // header button (under Copy Link)
+    private FrostedToolbarButton btnParticipants; // header button (under Copy Link)
     private FrostedToolbarButton btnHidePanels;
     private FrostedToolbarButton btnCopyLink;
 
@@ -171,7 +171,11 @@ public class MeetingPage extends FrostedBackgroundPanel {
         ScreenNVideo screenNVideo = new ScreenNVideo(meetingViewModel);
         CanvasViewModel canvasVM = new CanvasViewModel(new CanvasState());
         CanvasPage canvasPage = new CanvasPage(canvasVM);
-        SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel(meetingViewModel.rpc);
+        SentimentInsightsPanel sentimentInsightsPanel = null;
+        if (meetingViewModel.currentUser != null) {
+            System.out.println("Current User: " + meetingViewModel.currentUser.getDisplayName());
+            sentimentInsightsPanel = new SentimentInsightsPanel(meetingViewModel);
+        }
 
         stageTabs.addTab("  Screen & Video  ", wrap(screenNVideo));
         stageTabs.addTab("  Canvas  ", wrap(canvasPage));
@@ -255,7 +259,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
         btnChat.setCustomFill(tabName.equalsIgnoreCase("Chat") ? new Color(90, 160, 255, 160) : null);
     }
 
-
     private void toggleSidebarVisibility() {
         if (sidebarCard.isVisible()) {
             sidebarCard.setVisible(false);
@@ -315,7 +318,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
             com.swe.ux.App.getInstance(null).showView(App.MAIN_VIEW);
         });
 
-
         // order: (others) ... Chat (right-most)
         bar.add(btnMute);
         bar.add(btnCamera);
@@ -330,29 +332,24 @@ public class MeetingPage extends FrostedBackgroundPanel {
     // ---------------- Bindings & Theme ----------------
     private void setupBindings() {
         // update camera/share active states from viewmodel
-        meetingViewModel.isVideoEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
-                SwingUtilities.invokeLater(() -> btnCamera.setCustomFill(v ? new Color(90, 160, 255, 160) : null))
-        ));
+        meetingViewModel.isVideoEnabled.addListener(PropertyListeners.onBooleanChanged(v -> SwingUtilities
+                .invokeLater(() -> btnCamera.setCustomFill(v ? new Color(90, 160, 255, 160) : null))));
 
-        meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(v ->
-            SwingUtilities.invokeLater(() -> btnShare.setCustomFill(v ? new Color(90, 160, 255, 160) : null))
-        ));
+        meetingViewModel.isScreenShareEnabled.addListener(PropertyListeners.onBooleanChanged(v -> SwingUtilities
+                .invokeLater(() -> btnShare.setCustomFill(v ? new Color(90, 160, 255, 160) : null))));
 
         meetingViewModel.isAudioEnabled.addListener(PropertyListeners.onBooleanChanged(v -> {
             SwingUtilities.invokeLater(() -> btnMute.setCustomFill(v ? new Color(90, 160, 255, 160) : null));
         }));
 
-        meetingViewModel.meetingId.addListener(evt ->
-                SwingUtilities.invokeLater(() -> meetingIdBadge.setText(
-                        meetingViewModel.meetingId.get() == null || meetingViewModel.meetingId.get().isEmpty()
-                                ? "Meeting: --" : "Meeting: " + meetingViewModel.meetingId.get()))
-        );
+        meetingViewModel.meetingId.addListener(evt -> SwingUtilities.invokeLater(() -> meetingIdBadge.setText(
+                meetingViewModel.meetingId.get() == null || meetingViewModel.meetingId.get().isEmpty()
+                        ? "Meeting: --"
+                        : "Meeting: " + meetingViewModel.meetingId.get())));
 
-        meetingViewModel.role.addListener(evt ->
-                SwingUtilities.invokeLater(() -> roleLabel.setText(
-                        "Role: " + (meetingViewModel.role.get() == null || meetingViewModel.role.get().isEmpty() ? "Guest"
-                                : meetingViewModel.role.get())))
-        );
+        meetingViewModel.role.addListener(evt -> SwingUtilities.invokeLater(() -> roleLabel.setText(
+                "Role: " + (meetingViewModel.role.get() == null || meetingViewModel.role.get().isEmpty() ? "Guest"
+                        : meetingViewModel.role.get()))));
     }
 
     private void registerThemeListener() {
@@ -384,10 +381,10 @@ public class MeetingPage extends FrostedBackgroundPanel {
     }
 
     private void startLiveClock() {
-        if (liveTimer != null) liveTimer.stop();
-        liveTimer = new Timer(1000, e ->
-                liveClockLabel.setText("Live: " + new SimpleDateFormat("hh:mm:ss a").format(new Date()))
-        );
+        if (liveTimer != null)
+            liveTimer.stop();
+        liveTimer = new Timer(1000,
+                e -> liveClockLabel.setText("Live: " + new SimpleDateFormat("hh:mm:ss a").format(new Date())));
         liveTimer.setInitialDelay(0);
         liveTimer.start();
     }
@@ -396,11 +393,11 @@ public class MeetingPage extends FrostedBackgroundPanel {
         String id = meetingViewModel.meetingId.get();
         if (id != null && !id.isEmpty()) {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(id), null);
-            
+
             // Show "Copied!" feedback
             btnCopyLink.setText("Copied!");
             btnCopyLink.setEnabled(false);
-            
+
             // Reset after 3 seconds
             Timer resetTimer = new Timer(3000, e -> {
                 btnCopyLink.setText("Copy Link");
@@ -423,7 +420,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
                     ThemeManager.getInstance().applyThemeRecursively(controlsBar);
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override
@@ -443,7 +441,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
                     sidebarTabs.repaint();
                 }
                 applyTheme();
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         });
     }
 }
