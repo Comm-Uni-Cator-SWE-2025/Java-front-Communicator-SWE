@@ -29,7 +29,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
 
-public class  {
+public class CanvasViewModel {
 
     private final ActionManager actionManager;
     private final CanvasState canvasState;
