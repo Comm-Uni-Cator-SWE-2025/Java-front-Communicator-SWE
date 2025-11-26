@@ -1,3 +1,16 @@
+
+/*
+ * -----------------------------------------------------------------------------
+ * File: AiService.java
+ * Owner: Bhogaraju Shanmukha Sri Krishna
+ * Roll Number: 112201013
+ * Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
+
+
 package com.swe.canvas.services;
 
 import java.util.ArrayList;
@@ -7,14 +20,6 @@ import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeType;
 
-/**
- * Service for AI-powered canvas operations such as shape regularization.
- *
- * <p>This class provides static utility methods to enhance user-drawn shapes
- * with machine learning or algorithmic refinements.</p>
- *
- * @author AI Service Team
- */
 public class AiService {
     /**
      * Regularize a freehand shape into a polygonal or smoothed Shape.
@@ -29,8 +34,7 @@ public class AiService {
      * @return a new Shape with regularized points, or null if not applicable
      */
     public static Shape regularizeFreehandShape(final Shape original) {
-        final int minPoints = 3;
-        if (original == null || original.getPoints() == null || original.getPoints().size() < minPoints) {
+        if (original == null || original.getPoints() == null || original.getPoints().size() < 3) {
             return null;
         }
         if (original.getShapeType() != ShapeType.FREEHAND) {
@@ -54,14 +58,10 @@ public class AiService {
      * approximates the freehand stroke. This uses the centroid of the stroke
      * and the average radius of points from that centroid. The returned list
      * is non-empty for valid inputs (sides>=3).
-     *
-     * @param originalPoints The original freehand points.
-     * @return A list of regularized points.
      */
     private static List<Point> regularizeFreehandPoints(final List<Point> originalPoints) {
         final List<Point> out = new ArrayList<>();
-        final int twentyFive = 25;
-        final Point p = new Point(twentyFive, twentyFive);
+        final Point p = new Point(25, 25);
         out.add(p);
 
         return out;

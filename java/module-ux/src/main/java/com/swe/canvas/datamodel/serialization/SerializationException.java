@@ -1,3 +1,13 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: SerializationException.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module : Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.serialization;
 
 /**

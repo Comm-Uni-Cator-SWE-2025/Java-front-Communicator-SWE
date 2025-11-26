@@ -1,3 +1,12 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: UndoRedoManager.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module : Canvas
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.manager;
 
 import java.util.ArrayList;
@@ -6,31 +15,34 @@ import java.util.List;
 import com.swe.canvas.datamodel.action.Action;
 
 /**
- * Replaces UndoRedoStack.
- * Manages the undo/redo history using an ArrayList and a "pointer" (currentIndex).
- * This matches the "linked list" concept from the prompt.
+ * Manages the history of actions for Undo/Redo functionality.
  *
- * @author Canvas Team
+ * <p>This class implements a linear history stack using a list and a pointer.
+ * It supports standard push, undo, and redo operations, as well as specific
+ * adjustments for network synchronization (Host-driven consistency).</p>
  */
 public class UndoRedoManager {
 
-    /** The list of actions in the history. */
-    private final List<Action> history = new ArrayList<>();
-    
     /**
-     * Points to the index of the last *applied* action.
-     * -1 means the history is empty.
+     * The list storing the history of actions.
+     */
+    private final List<Action> history = new ArrayList<>();
+
+    /**
+     * The index of the last applied action. -1 indicates an empty effective state.
      */
     private int currentIndex = -1;
 
     /**
      * Pushes a new action onto the history stack.
-     * This is called when a user's *own* action is confirmed by the host.
-     * It clears all "redo" history.
-     * @param action The action to push onto the history stack.
+     *
+     * <p>This operation invalidates any redo history (actions ahead of the
+     * current pointer).</p>
+     *
+     * @param action The action to add to the history.
      */
     public synchronized void push(final Action action) {
-        // If we have "undone" actions, clear them
+        // Clear the "redo" future if we diverge
         while (history.size() - 1 > currentIndex) {
             history.remove(history.size() - 1);
         }
@@ -39,58 +51,62 @@ public class UndoRedoManager {
     }
 
     /**
-     * Gets the action to be undone and moves the pointer back.
-     * @return The Action to undo, or null if not possible.
+     * Retrieves the action to be undone.
+     *
+     * <p>This method does NOT remove the action or change the state immediately;
+     * it merely returns the action that <i>would</i> be undone so the caller
+     * can request an inverse operation.</p>
+     *
+     * @return The action at the current index, or null if history is empty.
      */
     public synchronized Action getActionToUndo() {
         if (canUndo()) {
-            final Action actionToUndo = history.get(currentIndex);
-            // We just move the pointer. The *host* will confirm.
-            // We return the action so the manager can create an inverse.
-            return actionToUndo;
+            return history.get(currentIndex);
         }
         return null;
     }
 
     /**
-     * Gets the action to be redone and moves the pointer forward.
-     * @return The Action to redo, or null if not possible.
+     * Retrieves the action to be redone.
+     *
+     * <p>This method returns the next action in the history list (ahead of the
+     * pointer) without moving the pointer.</p>
+     *
+     * @return The next action, or null if at the end of history.
      */
     public synchronized Action getActionToRedo() {
         if (canRedo()) {
-            // We return the *next* action in the stack.
-            final Action actionToRedo = history.get(currentIndex + 1);
-            return actionToRedo;
+            return history.get(currentIndex + 1);
         }
         return null;
     }
-    
+
     /**
-     * For clients receiving an undo message from the host.
-     * This moves the pointer back without returning an action.
-     * This is the "check" and "fix for consistency" mentioned in the prompt.
+     * Moves the history pointer back by one step.
+     *
+     * <p>This is typically called when the Host confirms an Undo operation.</p>
      */
     public synchronized void applyHostUndo() {
         if (canUndo()) {
-            System.out.println("[Client UndoManager] Moving pointer back.");
             currentIndex--;
         }
     }
 
     /**
-     * For clients receiving a redo message from the host.
-     * This moves the pointer forward without returning an action.
+     * Moves the history pointer forward by one step.
+     *
+     * <p>This is typically called when the Host confirms a Redo operation.</p>
      */
     public synchronized void applyHostRedo() {
         if (canRedo()) {
-            System.out.println("[Client UndoManager] Moving pointer forward.");
             currentIndex++;
         }
     }
 
     /**
      * Checks if an undo operation is possible.
-     * @return true if undo is possible, false otherwise.
+     *
+     * @return True if there are actions to undo.
      */
     public synchronized boolean canUndo() {
         return currentIndex > -1;
@@ -98,14 +114,15 @@ public class UndoRedoManager {
 
     /**
      * Checks if a redo operation is possible.
-     * @return true if redo is possible, false otherwise.
+     *
+     * @return True if there are actions to redo.
      */
     public synchronized boolean canRedo() {
         return currentIndex < history.size() - 1;
     }
-    
+
     /**
-     * Clears all undo/redo history.
+     * Clears the entire history and resets the pointer.
      */
     public synchronized void clear() {
         history.clear();

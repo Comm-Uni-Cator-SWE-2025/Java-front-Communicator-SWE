@@ -1,46 +1,50 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: NetworkSimulator.java
+ * Owner: B S S Krishna
+ * Roll Number: 112201013
+ * Module: Canvas
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.collaboration;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
+
+import com.swe.canvas.datamodel.manager.ActionManager;
 
 /**
- * Simple in-memory implementation of {@link NetworkService}.
- * Used by the desktop frontend to simulate host/client collaboration without
- * the full networking stack.
+ * A network stub that simulates the Host-Client connection in memory.
  *
- * @author Canvas Team
+ * <p>This class implements {@link NetworkService} by holding direct references
+ * to the Host and Client managers. Calls to send/broadcast directly invoke
+ * the `processIncomingMessage` methods on the recipients, simulating instantaneous
+ * network transmission.</p>
  */
 public class NetworkSimulator implements NetworkService {
 
-    /** Handler for host-side messages. */
-    private Consumer<NetworkMessage> hostHandler;
-    /** List of client-side message handlers. */
-    private final List<Consumer<NetworkMessage>> clientHandlers = new CopyOnWriteArrayList<>();
+    /** Reference to the Host manager. */
+    private ActionManager hostManager;
 
-    @Override
-    public void registerHostHandler(final Consumer<NetworkMessage> handler) {
-        this.hostHandler = handler;
-    }
+    /** List of registered Client managers. */
+    private final List<ActionManager> clientManagers = new ArrayList<>();
 
-    @Override
-    public void registerClientHandler(final Consumer<NetworkMessage> handler) {
-        if (handler != null) {
-            clientHandlers.add(handler);
-        }
-    }
+    
 
     @Override
     public void sendMessageToHost(final NetworkMessage message) {
-        if (hostHandler != null) {
-            hostHandler.accept(message);
+        // System.out.println("[NETWORK] Client -> Host: " + message.getMessageType());
+        if (hostManager != null) {
+            hostManager.processIncomingMessage(message);
         }
     }
 
     @Override
     public void broadcastMessage(final NetworkMessage message) {
-        for (final Consumer<NetworkMessage> handler : clientHandlers) {
-            handler.accept(message);
+        // System.out.println("[NETWORK] Host -> ALL Clients: " + message.getMessageType());
+        for (ActionManager client : clientManagers) {
+            client.processIncomingMessage(message);
         }
     }
 }

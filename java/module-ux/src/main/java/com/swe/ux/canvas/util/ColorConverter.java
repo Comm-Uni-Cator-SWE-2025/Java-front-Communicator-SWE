@@ -1,21 +1,21 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  File: ColorConverter.java
+ *  Owner: Darla Manohar
+ *  Roll Number: 112201034
+ *  Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.ux.canvas.util;
 
 /**
  * Converts between java.awt.Color (Data Model) and javafx.scene.paint.Color (UI).
  */
-public final class ColorConverter {
-
+public class ColorConverter {
     /**
-     * Alpha channel scale factor (0-255 to 0.0-1.0).
-     */
-    private static final double ALPHA_SCALE = 255.0;
-
-    private ColorConverter() {
-        // Utility class should not be instantiated
-    }
-
-    /**
-     * Convert to javafx.
+     * Convert to javafx
      * @param awtColor Input awt color
      * @return javafx.scene.paint.Color
      */
@@ -24,11 +24,11 @@ public final class ColorConverter {
                 awtColor.getRed(),
                 awtColor.getGreen(),
                 awtColor.getBlue(),
-                awtColor.getAlpha() / ALPHA_SCALE);
+                awtColor.getAlpha() / 255.0);
     }
 
     /**
-     * Convert to awt.
+     * Convert to awt
      * @param fxColor Input jfx color
      * @return java.awt.Color
      */
@@ -40,5 +40,3 @@ public final class ColorConverter {
                 (float) fxColor.getOpacity());
     }
 }
-
-

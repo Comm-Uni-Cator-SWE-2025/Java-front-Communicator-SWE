@@ -1,14 +1,20 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: ShapeSerializer.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module : Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.serialization;
 
 import java.awt.Color;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.swe.canvas.datamodel.action.Action;
-import com.swe.canvas.datamodel.action.ActionType;
-import com.swe.canvas.datamodel.action.CreateShapeAction;
-import com.swe.canvas.datamodel.action.DeleteShapeAction;
-import com.swe.canvas.datamodel.action.ModifyShapeAction;
-import com.swe.canvas.datamodel.action.ResurrectShapeAction;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.EllipseShape;
 import com.swe.canvas.datamodel.shape.FreehandShape;
@@ -20,27 +26,13 @@ import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.datamodel.shape.ShapeType;
 import com.swe.canvas.datamodel.shape.TriangleShape;
 
-/**
- * Provides manual JSON serialization and deserialization for the Canvas data model
- * (Shapes and Actions) using only core Java classes.
- *
- * <p>This class handles the high-level structure and relies on
- * {@link JsonUtils} for low-level parsing and helper functions.</p>
- */
 public final class ShapeSerializer {
 
     private ShapeSerializer() {
-        // Utility class
     }
 
-    // =========================================================================
-    // Shape Serialization/Deserialization
-    // =========================================================================
-
     /**
-     * Manually serializes a ShapeState object into a JSON string, matching the C# IShape format.
-     * @param shapeState The shape state to serialize.
-     * @return A JSON string.
+     * Serializes a ShapeState to JSON.
      */
     public static String serializeShape(final ShapeState shapeState) {
         if (shapeState == null || shapeState.getShape() == null) {
@@ -51,23 +43,19 @@ public final class ShapeSerializer {
         final StringBuilder sb = new StringBuilder();
 
         sb.append("{");
-        
-        // 1. ShapeId
-        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":");
-        sb.append(JsonUtils.jsonEscape(shape.getShapeId().getValue())).append(",");
-        
-        // 2. Type
-        sb.append(JsonUtils.jsonEscape("Type")).append(":");
-        sb.append(JsonUtils.jsonEscape(shape.getShapeType().toString())).append(",");
 
-        // 3. Points Array
+        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getShapeId().getValue())).append(",");
+        sb.append(JsonUtils.jsonEscape("Type")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getShapeType().toString())).append(",");
+
         sb.append(JsonUtils.jsonEscape("Points")).append(":[");
         final List<Point> points = shape.getPoints();
         for (int i = 0; i < points.size(); i++) {
             final Point p = points.get(i);
             sb.append("{");
-            sb.append(JsonUtils.jsonEscape("X")).append(":").append(p.getX()).append(",");
-            sb.append(JsonUtils.jsonEscape("Y")).append(":").append(p.getY());
+            sb.append(JsonUtils.jsonEscape("X")).append(":").append((int) p.getX()).append(",");
+            sb.append(JsonUtils.jsonEscape("Y")).append(":").append((int) p.getY());
             sb.append("}");
             if (i < points.size() - 1) {
                 sb.append(",");
@@ -75,41 +63,36 @@ public final class ShapeSerializer {
         }
         sb.append("],");
 
-        // 4. Color
-        sb.append(JsonUtils.jsonEscape("Color")).append(":");
-        sb.append(JsonUtils.jsonEscape(JsonUtils.colorToHex(shape.getColor()))).append(",");
-        
-        // 5. Thickness
-        sb.append(JsonUtils.jsonEscape("Thickness")).append(":");
-        sb.append(shape.getThickness()).append(",");
+        sb.append(JsonUtils.jsonEscape("Color")).append(":")
+                .append(JsonUtils.jsonEscape(JsonUtils.colorToHex(shape.getColor()))).append(",");
+        sb.append(JsonUtils.jsonEscape("Thickness")).append(":")
+                .append((int) shape.getThickness()).append(",");
 
-        // 6. CreatedBy
-        sb.append(JsonUtils.jsonEscape("CreatedBy")).append(":");
-        sb.append(JsonUtils.jsonEscape(shape.getCreatedBy())).append(",");
-        
-        // 7. LastModifiedBy
-        sb.append(JsonUtils.jsonEscape("LastModifiedBy")).append(":");
-        sb.append(JsonUtils.jsonEscape(shape.getLastUpdatedBy())).append(",");
-        
-        // 8. IsDeleted
-        sb.append(JsonUtils.jsonEscape("IsDeleted")).append(":").append(shapeState.isDeleted());
-        
+        sb.append(JsonUtils.jsonEscape("CreatedBy")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getCreatedBy())).append(",");
+        sb.append(JsonUtils.jsonEscape("LastModifiedBy")).append(":")
+                .append(JsonUtils.jsonEscape(shape.getLastUpdatedBy())).append(",");
+
+        sb.append(JsonUtils.jsonEscape("LastModified")).append(":")
+                .append(shapeState.getLastModified()).append(",");
+
+        sb.append(JsonUtils.jsonEscape("IsDeleted")).append(":")
+                .append(shapeState.isDeleted());
+
         sb.append("}");
         return sb.toString();
     }
 
-    /**
-     * Manually deserializes a JSON string back into a ShapeState object.
-     * @param json The JSON string.
-     * @return The ShapeState object.
-     */
     public static ShapeState deserializeShape(final String json) {
         if (json == null || json.isEmpty() || "null".equals(json)) {
             return null;
         }
 
         try {
-            final String content = json.substring(1, json.length() - 1); // Remove outer { }
+            String content = json.trim();
+            if (content.startsWith("{")) {
+                content = content.substring(1, content.length() - 1);
+            }
 
             final String shapeId = JsonUtils.extractString(content, "ShapeId");
             final String typeName = JsonUtils.extractString(content, "Type");
@@ -118,11 +101,13 @@ public final class ShapeSerializer {
             final String createdBy = JsonUtils.extractString(content, "CreatedBy");
             final String lastModifiedBy = JsonUtils.extractString(content, "LastModifiedBy");
             final boolean isDeleted = JsonUtils.extractBoolean(content, "IsDeleted");
+            final long lastModified = JsonUtils.extractLong(content, "LastModified");
 
             final List<Point> points = JsonUtils.extractPoints(content);
 
-            if (shapeId == null || typeName == null || createdBy == null || lastModifiedBy == null || points == null) {
-                throw new SerializationException("Missing crucial shape field during deserialization.");
+            if (shapeId == null || typeName == null || createdBy == null
+                    || lastModifiedBy == null || points == null) {
+                throw new SerializationException("Missing crucial shape field.");
             }
 
             final ShapeType shapeType = ShapeType.valueOf(typeName);
@@ -130,7 +115,6 @@ public final class ShapeSerializer {
             final ShapeId id = new ShapeId(shapeId);
 
             final Shape newShape;
-            final long zeroL = 0L;
             switch (shapeType) {
                 case FREEHAND:
                     newShape = new FreehandShape(id, points, thickness, color, createdBy, lastModifiedBy);
@@ -148,136 +132,111 @@ public final class ShapeSerializer {
                     newShape = new EllipseShape(id, points, thickness, color, createdBy, lastModifiedBy);
                     break;
                 default:
-                    throw new SerializationException("Unknown ShapeType during manual parsing: " + typeName);
+                    throw new SerializationException("Unknown ShapeType: " + typeName);
             }
 
-            // Use 0L for lastModified since the value is not included in the payload.
-            return new ShapeState(newShape, isDeleted, zeroL);
+            return new ShapeState(newShape, isDeleted, lastModified);
 
-        } catch (final Exception e) {
-            throw new SerializationException("Failed to manually deserialize ShapeState: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new SerializationException("Failed to deserialize ShapeState: " + e.getMessage(), e);
         }
     }
 
-    // =========================================================================
-    // Action Serialization/Deserialization
-    // =========================================================================
-
-    /**
-     * Manually serializes an Action object, including nested ShapeState objects.
-     * @param action The action to serialize.
-     * @return A JSON string.
-     */
-    public static String serializeAction(final Action action) {
-        if (action == null) {
-            return "null";
+    public static String serializeShapesMap(final Map<ShapeId, ShapeState> shapes) {
+        if (shapes == null || shapes.isEmpty()) {
+            return "{}";
         }
-
         final StringBuilder sb = new StringBuilder();
-        sb.append("{");
-
-        // Simple metadata fields
-        sb.append(JsonUtils.jsonEscape("ActionType")).append(":");
-        sb.append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
-        sb.append(JsonUtils.jsonEscape("ActionId")).append(":");
-        sb.append(JsonUtils.jsonEscape(action.getActionId())).append(",");
-        sb.append(JsonUtils.jsonEscape("ShapeId")).append(":");
-        sb.append(JsonUtils.jsonEscape(action.getShapeId().getValue())).append(",");
-        sb.append(JsonUtils.jsonEscape("UserId")).append(":");
-        sb.append(JsonUtils.jsonEscape(action.getUserId())).append(",");
-        sb.append(JsonUtils.jsonEscape("Timestamp")).append(":");
-        sb.append(action.getTimestamp()).append(",");
-
-        // PrevState (nested ShapeState JSON)
-        final String prevStateJson = serializeShape(action.getPrevState());
-        sb.append(JsonUtils.jsonEscape("PrevState")).append(":");
-        if (prevStateJson != null) {
-            sb.append(prevStateJson); // Append raw JSON object
-        } else {
-            sb.append("null");
+        sb.append("{").append("\n");
+        int i = 0;
+        for (Map.Entry<ShapeId, ShapeState> entry : shapes.entrySet()) {
+            sb.append("  ").append(JsonUtils.jsonEscape(entry.getKey().getValue()));
+            sb.append(": ");
+            final String shapeJson = serializeShape(entry.getValue());
+            sb.append(shapeJson != null ? shapeJson : "null");
+            if (i < shapes.size() - 1) {
+                sb.append(",");
+            }
+            sb.append("\n");
+            i++;
         }
-        sb.append(",");
-
-        // NewState (nested ShapeState JSON)
-        final String newStateJson = serializeShape(action.getNewState());
-        sb.append(JsonUtils.jsonEscape("NewState")).append(":");
-        if (newStateJson != null) {
-            sb.append(newStateJson); // Append raw JSON object
-        } else {
-            sb.append("null");
-        }
-
         sb.append("}");
         return sb.toString();
     }
 
-    /**
-     * Manually deserializes a JSON string back into a concrete Action object.
-     * @param json The JSON string.
-     * @return The Action object.
-     */
-    public static Action deserializeAction(final String json) {
-        if (json == null || json.isEmpty() || "null".equals(json)) {
-            return null;
+    public static Map<ShapeId, ShapeState> deserializeShapesMap(final String json) {
+        final Map<ShapeId, ShapeState> map = new HashMap<>();
+        if (json == null || json.trim().length() < 2) {
+            return map;
         }
 
-        // Same highly fragile parsing approach based on the exact structure output by serializeAction.
-        try {
-            final String content = json.substring(1, json.length() - 1); // Remove outer { }
+        String content = json.trim();
+        if (content.startsWith("{")) {
+            content = content.substring(1);
+        }
+        if (content.endsWith("}")) {
+            content = content.substring(0, content.length() - 1);
+        }
+        content = content.trim();
 
-            final String actionId = JsonUtils.extractString(content, "ActionId");
-            final String shapeId = JsonUtils.extractString(content, "ShapeId");
-            final String userId = JsonUtils.extractString(content, "UserId");
-            final ActionType actionType = ActionType.valueOf(JsonUtils.extractString(content, "ActionType"));
-            final long timestamp = JsonUtils.extractLong(content, "Timestamp");
+        if (content.isEmpty()) {
+            return map;
+        }
 
-            // Extract nested JSON strings for PrevState and NewState
-            final String prevStateJson = JsonUtils.extractNestedJson(content, "PrevState");
-            final String newStateJson = JsonUtils.extractNestedJson(content, "NewState");
+        int index = 0;
+        final int length = content.length();
 
-            // Deserialize nested ShapeState objects
-            final ShapeState prevState = deserializeShape(prevStateJson);
-            final ShapeState newState = deserializeShape(newStateJson);
-
-            if (actionId == null || shapeId == null || userId == null || actionType == null || newState == null) {
-                throw new SerializationException("Missing crucial action field during deserialization.");
+        while (index < length) {
+            while (index < length
+                    && (Character.isWhitespace(content.charAt(index)) || content.charAt(index) == ',')) {
+                index++;
+            }
+            if (index >= length) {
+                break;
+            }
+            if (content.charAt(index) != '"') {
+                break;
             }
 
-            final ShapeId targetId = new ShapeId(shapeId);
-
-            // Factory logic to create the correct concrete Action subclass
-            switch (actionType) {
-                case CREATE:
-                    return new CreateShapeAction(actionId, userId, timestamp, targetId, newState);
-                case MODIFY:
-                    return new ModifyShapeAction(actionId, userId, timestamp, targetId, prevState, newState);
-                case DELETE:
-                    return new DeleteShapeAction(actionId, userId, timestamp, targetId, prevState, newState);
-                case RESURRECT:
-                    return new ResurrectShapeAction(actionId, userId, timestamp, targetId, prevState, newState);
-                default:
-                    throw new SerializationException("Unknown action type: " + actionType);
+            int keyStart = index + 1;
+            int keyEnd = content.indexOf('"', keyStart);
+            if (keyEnd == -1) {
+                break;
             }
 
-        } catch (final Exception e) {
-            throw new SerializationException("Failed to manually deserialize Action: " + e.getMessage(), e);
-        }
-    }
+            index = keyEnd + 1;
+            while (index < length
+                    && (Character.isWhitespace(content.charAt(index)) || content.charAt(index) == ':')) {
+                index++;
+            }
 
-    /**
-     * Test helper to serialize a shape without a ShapeState.
-     * @param shape The shape to serialize.
-     * @return The serialized JSON string.
-     */
-    public static String testSerializeShapeOnly(final Shape shape) {
-        if (shape == null) {
-            return "{}";
+            if (index < length && content.charAt(index - 1) != '{') {
+                while (index < length && content.charAt(index) != '{') {
+                    index++;
+                }
+            }
+
+            if (index < length && content.charAt(index) == '{') {
+                int braceCount = 1;
+                int end = index + 1;
+                while (end < length && braceCount > 0) {
+                    if (content.charAt(end) == '{') {
+                        braceCount++;
+                    } else if (content.charAt(end) == '}') {
+                        braceCount--;
+                    }
+                    end++;
+                }
+                String shapeJson = content.substring(index, end);
+                ShapeState state = deserializeShape(shapeJson);
+                if (state != null && state.getShape() != null) {
+                    map.put(state.getShape().getShapeId(), state);
+                }
+                index = end;
+            } else {
+                break;
+            }
         }
-        // Since we need ShapeState for the isDeleted flag, we mock a ShapeState
-        // for serialization. We know that for a newly drawn shape, isDeleted is
-        // false and timestamp is irrelevant for the payload structure.
-        final long zeroL = 0L;
-        final ShapeState tempState = new ShapeState(shape, false, zeroL);
-        return serializeShape(tempState);
+        return map;
     }
 }

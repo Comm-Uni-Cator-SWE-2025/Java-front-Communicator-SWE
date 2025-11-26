@@ -1,5 +1,14 @@
-package com.swe.canvas.datamodel.serialization;
+/*
+ * -----------------------------------------------------------------------------
+ * File: NetActionSerializer.java
+ * Owner: Gajjala Bhavani Shankar
+ * Roll Number : 112201026
+ * Module : Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
 
+package com.swe.canvas.datamodel.serialization;
 
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionType;
@@ -10,28 +19,16 @@ import com.swe.canvas.datamodel.action.ResurrectShapeAction;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.ShapeId;
 
-/**
- * Serializer for Action objects in network messages.
- *
- * <p>Provides manual JSON serialization and deserialization for Action objects
- * to support network transmission.</p>
- *
- * @author Canvas Team
- */
-public final class NetActionSerializer {
-
-    /**
-     * Private constructor to prevent instantiation.
-     */
-    private NetActionSerializer() {
-    }
+public class NetActionSerializer {
     // =========================================================================
     // Action Serialization/Deserialization
     // =========================================================================
 
     /**
      * Manually serializes an Action object, including nested ShapeState objects.
-     * Fields included: actionId, actionType, prevState, newState (and others from the base class).
+     * Fields included: actionId, actionType, prevState, newState (and others from
+     * the base class).
+     * 
      * @param action The action to serialize.
      * @return A JSON string.
      */
@@ -48,8 +45,6 @@ public final class NetActionSerializer {
                 .append(JsonUtils.jsonEscape(action.getActionId())).append(",");
         sb.append(JsonUtils.jsonEscape("ActionType")).append(":")
                 .append(JsonUtils.jsonEscape(action.getActionType().toString())).append(",");
-        
-        
 
         // 2. PrevState (nested ShapeState JSON)
         final String prevStateJson = ShapeSerializer.serializeShape(action.getPrevState());
@@ -69,8 +64,9 @@ public final class NetActionSerializer {
         } else {
             sb.append("null");
         }
-        
-        // NOTE: The 'next' field is omitted as it is not present in the base Action class.
+
+        // NOTE: The 'next' field is omitted as it is not present in the base Action
+        // class.
 
         sb.append("}");
         return sb.toString();
@@ -79,11 +75,8 @@ public final class NetActionSerializer {
     /**
      * Manually deserializes a JSON string back into a concrete Action object.
      *
-     * <p>IMPORTANT: This method must use the Action subclass constructors
-     * (e.g., CreateShapeAction, ModifyShapeAction) for correct object creation.</p>
-     *
-     * @param json The JSON string to deserialize.
-     * @return The deserialized Action object.
+     * IMPORTANT: This method must use the Action subclass constructors
+     * (e.g., CreateShapeAction, ModifyShapeAction) for correct object creation.
      */
     public static Action deserializeAction(final String json) {
         if (json == null || json.isEmpty() || "null".equals(json)) {
@@ -98,7 +91,7 @@ public final class NetActionSerializer {
             final String actionTypeString = JsonUtils.extractString(content, "ActionType");
 
             final ActionType actionType = ActionType.valueOf(actionTypeString);
-            
+
             // 2. Extract nested JSON strings for PrevState and NewState
             final String prevStateJson = JsonUtils.extractNestedJson(content, "Prev");
             final String newStateJson = JsonUtils.extractNestedJson(content, "Next");
@@ -110,7 +103,6 @@ public final class NetActionSerializer {
             if (actionId == null || actionType == null || newState == null) {
                 throw new SerializationException("Missing crucial action field during deserialization.");
             }
-
 
             final String userId = newState.getShape().getLastUpdatedBy();
             final long timestamp = newState.getLastModified();
@@ -131,11 +123,8 @@ public final class NetActionSerializer {
                     throw new SerializationException("Unknown action type: " + actionType);
             }
 
-        } catch (final SerializationException e) {
+        } catch (SerializationException e) {
             throw new SerializationException("Failed to manually deserialize Action: " + e.getMessage(), e);
         }
     }
 }
-
-
-

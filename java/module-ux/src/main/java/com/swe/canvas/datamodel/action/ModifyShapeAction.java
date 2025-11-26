@@ -1,3 +1,13 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: ModifyShapeAction.java
+ * Owner: Gajula Sri Siva Sai Shashank
+ * Roll Number: 112201014
+ * Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.action;
 
 import com.swe.canvas.datamodel.canvas.ShapeState;
@@ -30,18 +40,22 @@ public class ModifyShapeAction extends Action {
     /**
      * Constructs a ModifyShapeAction.
      *
-     * @param actionId  A unique ID for this action.
-     * @param userId    The user performing the action.
-     * @param timestamp The time of action creation.
-     * @param shapeId   The target shape's ID.
-     * @param prevState The state before the action.
-     * @param newState  The state after the action.
+     * @param actionIdVal  A unique ID for this action.
+     * @param userIdVal    The user performing the action.
+     * @param timestampVal The time of action creation.
+     * @param shapeIdVal   The target shape's ID.
+     * @param prevStateVal The state before the action.
+     * @param newStateVal  The state after the action.
      */
-    public ModifyShapeAction(final String actionId, final String userId, final long timestamp,
-                             final ShapeId shapeId, final ShapeState prevState, final ShapeState newState) {
-        super(actionId, userId, timestamp, ActionType.MODIFY, shapeId, prevState, newState);
+    public ModifyShapeAction(final String actionIdVal,
+                             final String userIdVal,
+                             final long timestampVal,
+                             final ShapeId shapeIdVal,
+                             final ShapeState prevStateVal,
+                             final ShapeState newStateVal) {
+        super(actionIdVal, userIdVal, timestampVal, ActionType.MODIFY, shapeIdVal, prevStateVal, newStateVal);
 
-        if (prevState.isDeleted() || newState.isDeleted()) {
+        if (prevStateVal.isDeleted() || newStateVal.isDeleted()) {
             throw new IllegalArgumentException("ModifyShapeAction cannot be performed on a deleted shape.");
         }
     }
