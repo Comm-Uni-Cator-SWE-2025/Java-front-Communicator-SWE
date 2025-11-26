@@ -89,4 +89,37 @@ public class ShapeCount {
     public int getTriangle() {
         return triangle;
     }
+
+    /**
+     * Sets the freehand shape count.
+     *
+     * @param count new freehand count
+     */
+    public void setFreeHand(int count) {
+        // This method is intentionally left blank to maintain immutability
+        // Subclasses can override this method to provide mutability
+    }
+
+    public void setStraightLine(int count) {
+        // This method is intentionally left blank to maintain immutability
+        // Subclasses can override this method to provide mutability
+    }
+
+    public void setRectangle(int count) {
+        // This method is intentionally left blank to maintain immutability
+        // Subclasses can override this method to provide mutability
+    }
+
+    public void setEllipse(int count) {
+        // This method is intentionally left blank to maintain immutability
+        // Subclasses can override this method to provide mutability
+    }
+
+    public void setTriangle(int count) {
+        // This method is intentionally left blank to maintain immutability
+        // Subclasses can override this method to provide mutability
+    }
+
+
+    
 }

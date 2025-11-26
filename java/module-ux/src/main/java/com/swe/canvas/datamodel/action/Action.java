@@ -1,11 +1,19 @@
+/*
+ * -----------------------------------------------------------------------------
+ * File: Action.java
+ * Owner: Gajula Sri Siva Sai Shashank
+ * Roll Number: 112201014
+ * Module: Canvas
+ *
+ * -----------------------------------------------------------------------------
+ */
+
 package com.swe.canvas.datamodel.action;
-
-
-import java.io.Serializable;
-import java.util.Objects;
 
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.shape.ShapeId;
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Abstract base class for all operations (Commands) on the canvas.
@@ -20,7 +28,7 @@ import com.swe.canvas.datamodel.shape.ShapeId;
  * <li>`prevState`: The state of the shape *before* the action. Used by the
  * Host for validation and conflict detection.</li>
  * <li>`newState`: The state of the shape *after* the action. This is what
- * gets applied to the {@link CanvasState}
+ * gets applied to the {@link com.swe.canvas.datamodel.canvas.CanvasState}
  * upon successful validation.</li>
  * </ul>
  * </p>
@@ -41,6 +49,11 @@ public abstract class Action implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * Substring length for toString() representation.
+     */
+    private static final int SUBSTRING_LENGTH = 8;
+
+    /**
      * Unique identifier for this specific action instance (e.g., a UUID).
      */
     private final String actionId;
@@ -52,7 +65,6 @@ public abstract class Action implements Serializable {
 
     /**
      * The timestamp of when the action was created by the client.
-     * TO BE REMOVED
      */
     private final long timestamp;
 
@@ -63,7 +75,6 @@ public abstract class Action implements Serializable {
 
     /**
      * The ID of the shape this action targets.
-     * TO BE REMOVED
      */
     private final ShapeId shapeId;
 
@@ -81,31 +92,36 @@ public abstract class Action implements Serializable {
     /**
      * Constructs a new Action.
      *
-     * @param actionIdParam   A unique ID for this action.
-     * @param userIdParam     The user performing the action.
-     * @param timestampParam  The time of action creation.
-     * @param actionTypeParam The type of action.
-     * @param shapeIdParam    The target shape's ID.
-     * @param prevStateParam  The state before the action (null for CREATE).
-     * @param newStateParam   The state after the action.
+     * @param actionIdVal   A unique ID for this action.
+     * @param userIdVal     The user performing the action.
+     * @param timestampVal  The time of action creation.
+     * @param actionTypeVal The type of action.
+     * @param shapeIdVal    The target shape's ID.
+     * @param prevStateVal  The state before the action (null for CREATE).
+     * @param newStateVal   The state after the action.
      */
-    protected Action(final String actionIdParam, final String userIdParam, final long timestampParam, 
-                     final ActionType actionTypeParam, final ShapeId shapeIdParam, final ShapeState prevStateParam, 
-                     final ShapeState newStateParam) {
-        this.actionId = Objects.requireNonNull(actionIdParam, "actionId cannot be null");
-        this.userId = Objects.requireNonNull(userIdParam, "userId cannot be null");
-        this.timestamp = timestampParam;
-        this.actionType = Objects.requireNonNull(actionTypeParam, "actionType cannot be null");
-        this.shapeId = Objects.requireNonNull(shapeIdParam, "shapeId cannot be null");
+    protected Action(final String actionIdVal,
+                     final String userIdVal,
+                     final long timestampVal,
+                     final ActionType actionTypeVal,
+                     final ShapeId shapeIdVal,
+                     final ShapeState prevStateVal,
+                     final ShapeState newStateVal) {
+        this.actionId = Objects.requireNonNull(actionIdVal, "actionId cannot be null");
+        this.userId = Objects.requireNonNull(userIdVal, "userId cannot be null");
+        this.timestamp = timestampVal;
+        this.actionType = Objects.requireNonNull(actionTypeVal, "actionType cannot be null");
+        this.shapeId = Objects.requireNonNull(shapeIdVal, "shapeId cannot be null");
         // prevState can be null (for CREATE), but newState cannot
-        this.prevState = prevStateParam;
-        this.newState = Objects.requireNonNull(newStateParam, "newState cannot be null");
+        this.prevState = prevStateVal;
+        this.newState = Objects.requireNonNull(newStateVal, "newState cannot be null");
     }
 
     // --- Getters ---
 
     /**
      * Gets the unique action ID.
+     *
      * @return The unique action ID.
      */
     public String getActionId() {
@@ -114,6 +130,7 @@ public abstract class Action implements Serializable {
 
     /**
      * Gets the ID of the user who initiated the action.
+     *
      * @return The ID of the user who initiated the action.
      */
     public String getUserId() {
@@ -122,6 +139,7 @@ public abstract class Action implements Serializable {
 
     /**
      * Gets the creation timestamp.
+     *
      * @return The creation timestamp.
      */
     public long getTimestamp() {
@@ -130,6 +148,7 @@ public abstract class Action implements Serializable {
 
     /**
      * Gets the {@link ActionType}.
+     *
      * @return The {@link ActionType}.
      */
     public ActionType getActionType() {
@@ -138,6 +157,7 @@ public abstract class Action implements Serializable {
 
     /**
      * Gets the {@link ShapeId} of the target shape.
+     *
      * @return The {@link ShapeId} of the target shape.
      */
     public ShapeId getShapeId() {
@@ -146,6 +166,7 @@ public abstract class Action implements Serializable {
 
     /**
      * Gets the {@link ShapeState} before the action.
+     *
      * @return The {@link ShapeState} before the action (the "prevState" Memento).
      */
     public ShapeState getPrevState() {
@@ -154,14 +175,12 @@ public abstract class Action implements Serializable {
 
     /**
      * Gets the {@link ShapeState} after the action.
+     *
      * @return The {@link ShapeState} after the action (the "newState" Memento).
      */
     public ShapeState getNewState() {
         return newState;
     }
-
-    /** Length of ID substring used in string representation. */
-    private static final int SUBSTRING_LENGTH = 8;
 
     @Override
     public String toString() {
@@ -174,15 +193,15 @@ public abstract class Action implements Serializable {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
+    public boolean equals(final Object obj) {
+        if (this == obj) {
             return true;
-        } 
-        if (o == null || getClass() != o.getClass()) {
+        }
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
-        } 
+        }
 
-        final Action action = (Action) o;
+        final Action action = (Action) obj;
         // Two actions are identical if their actionId is the same.
         return actionId.equals(action.actionId);
     }

@@ -27,6 +27,14 @@ public class RPC implements AbstractRPC {
         methods = new HashMap<>();
     }
 
+    private static RPC instance = null;
+    public static RPC getInstance() {
+        if (instance == null) {
+            instance = new RPC();
+        }
+        return instance;
+    }
+
     /**
      * Subscribes a method to the RPC server.
      *

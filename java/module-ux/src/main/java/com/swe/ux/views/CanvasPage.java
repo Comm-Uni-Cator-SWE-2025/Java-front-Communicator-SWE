@@ -11,82 +11,36 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.net.URL;
 
 /**
- * Canvas Page - Embeds canvas FXML using JFXPanel.
- * Matches the sizing and layout behavior of ScreenNVideo component.
- * Dynamically resizes to fit within panel bounds without scrollbars.
+ * Canvas Page - Embeds canvas FXML using JFXPanel
+ * Matches the sizing and layout behavior of ScreenNVideo component
+ * Dynamically resizes to fit within panel bounds without scrollbars
  */
 public class CanvasPage extends JPanel {
-    private static final long serialVersionUID = 1L;
-    /**
-     * Default padding value.
-     */
-    private static final int DEFAULT_PADDING = 10;
-    /**
-     * Default canvas width.
-     */
-    private static final int DEFAULT_CANVAS_WIDTH = 800;
-    /**
-     * Default canvas height.
-     */
-    private static final int DEFAULT_CANVAS_HEIGHT = 600;
-    /**
-     * Error font size.
-     */
-    private static final int ERROR_FONT_SIZE = 12;
 
-    /**
-     * Action manager for canvas operations.
-     */
+    private static final long serialVersionUID = 1L;
+
     private final ActionManager actionManager;
-    /**
-     * User ID for canvas operations.
-     */
     private final String userId;
-    /**
-     * JavaFX panel for canvas.
-     */
     private final JFXPanel fxPanel;
-    /**
-     * Whether the canvas has been initialized.
-     */
     private boolean initialized = false;
-    /**
-     * JavaFX scene.
-     */
     private Scene scene;
-    /**
-     * JavaFX root node.
-     */
     private Parent root;
 
-    /**
-     * Creates a new CanvasPage.
-     *
-     * @param actionManagerParam the action manager
-     * @param userIdParam the user ID
-     */
-    public CanvasPage(final ActionManager actionManagerParam, final String userIdParam) {
-        this.actionManager = actionManagerParam;
-        this.userId = userIdParam;
+    public CanvasPage(ActionManager actionManager, String userId) {
+        this.actionManager = actionManager;
+        this.userId = userId;
         
         // Match ScreenNVideo layout: BorderLayout with padding
-        setLayout(new BorderLayout(DEFAULT_PADDING, DEFAULT_PADDING));
-        setBorder(new EmptyBorder(DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING));
+        setLayout(new BorderLayout(10, 10));
+        setBorder(new EmptyBorder(10, 10, 10, 10));
         setOpaque(false);
         setMinimumSize(new Dimension(0, 0));
         setPreferredSize(null);
@@ -108,7 +62,7 @@ public class CanvasPage extends JPanel {
         // Add resize listener to match ScreenNVideo behavior
         addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized(final ComponentEvent e) {
+            public void componentResized(ComponentEvent e) {
                 updateCanvasSize();
             }
         });
@@ -152,17 +106,17 @@ public class CanvasPage extends JPanel {
                 throw new RuntimeException("FXML resource not found: fxml/canvas-view.fxml");
             }
 
-            final FXMLLoader loader = new FXMLLoader(fxmlUrl);
+            FXMLLoader loader = new FXMLLoader(fxmlUrl);
             root = loader.load();
-            final CanvasController controller = loader.getController();
+            CanvasController controller = loader.getController();
 
             // Initialize controller
             if (controller != null) {
-                controller.initModel(actionManager, userId);
+                controller.initModel(actionManager);
             }
 
             // Calculate initial size based on available space
-            final Dimension availableSize = getAvailableSize();
+            Dimension availableSize = getAvailableSize();
             
             // Create scene with calculated size - matching ScreenNVideo's dynamic sizing
             scene = new Scene(root, availableSize.width, availableSize.height);
@@ -196,24 +150,22 @@ public class CanvasPage extends JPanel {
     /**
      * Calculate available size for the canvas, matching ScreenNVideo's approach.
      * Accounts for borders, padding, and ensures it fits within panel bounds.
-     *
-     * @return the available size for the canvas
      */
     private Dimension getAvailableSize() {
         Dimension size = getSize();
         if (size.width == 0 || size.height == 0) {
             // Fallback to reasonable defaults if not yet laid out
-            final Container parent = getParent();
+            Container parent = getParent();
             if (parent != null) {
                 size = parent.getSize();
             }
             if (size.width == 0 || size.height == 0) {
-                size = new Dimension(DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT); // Default fallback
+                size = new Dimension(800, 600); // Default fallback
             }
         }
 
         // Account for border and padding (10px on each side from EmptyBorder)
-        final Insets insets = getInsets();
+        Insets insets = getInsets();
         int availableWidth = size.width - (insets.left + insets.right);
         int availableHeight = size.height - (insets.top + insets.bottom);
 
@@ -246,28 +198,17 @@ public class CanvasPage extends JPanel {
         });
     }
 
-    private void showError(final String message) {
+    private void showError(String message) {
         removeAll();
-        final String errorMessage;
-        if (message != null) {
-            errorMessage = message;
-        } else {
-            errorMessage = "Unknown error";
-        }
-        final JLabel errorLabel = new JLabel("<html><center>Failed to load canvas<br/>"
-                + errorMessage + "</center></html>");
+        JLabel errorLabel = new JLabel("<html><center>Failed to load canvas<br/>" +
+                (message != null ? message : "Unknown error") + "</center></html>");
         errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        errorLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, ERROR_FONT_SIZE));
+        errorLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
         add(errorLabel, BorderLayout.CENTER);
         revalidate();
         repaint();
     }
 
-    /**
-     * Gets the action manager.
-     *
-     * @return the action manager
-     */
     public ActionManager getActionManager() {
         return actionManager;
     }
