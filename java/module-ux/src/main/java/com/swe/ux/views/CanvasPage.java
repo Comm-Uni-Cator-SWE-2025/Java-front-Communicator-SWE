@@ -97,8 +97,6 @@ public class CanvasPage extends JPanel {
         } else {
             this.rpc = RPC.getInstance();
         }
-
-        rpc.subscribe("canvas:update", actionManager::handleUpdate);
     }
 
     @Override

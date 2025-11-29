@@ -60,22 +60,41 @@ public class CanvasNetworkService implements NetworkService {
 
     @Override
     public void sendMessageToHost(NetworkMessage message) {
-        String serializedMessage = message.serialize();
-    
+        final String serializedMessage = message.serialize();
+        System.out.println("[CanvasNetworkService] sendMessageToHost called. Type="
+                + message.getMessageType() + ", bytes=" + serializedMessage.length());
 
         if (this.rpc != null) {
-            this.rpc.call("canvas:sendToHost", serializedMessage.getBytes(StandardCharsets.UTF_8));
+            this.rpc.call("canvas:sendToHost", serializedMessage.getBytes(StandardCharsets.UTF_8))
+                    .whenComplete((resp, err) -> {
+                        if (err != null) {
+                            System.err.println("[CanvasNetworkService] sendMessageToHost failed: " + err.getMessage());
+                        } else {
+                            System.out.println("[CanvasNetworkService] sendMessageToHost delivered.");
+                        }
+                    });
+        } else {
+            System.err.println("[CanvasNetworkService] RPC instance is null; cannot send to host.");
         }
     }
 
     @Override
     public void broadcastMessage(NetworkMessage message) {
-        String serializedMessage = message.serialize();
+        final String serializedMessage = message.serialize();
+        System.out.println("[CanvasNetworkService] broadcastMessage called. Type="
+                + message.getMessageType() + ", bytes=" + serializedMessage.length());
 
-        // network.broadcast(serializedMessage.getBytes(), 2, 0);
-    
         if (this.rpc != null) {
-            this.rpc.call("canvas:broadcast", serializedMessage.getBytes());
+            this.rpc.call("canvas:broadcast", serializedMessage.getBytes())
+                    .whenComplete((resp, err) -> {
+                        if (err != null) {
+                            System.err.println("[CanvasNetworkService] broadcastMessage failed: " + err.getMessage());
+                        } else {
+                            System.out.println("[CanvasNetworkService] broadcastMessage delivered.");
+                        }
+                    });
+        } else {
+            System.err.println("[CanvasNetworkService] RPC instance is null; cannot broadcast.");
         }
     }
 }

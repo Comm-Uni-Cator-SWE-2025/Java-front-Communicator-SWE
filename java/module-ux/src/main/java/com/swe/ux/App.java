@@ -271,6 +271,8 @@ public class App extends JFrame {
                     return;
                 }
 
+                // Ensure the local profile reflects instructor role
+                currentUser.setRole(ParticipantRole.INSTRUCTOR);
                 // Create a new meeting view model for this meeting with Instructor role
                 final MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
 
@@ -335,6 +337,7 @@ public class App extends JFrame {
                 mainViewModel.joinMeeting(meetingCode);
 
                 // Create a new meeting view model for joining meeting with Student role
+                currentUser.setRole(ParticipantRole.STUDENT);
                 final MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
 
                 // Create a new MeetingPage with the new view model

@@ -84,13 +84,24 @@ public class HostActionManager implements ActionManager {
     public HostActionManager(final String hostId,
                              final CanvasState state,
                              final NetworkService netService) {
+        this(hostId, state, netService, null);
+    }
+
+    public HostActionManager(final String hostId,
+                             final CanvasState state,
+                             final NetworkService netService,
+                             final AbstractRPC rpcObj) {
         this.userId = hostId;
         this.canvasState = state;
         this.networkService = netService;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
 
-        this.rpc = RPC.getInstance();
+        if (rpcObj != null) {
+            this.rpc = rpcObj;
+        } else {
+            this.rpc = RPC.getInstance();
+        }
         this.rpc.subscribe("canvas:update", this::handleUpdate);
     }
 
@@ -133,6 +144,7 @@ public class HostActionManager implements ActionManager {
 
     private void applyAndBroadcast(final Action action, final NetworkMessage originalMessage) {
         canvasState.applyState(action.getShapeId(), action.getNewState());
+        System.out.println("xxxHost applied action: " + action);
         networkService.broadcastMessage(originalMessage);
     }
 
