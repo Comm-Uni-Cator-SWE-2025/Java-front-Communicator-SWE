@@ -6,8 +6,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 
-import com.swe.controller.RPC;
 import com.swe.canvas.datamodel.action.ActionFactory;
+import com.swe.canvas.datamodel.analytics.CanvasShapeCount;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.collaboration.NetworkMessage;
@@ -17,10 +17,8 @@ import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeFactory;
 import com.swe.canvas.datamodel.shape.ShapeId;
 import com.swe.canvas.datamodel.shape.ShapeType;
-import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.canvas.util.ColorConverter;
 import com.swe.ux.canvas.util.GeometryUtils;
-import com.swe.canvas.datamodel.analytics.CanvasShapeCount;
 
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -57,12 +55,9 @@ public class CanvasViewModel {
     public boolean isDraggingSelection = false;
     private ShapeState originalShapeForDrag = null;
 
-    private AbstractRPC rpc;
-
     private static CanvasShapeCount shapeCount = null;
     
     public CanvasViewModel(final String userId, final ActionManager actionManager) {
-        this.rpc = RPC.getInstance();
 
         this.userId = userId;
         this.actionManager = actionManager;
@@ -71,7 +66,6 @@ public class CanvasViewModel {
         this.shapeFactory = new ShapeFactory();
         shapeCount = new CanvasShapeCount(0, 0, 0, 0, 0);
 
-        rpc.subscribe("canvas:update", this::handleUpdate);
     }
 
     private byte[] handleUpdate(final byte[] data) {

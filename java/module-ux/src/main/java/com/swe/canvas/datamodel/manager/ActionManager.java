@@ -103,4 +103,7 @@ public interface ActionManager {
      * @param message The network message containing the action or command.
      */
     void processIncomingMessage(NetworkMessage message);
+
+
+    byte[] handleUpdate(byte[] data);
 }

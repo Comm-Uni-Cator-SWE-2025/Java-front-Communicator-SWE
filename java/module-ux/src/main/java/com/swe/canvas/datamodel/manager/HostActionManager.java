@@ -11,6 +11,8 @@ package com.swe.canvas.datamodel.manager;
 
 import java.util.Map;
 import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+
 
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
@@ -221,9 +223,10 @@ public class HostActionManager implements ActionManager {
         }
     }
 
-    private byte[] handleUpdate(final byte[] data) {
+    @Override
+    public byte[] handleUpdate(final byte[] data) {
         // Placeholder for handling updates via RPC if needed
-        String dataString = data.toString();
+        String dataString = new String(data, StandardCharsets.UTF_8);
         NetworkMessage msg = NetworkMessage.deserialize(dataString);
         
         processIncomingMessage(msg);
@@ -239,7 +242,11 @@ public class HostActionManager implements ActionManager {
         }
 
         try {
-            final Action action = NetActionSerializer.deserializeAction(message.getSerializedAction().toString());
+            String json = new String(message.getSerializedAction(), StandardCharsets.UTF_8);
+
+            final Action action = NetActionSerializer.deserializeAction(json);
+
+            System.out.println("Client received action: " + action);
 
             if (action == null) {
                 return;

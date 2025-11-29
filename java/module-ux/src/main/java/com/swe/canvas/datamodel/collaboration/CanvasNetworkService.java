@@ -11,6 +11,8 @@
 
 package com.swe.canvas.datamodel.collaboration;
 
+import java.nio.charset.StandardCharsets;
+
 import com.swe.controller.RPC;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.networking.ClientNode;
@@ -55,12 +57,6 @@ public class CanvasNetworkService implements NetworkService {
         return new ClientNode(ip, port);
     }
 
-    private byte[] handleCallRPC(byte[] data) {
-        ClientNode hostNode = deserializeClientNodee(data);
-        this.hostNode = hostNode;
-
-        return data;
-    }
 
     @Override
     public void sendMessageToHost(NetworkMessage message) {
@@ -68,7 +64,7 @@ public class CanvasNetworkService implements NetworkService {
     
 
         if (this.rpc != null) {
-            this.rpc.call("canvas:sendToHost", serializedMessage.getBytes());
+            this.rpc.call("canvas:sendToHost", serializedMessage.getBytes(StandardCharsets.UTF_8));
         }
     }
 
