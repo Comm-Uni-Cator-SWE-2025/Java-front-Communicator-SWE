@@ -27,9 +27,11 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
@@ -57,6 +59,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * MeetingPage.
@@ -218,6 +221,12 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private final QuickDoubtPopup quickDoubtPopup;
     /** Hand raised flag. */
     private boolean isHandRaised = false;
+    /** Participant chat permission flag. */
+    private boolean allowParticipantChat = true;
+    /** Participant unmute permission flag. */
+    private boolean allowParticipantUnmute = true;
+    /** Participant share screen permission flag. */
+    private boolean allowParticipantShare = true;
 
     /**
      * Creates a new MeetingPage.
@@ -738,7 +747,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
         btnRaiseHand.setAccentColor(ACCENT_BLUE);
         btnRaiseHand.addActionListener(evt -> toggleQuickDoubt());
 
-        btnLeave = new MeetingControlButton("Leave", MeetingControlButton.ControlIcon.LEAVE);
+        final boolean isInstructor = isCurrentUserInstructor();
+        final String leaveLabel = isInstructor ? "End" : "Leave";
+        btnLeave = new MeetingControlButton(leaveLabel, MeetingControlButton.ControlIcon.LEAVE);
         final Color leaveAccent = new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE);
         btnLeave.setActiveColorOverride(new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE, LEAVE_ALPHA));
         btnLeave.setAccentColor(leaveAccent);
@@ -755,15 +766,38 @@ public class MeetingPage extends FrostedBackgroundPanel {
         btnPeople.setAccentColor(ACCENT_BLUE);
         btnPeople.addActionListener(evt -> handleControlTabButton("Participants"));
 
-        bar.add(btnMute);
-        bar.add(btnCamera);
-        bar.add(btnShare);
-        bar.add(btnRaiseHand);
-        bar.add(btnLeave);
-        bar.add(btnChat);
-        bar.add(btnPeople);
+        final JPanel controlsContent = new JPanel(new BorderLayout());
+        controlsContent.setOpaque(false);
+
+        final JPanel primaryRow = createControlsRow(FlowLayout.LEFT);
+        primaryRow.add(btnMute);
+        primaryRow.add(btnCamera);
+        primaryRow.add(btnShare);
+        primaryRow.add(btnRaiseHand);
+        primaryRow.add(btnLeave);
+
+        final JPanel secondaryRow = createControlsRow(FlowLayout.RIGHT);
+        secondaryRow.add(btnChat);
+        secondaryRow.add(btnPeople);
+
+        final JLabel controlsLabel = new JLabel("Meeting Controls");
+        controlsLabel.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE + 1, Font.BOLD));
+        controlsLabel.setBorder(new EmptyBorder(0, 0, 6, 0));
+
+        controlsContent.add(controlsLabel, BorderLayout.NORTH);
+        controlsContent.add(primaryRow, BorderLayout.CENTER);
+        controlsContent.add(secondaryRow, BorderLayout.EAST);
+
+        bar.add(controlsContent, BorderLayout.CENTER);
 
         return bar;
+    }
+
+    private JPanel createControlsRow(final int alignment) {
+        final FlowLayout layout = new FlowLayout(alignment, CONTROLS_GAP_H, CONTROLS_GAP_V);
+        final JPanel row = new JPanel(layout);
+        row.setOpaque(false);
+        return row;
     }
 
     // ---------------- Bindings & Theme ----------------
@@ -792,6 +826,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         meetingViewModel.getRole().addListener(evt -> SwingUtilities.invokeLater(() -> {
             roleLabel.setText(buildRoleLabelText());
             updateMeetingControlAvailability();
+            updateLeaveButtonLabel();
         }));
     }
 
@@ -828,6 +863,12 @@ public class MeetingPage extends FrostedBackgroundPanel {
         liveTimer.start();
     }
 
+    private void updateLeaveButtonLabel() {
+        if (btnLeave != null) {
+            btnLeave.setText(isCurrentUserInstructor() ? "End" : "Leave");
+        }
+    }
+
     private boolean isCurrentUserInstructor() {
         return meetingViewModel != null
                 && meetingViewModel.getCurrentUser() != null
@@ -853,10 +894,21 @@ public class MeetingPage extends FrostedBackgroundPanel {
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        JOptionPane.showMessageDialog(this,
-                "Meeting controls coming soon.",
-                "Meeting Controls",
-                JOptionPane.INFORMATION_MESSAGE);
+        final JPopupMenu menu = new JPopupMenu();
+        menu.add(createPermissionToggle("Allow participants to chat",
+                allowParticipantChat, selected -> allowParticipantChat = selected));
+        menu.add(createPermissionToggle("Allow participants to unmute",
+                allowParticipantUnmute, selected -> allowParticipantUnmute = selected));
+        menu.add(createPermissionToggle("Allow participants to share screen",
+                allowParticipantShare, selected -> allowParticipantShare = selected));
+        menu.show(meetingControlsButton, 0, meetingControlsButton.getHeight());
+    }
+
+    private JCheckBoxMenuItem createPermissionToggle(final String label, final boolean initial,
+                                                     final Consumer<Boolean> onToggle) {
+        final JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, initial);
+        item.addActionListener(e -> onToggle.accept(item.isSelected()));
+        return item;
     }
 
     private void copyMeetingId() {
