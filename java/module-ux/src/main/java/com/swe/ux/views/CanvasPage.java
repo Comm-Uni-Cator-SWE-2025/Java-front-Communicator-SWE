@@ -10,6 +10,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.Region;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,6 +18,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.HierarchyBoundsAdapter;
+import java.awt.event.HierarchyEvent;
 import java.net.URL;
 
 import com.swe.controller.RPC;
@@ -69,6 +72,19 @@ public class CanvasPage extends JPanel {
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
+                updateCanvasSize();
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                updateCanvasSize();
+            }
+        });
+
+        // Make sure ancestor size changes (e.g. sidebar drag) also resize the canvas
+        addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+            @Override
+            public void ancestorResized(HierarchyEvent e) {
                 updateCanvasSize();
             }
         });
@@ -200,14 +216,30 @@ public class CanvasPage extends JPanel {
             return;
         }
 
-        // JFXPanel automatically scales the Scene to fit its container
-        // We just need to trigger a revalidation to ensure proper layout
+        final Dimension availableSize = getAvailableSize();
+        final int targetWidth = Math.max(1, availableSize.width);
+        final int targetHeight = Math.max(1, availableSize.height);
+
+        // JFXPanel automatically scales the Scene to fit its container, but we still
+        // push preferred size hints so the surrounding layout matches other stages.
         SwingUtilities.invokeLater(() -> {
             if (fxPanel != null) {
-                // Don't set preferred size - let BorderLayout handle sizing
-                // JFXPanel will automatically scale the Scene content
+                fxPanel.setPreferredSize(new Dimension(targetWidth, targetHeight));
+                fxPanel.setMinimumSize(new Dimension(0, 0));
+                fxPanel.setSize(targetWidth, targetHeight);
+                revalidate();
                 fxPanel.revalidate();
                 fxPanel.repaint();
+            }
+        });
+
+        Platform.runLater(() -> {
+            if (scene != null && root instanceof Region) {
+                final Region region = (Region) root;
+                region.setPrefSize(targetWidth, targetHeight);
+                region.setMinSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+                region.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+                region.requestLayout();
             }
         });
     }
