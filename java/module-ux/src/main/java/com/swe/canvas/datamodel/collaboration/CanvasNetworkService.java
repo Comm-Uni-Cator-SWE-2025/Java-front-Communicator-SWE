@@ -48,20 +48,13 @@ public class CanvasNetworkService implements NetworkService {
     public void sendMessageToHost(NetworkMessage message) {
         String serializedMessage = message.serialize();
     
-
-        if (this.rpc != null) {
-            this.rpc.call("canvas:sendToHost", serializedMessage.getBytes(StandardCharsets.UTF_8));
-        }
+        this.rpc.call("canvas:sendToHost", serializedMessage.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
     public void broadcastMessage(NetworkMessage message) {
         String serializedMessage = message.serialize();
 
-        // network.broadcast(serializedMessage.getBytes(), 2, 0);
-    
-        if (this.rpc != null) {
-            this.rpc.call("canvas:broadcast", serializedMessage.getBytes(StandardCharsets.UTF_8));
-        }
+        this.rpc.call("canvas:broadcast", serializedMessage.getBytes(StandardCharsets.UTF_8));       
     }
 }

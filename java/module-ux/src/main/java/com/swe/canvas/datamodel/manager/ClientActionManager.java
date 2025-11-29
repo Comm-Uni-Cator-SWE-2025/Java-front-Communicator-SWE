@@ -9,6 +9,9 @@
 
 package com.swe.canvas.datamodel.manager;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.canvas.CanvasState;
@@ -20,12 +23,6 @@ import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
-
-import java.util.Map;
-import java.nio.charset.StandardCharsets;
-
-import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.controller.RPC;
 
 /**
  * The ActionManager implementation for the Client role.
@@ -70,7 +67,6 @@ public class ClientActionManager implements ActionManager {
     private Runnable onUpdateCallback = () -> {
     };
 
-    private final AbstractRPC rpc;
 
     /**
      * Constructs a new ClientActionManager.
@@ -88,8 +84,6 @@ public class ClientActionManager implements ActionManager {
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
 
-        this.rpc = RPC.getInstance();
-        this.rpc.subscribe("canvas:update", this::handleUpdate);
     }
 
     @Override
