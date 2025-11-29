@@ -4,6 +4,8 @@
 
 package com.swe.ux.service;
 
+import java.nio.charset.StandardCharsets;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
@@ -36,12 +38,15 @@ public class SentimentDataService {
         String data = null;
         try {
             System.out.println("Fetching Sentiment Data from Core Module...");
-            final byte[] json = rpc.call("core/AiSentiment", new byte[0]).get();
+            // final byte[] json = rpc.call("core/AiSentiment", new byte[0]).get();
+            
+            String sentiment = "true";
+            final byte[] json = sentiment.getBytes(StandardCharsets.UTF_8);
             System.out.println("Received Sentiment Data: " + new String(json));
             if (json != null) {
                 data = DataSerializer.deserialize(json, String.class);
             }
-        } catch (InterruptedException | ExecutionException | JsonProcessingException e) {
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
 

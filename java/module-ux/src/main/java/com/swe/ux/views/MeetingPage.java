@@ -373,12 +373,12 @@ public class MeetingPage extends FrostedBackgroundPanel {
             final CanvasState hostCanvasState = new CanvasState();
             final HostActionManager hostManager = new HostActionManager(userId, hostCanvasState,
                     new CanvasNetworkService(meetingViewModel.getRpc()));
-            canvasPage = new CanvasPage(hostManager, userId);
+            canvasPage = new CanvasPage(hostManager, userId, meetingViewModel.getRpc());
         } else {
             final CanvasState clientCanvasState = new CanvasState();
             final ClientActionManager clientManager = new ClientActionManager(userId, clientCanvasState,
                     new CanvasNetworkService(meetingViewModel.getRpc()));
-            canvasPage = new CanvasPage(clientManager, userId);
+            canvasPage = new CanvasPage(clientManager, userId, meetingViewModel.getRpc());
         }
         final SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel(meetingViewModel);
 

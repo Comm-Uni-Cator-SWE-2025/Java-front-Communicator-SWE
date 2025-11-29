@@ -20,7 +20,9 @@ import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
+
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.RPC;
@@ -197,9 +199,10 @@ public class ClientActionManager implements ActionManager {
         System.out.println("[Client] Local restore requested. (No-op in typical flow)");
     }
 
-    private byte[] handleUpdate(final byte[] data) {
+    @Override
+    public byte[] handleUpdate(final byte[] data) {
         // Placeholder for handling updates via RPC if needed
-        String dataString = data.toString();
+        String dataString = new String(data, StandardCharsets.UTF_8);
         NetworkMessage msg = NetworkMessage.deserialize(dataString);
         
         processIncomingMessage(msg);
@@ -227,7 +230,11 @@ public class ClientActionManager implements ActionManager {
         // 2. Handle Normal Actions
         try {
             // final String sa = new SerializedAction(message.getSerializedAction());
-            final Action action = NetActionSerializer.deserializeAction(message.getSerializedAction().toString());
+            String json = new String(message.getSerializedAction(), StandardCharsets.UTF_8);
+
+            final Action action = NetActionSerializer.deserializeAction(json);
+
+            System.out.println("Client received action: " + action);
             if (action == null) {
                 return;
             }

@@ -4,6 +4,7 @@
 
 package com.swe.ux.service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -35,12 +36,15 @@ public class MessageDataService {
         String data = null;
         try {
             System.out.println("Fetching Message Data from Core Module...");
-            final byte[] json = rpc.call("core/AiAction", new byte[0]).get();
+            // final byte[] json = rpc.call("core/AiAction", new byte[0]).get();
+
+            String message = "true";
+            final byte[] json = message.getBytes(StandardCharsets.UTF_8);
             System.out.println("Received Message Data: " + new String(json));
             if (json != null) {
                 data = DataSerializer.deserialize(json, String.class);
             }
-        } catch (InterruptedException | ExecutionException | JsonProcessingException e) {
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
 

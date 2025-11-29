@@ -13,10 +13,14 @@ import javafx.scene.Scene;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.net.URL;
+
+import com.swe.controller.RPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 
 /**
  * Canvas Page - Embeds canvas FXML using JFXPanel
@@ -34,7 +38,9 @@ public class CanvasPage extends JPanel {
     private Scene scene;
     private Parent root;
 
-    public CanvasPage(ActionManager actionManager, String userId) {
+    private final AbstractRPC rpc;
+
+    public CanvasPage(ActionManager actionManager, String userId, AbstractRPC rpcObj) {
         this.actionManager = actionManager;
         this.userId = userId;
         
@@ -69,6 +75,14 @@ public class CanvasPage extends JPanel {
 
         // Apply theme
         ThemeManager.getInstance().applyThemeRecursively(this);
+
+        if (rpcObj != null) {
+            this.rpc = rpcObj;
+        } else {
+            this.rpc = RPC.getInstance();
+        }
+
+        rpc.subscribe("canvas:update", actionManager::handleUpdate);
     }
 
     @Override
