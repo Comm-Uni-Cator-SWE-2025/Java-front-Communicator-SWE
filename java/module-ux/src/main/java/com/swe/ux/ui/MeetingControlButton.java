@@ -74,6 +74,10 @@ public class MeetingControlButton extends JButton {
      */
     private static final int PADDING = 8;
     /**
+     * Icon padding inside content rect.
+     */
+    private static final int ICON_PADDING = 12;
+    /**
      * Label font size.
      */
     private static final float LABEL_FONT_SIZE = 13.5f;

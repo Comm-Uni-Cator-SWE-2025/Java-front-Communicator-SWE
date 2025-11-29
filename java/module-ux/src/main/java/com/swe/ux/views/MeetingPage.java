@@ -28,6 +28,7 @@ import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -202,6 +203,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private MeetingControlButton btnChat;
     /** People control button. */
     private MeetingControlButton btnPeople;
+    /** Meeting controls button (host only). */
+    private FrostedToolbarButton meetingControlsButton;
 
     /** Meeting ID badge. */
     private FrostedBadgeLabel meetingIdBadge;
@@ -287,7 +290,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         final FrostedBadgeLabel ipBadge = new FrostedBadgeLabel("IP: " + Utils.getSelfIP());
         leftCluster.add(ipBadge);
 
-        roleLabel = new JLabel("Role: Guest");
+        roleLabel = new JLabel(buildRoleLabelText());
         roleLabel.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE, Font.PLAIN));
         leftCluster.add(roleLabel);
 
@@ -303,6 +306,11 @@ public class MeetingPage extends FrostedBackgroundPanel {
         btnCopyLink = new FrostedToolbarButton("Copy Link");
         btnCopyLink.addActionListener(e -> copyMeetingId());
         rightCluster.add(btnCopyLink);
+
+        meetingControlsButton = new FrostedToolbarButton("Meeting Controls");
+        meetingControlsButton.addActionListener(e -> openMeetingControlsDialog());
+        rightCluster.add(meetingControlsButton);
+        updateMeetingControlAvailability();
 
         sidebarToggleBtn = new JButton(new SidebarToggleIcon());
         sidebarToggleBtn.setToolTipText("Toggle right panel");
@@ -350,7 +358,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         final Map<String, String> tabs = new LinkedHashMap<>();
         tabs.put("MEETING", "Meeting");
         tabs.put("CANVAS", "Canvas");
-        tabs.put("INSIGHTS", "AI Insights");
+        tabs.put("INSIGHTS", "Analytics");
 
         stageTabs = new MeetingStageTabs(tabs, this::switchStageView);
         stageTabs.setAccentColor(ACCENT_BLUE);
@@ -371,13 +379,15 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
         if (meetingViewModel.getCurrentUser().getRole() == ParticipantRole.INSTRUCTOR) {
             final CanvasState hostCanvasState = new CanvasState();
+            final CanvasNetworkService networkService = new CanvasNetworkService(meetingViewModel.getRpc());
             final HostActionManager hostManager = new HostActionManager(userId, hostCanvasState,
-                    new CanvasNetworkService(meetingViewModel.getRpc()));
+                    networkService, meetingViewModel.getRpc());
             canvasPage = new CanvasPage(hostManager, userId, meetingViewModel.getRpc());
         } else {
             final CanvasState clientCanvasState = new CanvasState();
+            final CanvasNetworkService networkService = new CanvasNetworkService(meetingViewModel.getRpc());
             final ClientActionManager clientManager = new ClientActionManager(userId, clientCanvasState,
-                    new CanvasNetworkService(meetingViewModel.getRpc()));
+                    networkService, meetingViewModel.getRpc());
             canvasPage = new CanvasPage(clientManager, userId, meetingViewModel.getRpc());
         }
         final SentimentInsightsPanel sentimentInsightsPanel = new SentimentInsightsPanel(meetingViewModel);
@@ -780,14 +790,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
         }));
 
         meetingViewModel.getRole().addListener(evt -> SwingUtilities.invokeLater(() -> {
-            final String role = meetingViewModel.getRole().get();
-            final String roleText;
-            if (role == null || role.isEmpty()) {
-                roleText = "Role: Guest";
-            } else {
-                roleText = "Role: " + role;
-            }
-            roleLabel.setText(roleText);
+            roleLabel.setText(buildRoleLabelText());
+            updateMeetingControlAvailability();
         }));
     }
 
@@ -822,6 +826,37 @@ public class MeetingPage extends FrostedBackgroundPanel {
                 e -> liveClockLabel.setText("Live: " + new SimpleDateFormat("hh:mm:ss a").format(new Date())));
         liveTimer.setInitialDelay(0);
         liveTimer.start();
+    }
+
+    private boolean isCurrentUserInstructor() {
+        return meetingViewModel != null
+                && meetingViewModel.getCurrentUser() != null
+                && meetingViewModel.getCurrentUser().getRole() == ParticipantRole.INSTRUCTOR;
+    }
+
+    private void updateMeetingControlAvailability() {
+        if (meetingControlsButton == null) {
+            return;
+        }
+        final boolean instructor = isCurrentUserInstructor();
+        meetingControlsButton.setEnabled(instructor);
+        meetingControlsButton.setToolTipText(instructor
+                ? "Open advanced meeting controls"
+                : "Available only for instructors");
+    }
+
+    private void openMeetingControlsDialog() {
+        if (!isCurrentUserInstructor()) {
+            JOptionPane.showMessageDialog(this,
+                    "Only instructors can access meeting controls.",
+                    "Access Restricted",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this,
+                "Meeting controls coming soon.",
+                "Meeting Controls",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void copyMeetingId() {
@@ -931,5 +966,19 @@ public class MeetingPage extends FrostedBackgroundPanel {
         public int getIconHeight() {
             return SIZE;
         }
+    }
+
+    private String buildRoleLabelText() {
+        String role = meetingViewModel.getRole().get();
+        if (role == null || role.isEmpty()) {
+            if (meetingViewModel.getCurrentUser() != null
+                    && meetingViewModel.getCurrentUser().getRole() != null) {
+                role = meetingViewModel.getCurrentUser().getRole().name();
+            }
+        }
+        if (role == null || role.isEmpty()) {
+            role = "Guest";
+        }
+        return "Role: " + role;
     }
 }

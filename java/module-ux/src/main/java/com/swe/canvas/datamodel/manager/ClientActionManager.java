@@ -82,13 +82,24 @@ public class ClientActionManager implements ActionManager {
     public ClientActionManager(final String clientId,
             final CanvasState state,
             final NetworkService netService) {
+        this(clientId, state, netService, null);
+    }
+
+    public ClientActionManager(final String clientId,
+            final CanvasState state,
+            final NetworkService netService,
+            final AbstractRPC rpcParam) {
         this.userId = clientId;
         this.canvasState = state;
         this.networkService = netService;
         this.actionFactory = new ActionFactory();
         this.undoRedoManager = new UndoRedoManager();
 
-        this.rpc = RPC.getInstance();
+        if (rpcParam != null) {
+            this.rpc = rpcParam;
+        } else {
+            this.rpc = RPC.getInstance();
+        }
         this.rpc.subscribe("canvas:update", this::handleUpdate);
     }
 
