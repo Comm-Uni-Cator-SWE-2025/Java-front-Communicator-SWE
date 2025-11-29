@@ -46,17 +46,6 @@ public class CanvasNetworkService implements NetworkService {
 
     }
 
-    ClientNode deserializeClientNodee(byte[] data) {
-        String dataStr = new String(data);
-        String[] parts = dataStr.split(":");
-        if (parts.length != 2) {
-            throw new IllegalArgumentException("Invalid ClientNode data: " + dataStr);
-        }
-        String ip = parts[0];
-        int port = Integer.parseInt(parts[1]);
-        return new ClientNode(ip, port);
-    }
-
 
     @Override
     public void sendMessageToHost(NetworkMessage message) {
@@ -75,7 +64,7 @@ public class CanvasNetworkService implements NetworkService {
         // network.broadcast(serializedMessage.getBytes(), 2, 0);
     
         if (this.rpc != null) {
-            this.rpc.call("canvas:broadcast", serializedMessage.getBytes());
+            this.rpc.call("canvas:broadcast", serializedMessage.getBytes(StandardCharsets.UTF_8));
         }
     }
 }
