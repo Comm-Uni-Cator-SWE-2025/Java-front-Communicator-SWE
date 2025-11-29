@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 
 import com.swe.controller.RPC;
 import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.networking.ClientNode;
 import com.swe.networking.NetworkFront;
 
 /**
@@ -25,10 +24,9 @@ import com.swe.networking.NetworkFront;
  */
 public class CanvasNetworkService implements NetworkService {
 
-    private final NetworkFront network;
     private final AbstractRPC rpc;
 
-    private ClientNode hostNode = null;
+    
 
     public CanvasNetworkService(final AbstractRPC rpc) {
         this(rpc, NetworkFront.getInstance());
@@ -42,7 +40,6 @@ public class CanvasNetworkService implements NetworkService {
             this.rpc = RPC.getInstance();
         }
         
-        this.network = network;
 
     }
 

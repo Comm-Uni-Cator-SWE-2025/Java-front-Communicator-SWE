@@ -10,7 +10,6 @@ import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.analytics.CanvasShapeCount;
 import com.swe.canvas.datamodel.canvas.CanvasState;
 import com.swe.canvas.datamodel.canvas.ShapeState;
-import com.swe.canvas.datamodel.collaboration.NetworkMessage;
 import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.shape.Point;
 import com.swe.canvas.datamodel.shape.Shape;
@@ -68,14 +67,6 @@ public class CanvasViewModel {
 
     }
 
-    private byte[] handleUpdate(final byte[] data) {
-        final String json = data.toString();
-        final NetworkMessage message = NetworkMessage.deserialize(json);
-
-        this.actionManager.processIncomingMessage(message);
-        return new byte[0];
-    }
-
     public CanvasState getCanvasState() {
         return canvasState;
     }
@@ -84,9 +75,7 @@ public class CanvasViewModel {
         return transientShape;
     }
 
-    public void setOnCanvasUpdate(final Runnable r) {
-        actionManager.setOnUpdate(r);
-    }
+
 
     public void updateSelectedShapeColor(final Color newFxColor) {
         updateShapeProperty(s -> s.setColor(ColorConverter.toAwt(newFxColor)));
@@ -283,23 +272,13 @@ public class CanvasViewModel {
 
     private void updateShapeCount(final ShapeType shapeType) {
         switch (shapeType) {
-            case FREEHAND:
-                shapeCount.incrementFreeHand();
-                break;
-            case LINE:
-                shapeCount.incrementStraightLine();
-                break;
-            case RECTANGLE:
-                shapeCount.incrementRectangle();
-                break;
-            case ELLIPSE:
-                shapeCount.incrementEllipse();
-                break;
-            case TRIANGLE:
-                shapeCount.incrementTriangle();
-                break;
-            default:
-                break;
+            case FREEHAND -> shapeCount.incrementFreeHand();
+            case LINE -> shapeCount.incrementStraightLine();
+            case RECTANGLE -> shapeCount.incrementRectangle();
+            case ELLIPSE -> shapeCount.incrementEllipse();
+            case TRIANGLE -> shapeCount.incrementTriangle();
+            default -> {
+            }
         }
     }
 
