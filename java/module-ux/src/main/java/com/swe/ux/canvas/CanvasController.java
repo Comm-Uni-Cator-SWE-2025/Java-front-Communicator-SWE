@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import javax.imageio.ImageIO;
+import javax.imageio.ImageIO; // ADDED: Required for clipping
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,6 +52,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
@@ -148,6 +149,13 @@ public class CanvasController {
         canvasTranslate = new Translate();
         canvasScale = new Scale();
         canvasHolder.getTransforms().addAll(canvasTranslate, canvasScale);
+
+        // --- FIX: CLIP THE CANVAS CONTAINER ---
+        // This ensures that when zoomed in, the canvas does not bleed over the toolbar
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(canvasContainer.widthProperty());
+        clip.heightProperty().bind(canvasContainer.heightProperty());
+        canvasContainer.setClip(clip);
 
         // --- Initialize Controls ---
         sizeSlider.setValue(viewModel.activeStrokeWidth.get());
