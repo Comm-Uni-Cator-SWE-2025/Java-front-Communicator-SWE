@@ -50,7 +50,7 @@ public class CanvasApp extends Application {
 
         // Get the controller and inject the ActionManager
         CanvasController controller = loader.getController();
-        controller.initModel(actionManager);
+        controller.initModel(actionManager, null);
 
         Stage stage = new Stage();
         stage.setTitle(title);
