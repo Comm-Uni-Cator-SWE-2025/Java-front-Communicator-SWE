@@ -18,7 +18,7 @@ import com.swe.ux.model.Meeting;
 public class MeetingViewModel extends BaseViewModel {
     /** Title segment length constant. */
     private static final int TITLE_SEGMENT_LENGTH = 8;
-    
+
     /** Current user in the meeting. */
     private final UserProfile currentUser;
     /** Current meeting instance. */
@@ -28,7 +28,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /** IP to email mapping. */
     private final HashMap<String, String> ipToMail;
-    
+
     /** Meeting title property. */
     private final BindableProperty<String> meetingTitle = new BindableProperty<>("", "meetingTitle");
     /** Meeting ID property. */
@@ -44,8 +44,7 @@ public class MeetingViewModel extends BaseViewModel {
     /** Audio enabled property. */
     public final BindableProperty<Boolean> isAudioEnabled = new BindableProperty<>(false, "isAudioEnabled");
     /** Screen share enabled property. */
-    public final BindableProperty<Boolean> isScreenShareEnabled = 
-        new BindableProperty<>(false, "isScreenShareEnabled");
+    public final BindableProperty<Boolean> isScreenShareEnabled = new BindableProperty<>(false, "isScreenShareEnabled");
     /** Participants property. */
     public final BindableProperty<List<UserProfile>> participants = new BindableProperty<>(new ArrayList<>(),
             "participants");
@@ -54,8 +53,9 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Creates a new MeetingViewModel.
+     * 
      * @param currentUserParam The current user
-     * @param rpcParam The RPC instance
+     * @param rpcParam         The RPC instance
      */
     public MeetingViewModel(final UserProfile currentUserParam, final AbstractRPC rpcParam) {
         System.out.println("User  " + currentUserParam);
@@ -66,9 +66,10 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Creates a new MeetingViewModel with role.
+     * 
      * @param currentUserParam The current user
-     * @param roleParam The user's role
-     * @param rpcParam The RPC instance
+     * @param roleParam        The user's role
+     * @param rpcParam         The RPC instance
      */
     public MeetingViewModel(final UserProfile currentUserParam, final String roleParam, final AbstractRPC rpcParam) {
         this.currentUser = currentUserParam;
@@ -86,6 +87,20 @@ public class MeetingViewModel extends BaseViewModel {
     public void setMeetingId(final String id) {
         if (id != null && !id.trim().isEmpty()) {
             meetingId.set(id);
+        }
+    }
+
+    /**
+     * Clear all participants from the current meeting and notify observers.
+     */
+    public void clearParticipants() {
+        if (currentMeeting != null) {
+            // clear model participants and push update to view property
+            currentMeeting.getParticipants().clear();
+            updateParticipants();
+        } else {
+            // ensure property change even when no meeting object exists
+            participants.set(new ArrayList<>());
         }
     }
 
@@ -135,7 +150,7 @@ public class MeetingViewModel extends BaseViewModel {
             if (rpc != null) {
                 rpc.call("core/endMeeting", new byte[0]);
             }
-            
+
             addSystemMessage("Meeting ended");
             currentMeeting.endMeeting();
             isMeetingActive.set(false);
@@ -162,6 +177,7 @@ public class MeetingViewModel extends BaseViewModel {
     /**
      * Captures a quick doubt entry and surfaces it to the meeting chat log so
      * analytics panels can pick it up.
+     * 
      * @param quickDoubt the quick doubt text entered by the participant
      */
     public void submitQuickDoubt(final String quickDoubt) {
@@ -179,6 +195,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Add a participant to the current meeting.
+     * 
      * @param user The user to add
      */
     public void addParticipant(final UserProfile user) {
@@ -197,6 +214,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Remove a participant from the current meeting.
+     * 
      * @param user The user to remove
      */
     public void removeParticipant(final UserProfile user) {
@@ -298,6 +316,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the current meeting.
+     * 
      * @return The current meeting
      */
     public Meeting getCurrentMeeting() {
@@ -306,6 +325,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Checks if the current user is in the meeting.
+     * 
      * @return True if user is in meeting
      */
     public boolean isCurrentUserInMeeting() {
@@ -315,6 +335,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the current user.
+     * 
      * @return The current user
      */
     public UserProfile getCurrentUser() {
@@ -323,6 +344,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the RPC instance.
+     * 
      * @return The RPC instance
      */
     public AbstractRPC getRpc() {
@@ -331,6 +353,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the IP to email mapping.
+     * 
      * @return The IP to email mapping
      */
     public HashMap<String, String> getIpToMail() {
@@ -339,6 +362,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the meeting title property.
+     * 
      * @return The meeting title property
      */
     public BindableProperty<String> getMeetingTitle() {
@@ -347,6 +371,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the meeting ID property.
+     * 
      * @return The meeting ID property
      */
     public BindableProperty<String> getMeetingId() {
@@ -355,6 +380,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the message text property.
+     * 
      * @return The message text property
      */
     public BindableProperty<String> getMessageText() {
@@ -363,6 +389,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the messages property.
+     * 
      * @return The messages property
      */
     public BindableProperty<List<String>> getMessages() {
@@ -371,6 +398,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the meeting active state property.
+     * 
      * @return The meeting active state property
      */
     public BindableProperty<Boolean> getIsMeetingActive() {
@@ -379,6 +407,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the video enabled property.
+     * 
      * @return The video enabled property
      */
     public BindableProperty<Boolean> getIsVideoEnabled() {
@@ -387,6 +416,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the audio enabled property.
+     * 
      * @return The audio enabled property
      */
     public BindableProperty<Boolean> getIsAudioEnabled() {
@@ -395,6 +425,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the screen share enabled property.
+     * 
      * @return The screen share enabled property
      */
     public BindableProperty<Boolean> getIsScreenShareEnabled() {
@@ -403,6 +434,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the participants property.
+     * 
      * @return The participants property
      */
     public BindableProperty<List<UserProfile>> getParticipants() {
@@ -411,6 +443,7 @@ public class MeetingViewModel extends BaseViewModel {
 
     /**
      * Gets the role property.
+     * 
      * @return The role property
      */
     public BindableProperty<String> getRole() {
