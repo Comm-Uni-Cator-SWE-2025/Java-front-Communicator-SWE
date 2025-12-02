@@ -4,7 +4,6 @@ package com.swe.ux.views;
  * Contributed by Pushti Vasoya.
  */
 
-import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.Theme;
@@ -17,7 +16,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
@@ -78,21 +76,9 @@ public class ParticipantsView extends JPanel {
      */
     private static final int SUBTITLE_FONT_SIZE = 12;
     /**
-     * Indicator size.
+     * Default avatar color.
      */
-    private static final int INDICATOR_SIZE = 10;
-    /**
-     * Online color red component.
-     */
-    private static final int ONLINE_COLOR_R = 76;
-    /**
-     * Online color green component.
-     */
-    private static final int ONLINE_COLOR_G = 175;
-    /**
-     * Online color blue component.
-     */
-    private static final int ONLINE_COLOR_B = 80;
+    private static final Color DEFAULT_AVATAR_COLOR = new Color(82, 140, 255);
     /**
      * Avatar size.
      */
@@ -117,10 +103,6 @@ public class ParticipantsView extends JPanel {
      * Participant detail key.
      */
     private static final String PARTICIPANT_DETAIL_KEY = "participantDetail";
-    /**
-     * Participant badge key.
-     */
-    private static final String PARTICIPANT_BADGE_KEY = "participantBadge";
 
     /**
      * ViewModel for participants data.
@@ -296,16 +278,7 @@ public class ParticipantsView extends JPanel {
         textPanel.add(detailLabel);
 
         leftPanel.add(textPanel);
-
-        final JLabel badgeLabel = new JLabel(resolveRoleBadge(participant));
-        badgeLabel.setFont(new Font("Segoe UI", Font.BOLD, SUBTITLE_FONT_SIZE));
-        badgeLabel.setOpaque(true);
-        badgeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        badgeLabel.setBorder(new EmptyBorder(4, 12, 4, 12));
-        badgeLabel.putClientProperty(PARTICIPANT_BADGE_KEY, Boolean.TRUE);
-
         itemPanel.add(leftPanel, BorderLayout.CENTER);
-        itemPanel.add(badgeLabel, BorderLayout.EAST);
 
         applyThemeToComponentTree(itemPanel);
         return itemPanel;
@@ -328,27 +301,7 @@ public class ParticipantsView extends JPanel {
         if (email != null && !email.isBlank()) {
             return email;
         }
-        final ParticipantRole role = participant.getRole();
-        if (role != null) {
-            return capitalize(role.name());
-        }
         return "Connected";
-    }
-
-    private String resolveRoleBadge(final UserProfile participant) {
-        final ParticipantRole role = participant.getRole();
-        if (role == null) {
-            return "GUEST";
-        }
-        return role.name().replace('_', ' ');
-    }
-
-    private String capitalize(final String value) {
-        if (value == null || value.isBlank()) {
-            return "";
-        }
-        final String lower = value.toLowerCase();
-        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
     private String extractInitials(final String name) {
@@ -423,9 +376,6 @@ public class ParticipantsView extends JPanel {
                 label.setForeground(textColor);
             } else if (Boolean.TRUE.equals(label.getClientProperty(PARTICIPANT_DETAIL_KEY))) {
                 label.setForeground(mutedTextColor);
-            } else if (Boolean.TRUE.equals(label.getClientProperty(PARTICIPANT_BADGE_KEY))) {
-                label.setForeground(Color.WHITE);
-                label.setBackground(accentColor);
             }
         } else if (component instanceof AvatarCircle avatar) {
             final Color avatarBg = blendColors(accentColor, surfaceColor, 0.25);
@@ -506,7 +456,7 @@ public class ParticipantsView extends JPanel {
     private static final class AvatarCircle extends JComponent {
         private static final long serialVersionUID = 1L;
         private final String initials;
-        private Color backgroundColor = new Color(ONLINE_COLOR_R, ONLINE_COLOR_G, ONLINE_COLOR_B);
+        private Color backgroundColor = DEFAULT_AVATAR_COLOR;
         private Color textColor = Color.WHITE;
 
         AvatarCircle(final String initialsParam) {

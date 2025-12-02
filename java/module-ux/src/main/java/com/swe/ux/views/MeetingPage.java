@@ -6,7 +6,6 @@ import com.swe.canvas.datamodel.manager.ClientActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.screenNVideo.Utils;
-import com.swe.ux.analytics.NetworkHeartbeatMonitor;
 import com.swe.ux.App;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
@@ -116,6 +115,12 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private static final int SIDEBAR_BLUR_RADIUS = 10;
     /** Sidebar layout gap. */
     private static final int SIDEBAR_LAYOUT_GAP = 8;
+    /** Sidebar header background color. */
+    private static final Color SIDEBAR_HEADER_BACKGROUND = new Color(35, 37, 48, 210);
+    /** Sidebar body background. */
+    private static final Color SIDEBAR_BODY_BACKGROUND = new Color(255, 255, 255, 70);
+    /** Sidebar body radius. */
+    private static final int SIDEBAR_BODY_RADIUS = 26;
     /** Panel blur radius. */
     private static final int PANEL_BLUR_RADIUS = 12;
     /** Controls bar blur radius. */
@@ -126,6 +131,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private static final int CONTROLS_GAP_H = 12;
     /** Controls layout gap vertical (reduced for slimmer bar). */
     private static final int CONTROLS_GAP_V = 0;
+    /** Controls card fill color. */
+    private static final Color CONTROLS_BAR_BACKGROUND = new Color(255, 255, 255, 90);
     /** Leave button red color component. */
     private static final int LEAVE_RED = 229;
     /** Leave button green color component. */
@@ -212,8 +219,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
     /** Meeting ID badge. */
     private FrostedBadgeLabel meetingIdBadge;
-    /** Network status badge. */
-    private FrostedBadgeLabel networkStatusBadge;
     /** Live clock label. */
     private JLabel liveClockLabel;
     /** Role label. */
@@ -239,7 +244,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
     public MeetingPage(final MeetingViewModel meetingViewModelParam) {
         this.meetingViewModel = meetingViewModelParam;
         initializeUI();
-        startNetworkStatusWatcher();
         quickDoubtPopup = new QuickDoubtPopup();
         quickDoubtPopup.setOnSend(this::handleQuickDoubtSent);
         quickDoubtPopup.addPopupMenuListener(new PopupMenuListener() {
@@ -277,7 +281,10 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
         // Bottom controls
         controlsBar = buildControlsBar();
-        add(controlsBar, BorderLayout.SOUTH);
+        final JPanel controlsWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        controlsWrapper.setOpaque(false);
+        controlsWrapper.add(controlsBar);
+        add(controlsWrapper, BorderLayout.SOUTH);
     }
 
     // ---------------- Header ----------------
@@ -303,9 +310,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
         final FrostedBadgeLabel ipBadge = new FrostedBadgeLabel("IP: " + Utils.getSelfIP());
         leftCluster.add(ipBadge);
-
-        networkStatusBadge = new FrostedBadgeLabel("Status: Checking…");
-        leftCluster.add(networkStatusBadge);
 
         roleLabel = new JLabel(buildRoleLabelText());
         roleLabel.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE, Font.PLAIN));
@@ -443,27 +447,21 @@ public class MeetingPage extends FrostedBackgroundPanel {
     // ---------------- Sidebar ----------------
     private SoftCardPanel buildSidebarCard() {
         final SoftCardPanel sb = new SoftCardPanel(SIDEBAR_BLUR_RADIUS);
-        sb.setLayout(new BorderLayout(SIDEBAR_LAYOUT_GAP, SIDEBAR_LAYOUT_GAP));
+        sb.setLayout(new BorderLayout());
         sb.setPreferredSize(new Dimension(SIDEBAR_DEFAULT_WIDTH, 0));
         sb.setVisible(false);
+        sb.setBorder(new EmptyBorder(18, 18, 18, 18));
 
-        final JPanel sidebarHeader = new JPanel(new BorderLayout());
-        sidebarHeader.setOpaque(false);
-        sidebarHeaderLabel = new JLabel("Panels");
-        sidebarHeaderLabel.setFont(FontUtil.getJetBrainsMono(TITLE_FONT_SIZE, Font.BOLD));
-        final JButton closeSidebarBtn = new JButton("x");
-        closeSidebarBtn.setToolTipText("Hide panel");
-        closeSidebarBtn.setFocusPainted(false);
-        closeSidebarBtn.setBorderPainted(false);
-        closeSidebarBtn.setContentAreaFilled(false);
-        closeSidebarBtn.addActionListener(e -> toggleSidebarVisibility());
-        sidebarHeader.add(sidebarHeaderLabel, BorderLayout.WEST);
-        sidebarHeader.add(closeSidebarBtn, BorderLayout.EAST);
+        final JPanel chrome = new JPanel(new BorderLayout(SIDEBAR_LAYOUT_GAP, SIDEBAR_LAYOUT_GAP));
+        chrome.setOpaque(false);
+
+        final JPanel sidebarHeader = createSidebarHeader();
 
         // Internal tabs: Chat | Participants
         sidebarTabs = new JTabbedPane(SwingConstants.TOP);
         sidebarTabs.setOpaque(false);
         sidebarTabs.setUI(new ModernTabbedPaneUI());
+        sidebarTabs.setBorder(new EmptyBorder(4, 4, 4, 4));
 
         chatPanel = createChatPanel();
         participantsPanel = createParticipantsPanel();
@@ -471,9 +469,44 @@ public class MeetingPage extends FrostedBackgroundPanel {
         sidebarTabs.addTab("Chat", chatPanel);
         sidebarTabs.addTab("Participants", participantsPanel);
 
-        sb.add(sidebarHeader, BorderLayout.NORTH);
-        sb.add(sidebarTabs, BorderLayout.CENTER);
+        final JPanel bodyWrapper = new SidebarBodyPanel();
+        bodyWrapper.setLayout(new BorderLayout());
+        bodyWrapper.setBorder(new EmptyBorder(10, 10, 10, 10));
+        bodyWrapper.add(sidebarTabs, BorderLayout.CENTER);
+
+        chrome.add(sidebarHeader, BorderLayout.NORTH);
+        chrome.add(bodyWrapper, BorderLayout.CENTER);
+
+        sb.add(chrome, BorderLayout.CENTER);
         return sb;
+    }
+
+    private JPanel createSidebarHeader() {
+        final SoftCardPanel header = new SoftCardPanel(PANEL_BLUR_RADIUS);
+        header.setCornerRadius(18);
+        header.setLayout(new BorderLayout(12, 0));
+        header.setBackground(SIDEBAR_HEADER_BACKGROUND);
+        header.setBorder(new EmptyBorder(14, 18, 14, 18));
+        header.setOpaque(false);
+
+        sidebarHeaderLabel = new JLabel("Collaboration Hub");
+        sidebarHeaderLabel.setFont(FontUtil.getJetBrainsMono(TITLE_FONT_SIZE, Font.BOLD));
+        sidebarHeaderLabel.setForeground(Color.WHITE);
+        header.add(sidebarHeaderLabel, BorderLayout.WEST);
+        header.add(createSidebarCloseButton(), BorderLayout.EAST);
+        return header;
+    }
+
+    private JButton createSidebarCloseButton() {
+        final JButton closeSidebarBtn = new JButton("✕");
+        closeSidebarBtn.setToolTipText("Hide panel");
+        closeSidebarBtn.setFocusPainted(false);
+        closeSidebarBtn.setBorderPainted(false);
+        closeSidebarBtn.setContentAreaFilled(false);
+        closeSidebarBtn.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE, Font.BOLD));
+        closeSidebarBtn.setForeground(Color.WHITE);
+        closeSidebarBtn.addActionListener(e -> toggleSidebarVisibility());
+        return closeSidebarBtn;
     }
 
     private JPanel createParticipantsPanel() {
@@ -739,10 +772,10 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private SoftCardPanel buildControlsBar() {
         final SoftCardPanel bar = new SoftCardPanel(CONTROLS_BLUR_RADIUS);
         bar.setCornerRadius(CONTROLS_CORNER_RADIUS);
-        // Use BorderLayout so we can tightly control padding + height
         bar.setLayout(new BorderLayout());
-        // Slim vertical padding for the whole bar
-        bar.setBorder(new EmptyBorder(4, 8, 4, 8));
+        bar.setBorder(new EmptyBorder(6, 10, 6, 10));
+        bar.setBackground(CONTROLS_BAR_BACKGROUND);
+        bar.setOpaque(false);
 
         // Create buttons
         btnMute = new MeetingControlButton("Mic", MeetingControlButton.ControlIcon.MIC);
@@ -771,7 +804,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
         btnLeave.setShowIcon(false);
         final Color leaveAccent = new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE);
         btnLeave.setActiveColorOverride(new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE, LEAVE_ALPHA));
-        btnLeave.setAccentColor(leaveAccent);
+        btnLeave.setAccentColor(new Color(220, 68, 55));
         btnLeave.addActionListener(e -> {
             meetingViewModel.endMeeting();
             App.getInstance(null).showView(App.MAIN_VIEW);
@@ -808,6 +841,10 @@ public class MeetingPage extends FrostedBackgroundPanel {
         controlsContent.add(btnPeople);
 
         bar.add(controlsContent, BorderLayout.CENTER);
+        final Dimension controlsPref = controlsContent.getPreferredSize();
+        final Dimension cardPref = new Dimension(controlsPref.width + 24, controlsPref.height + 16);
+        bar.setPreferredSize(cardPref);
+        bar.setMaximumSize(cardPref);
 
         return bar;
     }
@@ -878,23 +915,6 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private void updateLeaveButtonLabel() {
         if (btnLeave != null) {
             btnLeave.setText(isCurrentUserInstructor() ? "End" : "Leave");
-        }
-    }
-
-    private void startNetworkStatusWatcher() {
-        NetworkHeartbeatMonitor.getInstance().addListener(alive ->
-                SwingUtilities.invokeLater(() -> updateNetworkBadge(alive)));
-    }
-
-    private void updateNetworkBadge(final boolean alive) {
-        if (networkStatusBadge == null) {
-            return;
-        }
-        networkStatusBadge.setText("Status: " + (alive ? "Online" : "Offline"));
-        if (alive) {
-            networkStatusBadge.setForeground(new Color(34, 197, 94));
-        } else {
-            networkStatusBadge.setForeground(new Color(234, 88, 12));
         }
     }
 
@@ -988,6 +1008,25 @@ public class MeetingPage extends FrostedBackgroundPanel {
             quickDoubtPopup.reset();
             handleQuickDoubtClosed();
         });
+    }
+
+    private static final class SidebarBodyPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+
+        SidebarBodyPanel() {
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(final Graphics g) {
+            final Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(SIDEBAR_BODY_BACKGROUND);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(),
+                    SIDEBAR_BODY_RADIUS, SIDEBAR_BODY_RADIUS);
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
 
     private void applyTheme() {

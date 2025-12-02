@@ -642,11 +642,11 @@ public class App extends JFrame {
      * Clears any persisted OAuth tokens so the next login starts fresh.
      */
     private void clearStoredCredentialCache() {
-        final Path tokensDir = Paths.get("tokens");
-        if (!Files.exists(tokensDir)) {
+        final Path tokensDir = resolveTokenDirectory();
+        if (tokensDir == null || !Files.exists(tokensDir)) {
             return;
         }
-        try (var paths = Files.walk(tokensDir)) {
+        try (java.util.stream.Stream<Path> paths = Files.walk(tokensDir)) {
             paths.sorted(Comparator.reverseOrder()).forEach(path -> {
                 try {
                     Files.deleteIfExists(path);
@@ -654,9 +654,30 @@ public class App extends JFrame {
                     System.err.println("Failed to delete credential file: " + path + " -> " + e.getMessage());
                 }
             });
-            System.out.println("Cleared stored credential cache.");
+            System.out.println("Cleared stored credential cache at " + tokensDir.toAbsolutePath());
         } catch (IOException e) {
             System.err.println("Error clearing stored credentials: " + e.getMessage());
         }
+    }
+
+    private Path resolveTokenDirectory() {
+        try {
+            final File currentJar = new File(App.class
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .toURI());
+            final File appDir = currentJar.getParentFile();
+            if (appDir != null) {
+                final Path candidate = appDir.toPath().resolve("tokens");
+                if (Files.exists(candidate)) {
+                    return candidate;
+                }
+            }
+        } catch (Exception ignored) {
+            // fall back to working directory
+        }
+        final Path fallback = Paths.get("tokens");
+        return Files.exists(fallback) ? fallback : null;
     }
 }
