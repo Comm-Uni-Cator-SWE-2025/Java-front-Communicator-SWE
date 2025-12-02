@@ -63,6 +63,11 @@ public class MeetingViewModel extends BaseViewModel {
         this.currentUser = currentUserParam;
         this.rpc = rpcParam;
         this.ipToMail = new HashMap<>();
+
+        rpc.subscribe("core/LeaveMeeting", data -> {
+            endMeeting();
+            return new byte[0];
+        });
     }
 
     /**

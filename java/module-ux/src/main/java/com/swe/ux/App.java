@@ -323,6 +323,7 @@ public class App extends JFrame {
      * @param activeMeetingViewModelRef reference to the active meeting view model
      */
     private void setupParticipantUpdateListener(final MeetingViewModel[] activeMeetingViewModelRef) {
+
         rpc.subscribe("core/updateParticipants", data -> {
             System.out.println("updating participants");
             try {
