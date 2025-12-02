@@ -85,8 +85,16 @@ public final class FileMessageSerializer {
         final int totalSize = calculateTotalSize(messageBytes);
 
         final ByteBuffer buffer = ByteBuffer.allocate(totalSize);
-        writeAllBytes(buffer, messageBytes);
+        // writeAllBytes(buffer, messageBytes);
+        writeBytes(buffer, messageBytes.getMessageIdBytes());
+        writeBytes(buffer, messageBytes.getUserIdBytes());
+        writeBytes(buffer, messageBytes.getSenderNameBytes());
+        writeBytes(buffer, messageBytes.getCaptionBytes());
+        writeBytes(buffer, messageBytes.getFileNameBytes());
+        writeBytes(buffer, messageBytes.getFilePathBytes());
+        writeBytes(buffer, messageBytes.getFileContentBytes());
         buffer.putLong(timestampEpoch);
+        writeBytes(buffer, messageBytes.getReplyIdBytes());
 
         return buffer.array();
     }
