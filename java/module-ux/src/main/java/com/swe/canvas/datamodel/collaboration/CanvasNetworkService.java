@@ -48,24 +48,6 @@ public class CanvasNetworkService implements NetworkService {
 
     }
 
-    ClientNode deserializeClientNodee(byte[] data) {
-        // String dataStr = new String(data);
-
-        try {
-            String dataStr = DataSerializer.deserialize(data, String.class);
-            String[] parts = dataStr.split(":");
-            if (parts.length != 2) {
-                throw new IllegalArgumentException("Invalid ClientNode data: " + dataStr);
-            }
-            String ip = parts[0];
-            int port = Integer.parseInt(parts[1]);
-            return new ClientNode(ip, port);    
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        
-    }
-
 
     @Override
     public void sendMessageToHost(NetworkMessage message) {

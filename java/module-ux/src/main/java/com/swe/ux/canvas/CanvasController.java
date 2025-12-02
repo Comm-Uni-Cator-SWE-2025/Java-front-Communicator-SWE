@@ -34,8 +34,8 @@ import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.ux.viewmodels.CanvasViewModel;
 import com.swe.ux.viewmodels.ToolType;
 
-import datastructures.Entity;
-import functionlibrary.CloudFunctionLibrary;
+import com.swe.cloud.datastructures.Entity;
+import com.swe.cloud.functionlibrary.CloudFunctionLibrary;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
@@ -670,48 +670,5 @@ public class CanvasController {
         }
     }
 
-    // =========================================================================
-    // --- HOST ONLY: SAVE & RESTORE ---
-    // =========================================================================
-
-    @FXML
-    private void onSave() {
-        if (actionManager == null) return;
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Canvas State");
-        fileChooser.setInitialFileName("canvas-state.json");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json"));
-        File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
-
-        if (file != null) {
-            try {
-                String json = actionManager.saveMap();
-                Files.writeString(file.toPath(), json);
-                System.out.println("State saved to: " + file.getAbsolutePath());
-            } catch (Exception ex) {
-                System.err.println("Error saving state: " + ex.getMessage());
-            }
-        }
-    }
-
-    @FXML
-    private void onRestore() {
-        if (actionManager == null) return;
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Restore Canvas State");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json"));
-        File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
-
-        if (file != null) {
-            try {
-                String json = Files.readString(file.toPath());
-                actionManager.restoreMap(json);
-                System.out.println("State restored from: " + file.getAbsolutePath());
-            } catch (Exception ex) {
-                System.err.println("Error restoring state: " + ex.getMessage());
-            }
-        }
-    }
+    
 }
