@@ -22,6 +22,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -108,6 +109,8 @@ public class SentimentViewPane extends StackPane {
     private NumberAxis xAxis;
     /** Y axis. */
     private NumberAxis yAxis;
+    /** Slider to drag the sentiment window. */
+    private Slider sentimentWindowSlider;
     /** User count chart. */
     private LineChart<Number, Number> userCountChart;
     /** User count X axis. */
@@ -128,6 +131,8 @@ public class SentimentViewPane extends StackPane {
     private final Deque<UserCountSample> userCountHistory;
     /** Sample index for user counts. */
     private int userCountSampleIndex;
+    /** Flag to avoid slider feedback loops. */
+    private boolean programmaticSliderUpdate;
 
     /**
      * Creates a new SentimentViewPane.
@@ -236,6 +241,7 @@ public class SentimentViewPane extends StackPane {
         shapeButtonBox.getChildren().addAll(shapePrevBtn, shapeNextBtn);
 
         createChart();
+        createTimelineSlider();
         createUserCountChart();
         final VBox participantSection = new VBox(5);
         participantSection.setAlignment(Pos.TOP_LEFT);
@@ -251,7 +257,10 @@ public class SentimentViewPane extends StackPane {
         chartsRow.getChildren().addAll(chart, participantSection);
         HBox.setHgrow(chart, Priority.ALWAYS);
 
-        topLeftPane.getChildren().addAll(buttonBox, chartsRow);
+        final VBox timelineControls = new VBox(6);
+        timelineControls.getChildren().addAll(buttonBox, sentimentWindowSlider);
+
+        topLeftPane.getChildren().addAll(timelineControls, chartsRow);
         VBox.setVgrow(chartsRow, Priority.ALWAYS);
 
         createBarChart();
@@ -400,6 +409,30 @@ public class SentimentViewPane extends StackPane {
         chart.setAnimated(false);
         chart.setLegendVisible(false);
         chart.setMinHeight(260);
+    }
+
+    private void createTimelineSlider() {
+        sentimentWindowSlider = new Slider(0, 0, 0);
+        sentimentWindowSlider.setBlockIncrement(1);
+        sentimentWindowSlider.setMajorTickUnit(1);
+        sentimentWindowSlider.setMinorTickCount(0);
+        sentimentWindowSlider.setSnapToTicks(true);
+        sentimentWindowSlider.setShowTickLabels(false);
+        sentimentWindowSlider.setShowTickMarks(false);
+        sentimentWindowSlider.setDisable(true);
+        sentimentWindowSlider.setMaxWidth(Double.MAX_VALUE);
+
+        sentimentWindowSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (programmaticSliderUpdate) {
+                return;
+            }
+            final int targetIndex = (int) Math.round(newVal.doubleValue());
+            viewModel.moveWindowTo(targetIndex);
+            updateChartWithAnimation(false);
+        });
+
+        viewModel.currentStartIndexProperty().addListener((obs, oldVal, newVal) ->
+                Platform.runLater(() -> updateSliderFromViewModel(newVal.intValue())));
     }
 
     private void createUserCountChart() {
@@ -556,6 +589,29 @@ public class SentimentViewPane extends StackPane {
 
         chart.getData().clear();
         chart.getData().add(series);
+        refreshTimelineSliderBounds();
+        updateSliderFromViewModel(startIndex);
+    }
+
+    private void refreshTimelineSliderBounds() {
+        if (sentimentWindowSlider == null) {
+            return;
+        }
+        sentimentWindowSlider.setMin(0);
+        final int maxStartIndex = viewModel.getMaxStartIndex();
+        sentimentWindowSlider.setMax(Math.max(0, maxStartIndex));
+        final boolean canSlide = viewModel.getAllData().size() > viewModel.windowSizeProperty().get();
+        sentimentWindowSlider.setDisable(!canSlide);
+        sentimentWindowSlider.setBlockIncrement(Math.max(1, viewModel.windowSizeProperty().get() / 2));
+    }
+
+    private void updateSliderFromViewModel(final int index) {
+        if (sentimentWindowSlider == null) {
+            return;
+        }
+        programmaticSliderUpdate = true;
+        sentimentWindowSlider.setValue(index);
+        programmaticSliderUpdate = false;
     }
 
     private void updateUserCountChart() {

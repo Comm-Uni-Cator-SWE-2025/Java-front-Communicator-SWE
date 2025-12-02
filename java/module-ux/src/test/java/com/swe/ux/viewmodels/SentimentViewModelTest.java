@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,6 +69,26 @@ class SentimentViewModelTest {
         assertEquals(0, viewModel.getCurrentStartIndex());
     }
 
+    @Test
+    void moveWindowToProvidesDraggableWindow() throws Exception {
+        String payload = buildPayload(15);
+        rpc.setResponse(serialize(payload));
+
+        viewModel.windowSizeProperty().set(5);
+        viewModel.fetchAndUpdateData();
+
+        viewModel.moveWindowTo(4);
+        assertEquals(4, viewModel.getCurrentStartIndex());
+        assertFalse(viewModel.autoModeProperty().get());
+
+        final int maxStart = viewModel.getMaxStartIndex();
+        viewModel.moveWindowTo(100);
+        assertEquals(maxStart, viewModel.getCurrentStartIndex());
+
+        viewModel.moveWindowTo(-5);
+        assertEquals(0, viewModel.getCurrentStartIndex());
+    }
+
     private String buildPayload(int count) {
         return IntStream.range(0, count)
                 .mapToObj(i -> String.format("{\"time\":\"T%02d\",\"sentiment\":%s}", i, i * 0.1))
@@ -108,4 +129,3 @@ class SentimentViewModelTest {
         }
     }
 }
-

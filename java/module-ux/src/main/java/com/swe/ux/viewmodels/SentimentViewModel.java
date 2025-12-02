@@ -27,6 +27,10 @@ public class SentimentViewModel {
     private static final int WINDOW_SIZE = 10;
     /** Half window constant. */
     private static final int HALF_WINDOW = 2;
+    /** Fixed lower bound for y-axis. */
+    private static final double FIXED_MIN_Y = -10.0;
+    /** Fixed upper bound for y-axis. */
+    private static final double FIXED_MAX_Y = 10.0;
     
     /** Data service for sentiment analytics. */
     private final SentimentDataService dataService;
@@ -63,8 +67,8 @@ public class SentimentViewModel {
         this.autoMode = new SimpleBooleanProperty(true);
         this.windowSize = new SimpleIntegerProperty(WINDOW_SIZE);
         
-        this.minY = new SimpleDoubleProperty(0);
-        this.maxY = new SimpleDoubleProperty(0);
+        this.minY = new SimpleDoubleProperty(FIXED_MIN_Y);
+        this.maxY = new SimpleDoubleProperty(FIXED_MAX_Y);
         this.lowerBound = new SimpleIntegerProperty(0);
         this.upperBound = new SimpleIntegerProperty(0);
     }
@@ -78,7 +82,6 @@ public class SentimentViewModel {
         if (!json.isEmpty()) {
             System.out.println("Updating Sentiment Data with: " + json);
             updateData(json);
-            autoMode.set(true);
         }
         
         calculateViewBounds();
@@ -110,21 +113,9 @@ public class SentimentViewModel {
         
         final int end = Math.min(currentStartIndex.get() + windowSize.get(), allData.size());
         
-        double min = Double.MAX_VALUE;
-        double max = Double.MIN_VALUE;
-        
-        for (int i = currentStartIndex.get(); i < end; i++) {
-            final double sentiment = allData.get(i).getSentiment();
-            if (sentiment < min) {
-                min = sentiment;
-            }
-            if (sentiment > max) {
-                max = sentiment;
-            }
-        }
-        
-        minY.set(min - 1);
-        maxY.set(max + 1);
+        // Always keep the same y-axis range so the chart doesn't shrink/expand with data
+        minY.set(FIXED_MIN_Y);
+        maxY.set(FIXED_MAX_Y);
         lowerBound.set(currentStartIndex.get());
         upperBound.set(currentStartIndex.get() + windowSize.get() - 1);
     }
@@ -149,6 +140,37 @@ public class SentimentViewModel {
             currentStartIndex.set(currentStartIndex.get() - (windowSize.get() / HALF_WINDOW));
             calculateViewBounds();
         }
+    }
+
+    /**
+     * Moves the window to the given start index, typically driven by a slider.
+     * Auto mode is disabled to allow manual control.
+     *
+     * @param startIndex the desired starting index for the window
+     */
+    public void moveWindowTo(final int startIndex) {
+        autoMode.set(false);
+        final int clamped = clampStartIndex(startIndex);
+        currentStartIndex.set(clamped);
+        calculateViewBounds();
+    }
+
+    /**
+     * Maximum valid start index for the current dataset.
+     *
+     * @return the highest index the window can start at
+     */
+    public int getMaxStartIndex() {
+        final int size = allData.size();
+        final int window = windowSize.get();
+        if (size <= window) {
+            return 0;
+        }
+        return size - window;
+    }
+
+    private int clampStartIndex(final int startIndex) {
+        return Math.max(0, Math.min(startIndex, getMaxStartIndex()));
     }
 
     /**
