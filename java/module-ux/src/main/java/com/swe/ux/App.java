@@ -331,6 +331,7 @@ public class App extends JFrame {
      */
     private void setupParticipantUpdateListener(final MeetingViewModel[] activeMeetingViewModelRef) {
         rpc.subscribe("core/updateParticipants", data -> {
+            System.out.println("updating paticipents");
             try {
                 final Map<ClientNode, UserProfile> participantsMap = DataSerializer.deserialize(data,
                         new TypeReference<Map<ClientNode, UserProfile>>() { });
