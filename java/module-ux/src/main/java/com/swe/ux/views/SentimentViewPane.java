@@ -40,6 +40,8 @@ import java.util.concurrent.CompletableFuture;
 
 import com.swe.ux.viewmodels.SentimentViewModel;
 import com.swe.ux.viewmodels.ShapeViewModel;
+import javafx.util.StringConverter;
+import jdk.jfr.Category;
 
 /**
  * JavaFX pane that renders the Sentiment + Shape analytics dashboard.
@@ -111,12 +113,14 @@ public class SentimentViewPane extends StackPane {
     /** User count chart. */
     private LineChart<Number, Number> userCountChart;
     /** User count X axis. */
+//    /** User count X axis. */
     private NumberAxis userCountXAxis;
     /** User count Y axis. */
     private NumberAxis userCountYAxis;
     /** Bar chart. */
     private BarChart<String, Number> barChart;
     /** Category axis. */
+//    private CategoryAxis xAxis;
     private CategoryAxis categoryAxis;
     /** Bar Y axis. */
     private NumberAxis barYAxis;
@@ -302,7 +306,7 @@ public class SentimentViewPane extends StackPane {
     }
 
     private void setupMessagePane() {
-        final Label titleLabel = new Label("Messages");
+        final Label titleLabel = new Label("Action Items");
         titleLabel.setStyle("-fx-font-size: " + TITLE_FONT_SIZE + "px; -fx-font-weight: bold;");
 
         messageContainer = new VBox(DEFAULT_SPACING);
@@ -392,8 +396,36 @@ public class SentimentViewPane extends StackPane {
     private void createChart() {
         xAxis = new NumberAxis();
         yAxis = new NumberAxis();
-        xAxis.setLabel("Index (Time Order)");
+        xAxis.setLabel("Time");
         yAxis.setLabel("Sentiment");
+        xAxis.setAutoRanging(false);
+        yAxis.setAutoRanging(false);
+        yAxis.setUpperBound(10);
+        yAxis.setLowerBound(-10);
+        xAxis.setUpperBound(30);
+        xAxis.setLowerBound(0);
+
+        xAxis.setTickLabelFormatter(new StringConverter<Number>() {
+            @Override
+            public String toString(final Number object) {
+                final int index = object.intValue();
+                if (index >= 0 && index < viewModel.getAllData().size()) {
+
+                    final String rawTime = viewModel.getAllData().get(index).getTime();
+
+                    if (rawTime.contains("T")) {
+                        return rawTime.substring(rawTime.indexOf('T') + 1, rawTime.indexOf('T') + 6);
+                    }
+                    return rawTime;
+                }
+                return "";
+            }
+
+            @Override
+            public Number fromString(final String string) {
+                return 0;
+            }
+        });
 
         chart = new LineChart<>(xAxis, yAxis);
         chart.setTitle("Sentiment Trend");
@@ -518,6 +550,7 @@ public class SentimentViewPane extends StackPane {
 
         for (int i = 0; i < viewModel.getWindowData().size(); i++) {
             final SentimentPoint point = viewModel.getWindowData().get(i);
+//            final String timeString = point.getTime();
             series.getData().add(new XYChart.Data<>(startIndex + i, point.getSentiment()));
         }
 
@@ -546,7 +579,7 @@ public class SentimentViewPane extends StackPane {
                 xAxis.setAutoRanging(false);
                 xAxis.setLowerBound(targetLowerBound);
                 xAxis.setUpperBound(targetUpperBound);
-                xAxis.setTickUnit(1);
+                xAxis.setTickUnit(5);
 
                 yAxis.setAutoRanging(false);
                 yAxis.setLowerBound(targetMinY);
