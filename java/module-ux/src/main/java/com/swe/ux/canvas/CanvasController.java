@@ -77,6 +77,10 @@ public class CanvasController {
     /** Default snapshot height if canvas dimensions are invalid. */
     private static final int DEFAULT_SNAPSHOT_HEIGHT = 600;
 
+    /** Snapshots folder. */
+    private static final String TEMP_DIR_NAME = "temp_snapshots";
+
+
     /** Zoom factor per scroll tick. */
     private static final double ZOOM_FACTOR = 1.1;
 
@@ -605,7 +609,7 @@ public class CanvasController {
     }
 
     @FXML
-    private void onAnalyze() {
+    private void onDescribe() {
         if (rpc == null) {
             UiFactory.createAlert(Alert.AlertType.ERROR, "RPC not initialized.").show();
             return;
@@ -620,7 +624,17 @@ public class CanvasController {
 
     private void performAnalysis() {
         try {
-            final File tempFile = File.createTempFile("canvas_snapshot_", ".png");
+            final File relativeDir = new File(TEMP_DIR_NAME);
+            if (!relativeDir.exists()) {
+                if (!relativeDir.mkdirs()) {
+                    throw new IOException("Could not create directory: " + relativeDir.getAbsolutePath());
+                }
+            }
+
+            // final File tempFile = File.createTempFile("canvas_snapshot_", ".png");
+            final String fileName = "canvas_snapshot_" + System.currentTimeMillis() + ".png";
+            final File tempFile = new File(relativeDir, fileName);
+            
             int width = (int) canvas.getWidth();
             int height = (int) canvas.getHeight();
             if (width <= 0) {
