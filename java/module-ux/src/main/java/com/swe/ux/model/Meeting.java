@@ -2,6 +2,8 @@ package com.swe.ux.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -129,6 +131,38 @@ public class Meeting {
                 .contains(user.getEmail());
         if (!userPresent) {
             participants.add(user);
+        }
+    }
+
+    /**
+     * Removes every participant from the meeting.
+     */
+    public void clearParticipants() {
+        participants.clear();
+    }
+
+    /**
+     * Replaces the existing participant list with the provided collection.
+     * Ensures we don't duplicate entries when the authoritative list has repeats.
+     *
+     * @param newParticipants the new set of participants from the backend
+     */
+    public void setParticipants(final Collection<UserProfile> newParticipants) {
+        participants.clear();
+        if (newParticipants == null) {
+            return;
+        }
+
+        final HashSet<String> seenEmails = new HashSet<>();
+        for (final UserProfile participant : newParticipants) {
+            if (participant == null) {
+                continue;
+            }
+
+            final String email = participant.getEmail();
+            if (email == null || seenEmails.add(email)) {
+                participants.add(participant);
+            }
         }
     }
 

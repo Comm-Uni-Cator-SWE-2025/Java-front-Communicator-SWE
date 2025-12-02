@@ -1,6 +1,7 @@
 package com.swe.ux.viewmodels;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -94,14 +95,23 @@ public class MeetingViewModel extends BaseViewModel {
      * Clear all participants from the current meeting and notify observers.
      */
     public void clearParticipants() {
+        applyParticipantSnapshot(Collections.emptyList());
+    }
+
+    /**
+     * Replace the current participant list with a server-provided snapshot.
+     * @param snapshot the ordered list of participants from the backend
+     */
+    public void applyParticipantSnapshot(final List<UserProfile> snapshot) {
+        final List<UserProfile> safeSnapshot = snapshot == null
+                ? new ArrayList<>()
+                : new ArrayList<>(snapshot);
+
         if (currentMeeting != null) {
-            // clear model participants and push update to view property
-            currentMeeting.getParticipants().clear();
-            updateParticipants();
-        } else {
-            // ensure property change even when no meeting object exists
-            participants.set(new ArrayList<>());
+            currentMeeting.setParticipants(safeSnapshot);
         }
+
+        participants.set(safeSnapshot);
     }
 
     /**

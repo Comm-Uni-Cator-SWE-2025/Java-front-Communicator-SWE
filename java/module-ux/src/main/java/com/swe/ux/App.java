@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import com.swe.ux.views.LoginPage;
 import com.swe.ux.views.MainPage;
@@ -330,21 +332,37 @@ public class App extends JFrame {
                         });
                 System.out.println("App: participantsMap: " + participantsMap);
 
-                // CLEAR existing participants and IP→email map first
-                activeMeetingViewModelRef[0].clearParticipants();
-                activeMeetingViewModelRef[0].getIpToMail().clear();
+                final MeetingViewModel meetingViewModel = activeMeetingViewModelRef[0];
+                if (meetingViewModel == null) {
+                    return new byte[0];
+                }
+
+                meetingViewModel.getIpToMail().clear();
+                final List<UserProfile> snapshot = new ArrayList<>();
 
                 // Re-populate from authoritative map
                 participantsMap.forEach((clientNode, userProfile) -> {
+                    if (userProfile == null) {
+                        return;
+                    }
+
                     System.out.println("App: clientNode: " + clientNode + " userProfile: " + userProfile);
-                    // map email -> host/ip (use hostName() as you had)
-                    activeMeetingViewModelRef[0].getIpToMail().put(userProfile.getEmail(), clientNode.hostName());
-                    // add participant to view model (this will update UI via updateParticipants())
-                    activeMeetingViewModelRef[0].addParticipant(userProfile);
+
+                    final String email = userProfile.getEmail();
+                    final String hostName = clientNode != null ? clientNode.hostName() : null;
+
+                    if (email != null && hostName != null) {
+                        // map email -> host/ip (use hostName() as you had)
+                        meetingViewModel.getIpToMail().put(email, hostName);
+                    }
+
+                    snapshot.add(userProfile);
                 });
 
-                System.out.println(
-                        "App: participants after update: " + activeMeetingViewModelRef[0].getParticipants().get());
+                // apply snapshot once so UI sees a consistent list
+                meetingViewModel.applyParticipantSnapshot(snapshot);
+
+                System.out.println("App: participants after update: " + meetingViewModel.getParticipants().get());
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
