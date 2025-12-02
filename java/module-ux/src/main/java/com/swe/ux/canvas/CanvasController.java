@@ -62,12 +62,18 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
+
 import javax.imageio.ImageIO;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collection;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.api.client.util.Data;
+import com.swe.controller.serialize.DataSerializer;
 
 /**
  * Controller for the fxml view.
@@ -238,7 +244,10 @@ public class CanvasController {
 
     @FXML 
     private void onRegularize() { 
-        if (viewModel.selectedShapeId.get() == null || rpc == null) return;
+        if (viewModel.selectedShapeId.get() == null || rpc == null) {
+            System.err.println("Regularize skipped: No selection or RPC missing.");
+            return;
+        }
 
         System.out.println("Regularizing selected shape...");
         
@@ -252,24 +261,37 @@ public class CanvasController {
         // 3. Call Core RPC
         CompletableFuture.runAsync(() -> {
             try {
-                // "core/regularizeShape" is the custom RPC you made in core
-                byte[] response = rpc.call("canvas:regularize", shapeJson.getBytes(StandardCharsets.UTF_8)).get();
+                // Wrap the string in quotes/format required by your Core serializer
+                byte[] data = DataSerializer.serialize(shapeJson); 
+                
+                // Call RPC
+                byte[] response = rpc.call("canvas:regularize", data).get();
                 
                 if (response != null && response.length > 0) {
-                    String updatedShapeJson = new String(response, StandardCharsets.UTF_8);
+                    // Deserialize the response string (which contains the JSON)
+                    String updatedShapeJson = DataSerializer.deserialize(response, String.class);
                     
-                    // 4. Deserialize and update Canvas
+                    // 4. Deserialize back to ShapeState
                     ShapeState validatedState = ShapeSerializer.deserializeShape(updatedShapeJson);
+                    
                     if (validatedState != null && validatedState.getShape() != null) {
                         Platform.runLater(() -> {
-                            // Update via ActionManager to ensure consistency
+                            // CRITICAL: This requests the modification. 
+                            // The ActionManager listener (set in initializeControls) will catch this
+                            // and call redraw() automatically.
                             actionManager.requestModify(state, validatedState.getShape());
-                            System.out.println("Shape regularized successfully.");
+                            
+                            // Force selection refresh to ensure bounding box updates
+                            viewModel.selectedShapeId.set(state.getShapeId());
+                            System.out.println("Shape regularized and view updated.");
                         });
+                    } else {
+                        System.err.println("Failed to deserialize validation response.");
                     }
                 }
             } catch (Exception e) {
                 System.err.println("AI Regularization failed: " + e.getMessage());
+                e.printStackTrace();
             }
         });
     }
@@ -279,25 +301,28 @@ public class CanvasController {
     @FXML private TextArea aiDescriptionArea;
 
     @FXML
-    private void onDescribe() {
+    private void onDescribe() { // Renamed to match standard naming, ensure FXML uses #onDescribe or #onAnalyze consistently
         if (rpc == null) {
             new Alert(Alert.AlertType.ERROR, "RPC not initialized.").show();
             return;
         }
 
         // 1. Show "Processing" state in sidebar
-        aiSidebar.setVisible(true);
-        aiSidebar.setManaged(true);
-        aiDescriptionArea.setText("Analyzing canvas... please wait.");
+        if (aiSidebar != null) {
+            aiSidebar.setVisible(true);
+            aiSidebar.setManaged(true);
+        }
+        if (aiDescriptionArea != null) {
+            aiDescriptionArea.setText("Analyzing canvas... please wait.");
+        }
 
         try {
             // 2. Automatically Snapshot the Canvas to a Temp File
             File tempFile = File.createTempFile("canvas_snapshot_", ".png");
-            // NOTE: WritableImage dimensions must be integers.
+            
+            // Scale up for better AI readability (optional, using 2x scale here)
             int width = (int) canvas.getWidth();
             int height = (int) canvas.getHeight();
-            
-            // Ensure valid dimensions
             if (width <= 0) width = 800;
             if (height <= 0) height = 600;
 
@@ -312,24 +337,43 @@ public class CanvasController {
             // 3. Send file path to AI via RPC
             CompletableFuture.runAsync(() -> {
                 try {
-                    byte[] response = rpc.call("canvas:describe", tempFile.getAbsolutePath().getBytes(StandardCharsets.UTF_8)).get();
-                    String description = new String(response, StandardCharsets.UTF_8);
+                    byte[] data = DataSerializer.serialize(tempFile.getAbsolutePath());
+                    byte[] response = rpc.call("canvas:describe", data).get();
+                    
+                    // Deserialize result
+                    // We create a temporary final variable to safely pass to Platform.runLater
+                    final String finalDescription = DataSerializer.deserialize(response, String.class);
 
                     // 4. Update UI with response
                     Platform.runLater(() -> {
-                        aiDescriptionArea.setText(description);
-                        // Optional: delete temp file if needed, though temp files are usually cleaned up by OS later
-                        tempFile.deleteOnExit(); 
+                        if (aiDescriptionArea != null) {
+                            aiDescriptionArea.setText(finalDescription);
+                        } else {
+                            // Fallback if sidebar is missing
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("AI Analysis");
+                            alert.setHeaderText("Description:");
+                            alert.setContentText(finalDescription);
+                            alert.show();
+                        }
+                        // Cleanup
+                        tempFile.delete(); 
                     });
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Platform.runLater(() -> aiDescriptionArea.setText("Error analyzing image: " + e.getMessage()));
+                    Platform.runLater(() -> {
+                        if (aiDescriptionArea != null) {
+                            aiDescriptionArea.setText("Error analyzing image: " + e.getMessage());
+                        }
+                    });
                 }
             });
 
         } catch (IOException e) {
             e.printStackTrace();
-            aiDescriptionArea.setText("Failed to capture canvas: " + e.getMessage());
+            if (aiDescriptionArea != null) {
+                aiDescriptionArea.setText("Failed to capture canvas: " + e.getMessage());
+            }
         }
     }
 

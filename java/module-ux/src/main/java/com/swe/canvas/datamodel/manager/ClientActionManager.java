@@ -22,10 +22,11 @@ import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
 
 import java.util.Map;
-import java.nio.charset.StandardCharsets;
+// StandardCharsets not required after switching to DataSerializer
 
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.RPC;
+import com.swe.controller.serialize.DataSerializer;
 
 /**
  * The ActionManager implementation for the Client role.
@@ -138,8 +139,8 @@ public class ClientActionManager implements ActionManager {
      */
     private void sendActionToHost(final Action action, final MessageType type) {
         try {
-            final String serializedAction = NetActionSerializer.serializeAction(action);
-            final NetworkMessage message = new NetworkMessage(type, serializedAction.getBytes());
+            final byte[] serializedAction = DataSerializer.serialize(action);
+            final NetworkMessage message = new NetworkMessage(type, serializedAction);
             networkService.sendMessageToHost(message);
         } catch (Exception e) {
             System.err.println("Client failed to send message: " + e.getMessage());
@@ -218,7 +219,14 @@ public class ClientActionManager implements ActionManager {
     @Override
     public byte[] handleUpdate(final byte[] data) {
         // Placeholder for handling updates via RPC if needed
-        String dataString = new String(data, StandardCharsets.UTF_8);
+        String dataString = "";
+        try {
+            dataString = DataSerializer.deserialize(data, String.class);
+        } catch (Exception e) {
+            System.err.println("Client failed to deserialize data: " + e.getMessage());
+            return data;
+        }
+
         NetworkMessage msg = NetworkMessage.deserialize(dataString);
         
         processIncomingMessage(msg);
@@ -245,8 +253,13 @@ public class ClientActionManager implements ActionManager {
 
         // 2. Handle Normal Actions
         try {
-            // final String sa = new SerializedAction(message.getSerializedAction());
-            String json = new String(message.getSerializedAction(), StandardCharsets.UTF_8);
+            String json = "";
+            try {
+                json = DataSerializer.deserialize(message.getSerializedAction(), String.class);
+            } catch (Exception e) {
+                System.err.println("Client failed to deserialize action data: " + e.getMessage());
+                return;
+            }
 
             final Action action = NetActionSerializer.deserializeAction(json);
 

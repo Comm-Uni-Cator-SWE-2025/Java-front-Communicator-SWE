@@ -13,7 +13,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.nio.charset.StandardCharsets;
 
-
+import com.google.api.client.json.Json;
+import com.google.api.client.util.Data;
 import com.swe.canvas.datamodel.action.Action;
 import com.swe.canvas.datamodel.action.ActionFactory;
 import com.swe.canvas.datamodel.action.ActionType;
@@ -30,6 +31,7 @@ import com.swe.canvas.datamodel.shape.ShapeId;
 
 import com.swe.controller.RPC;
 import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.controller.serialize.DataSerializer;
 
 /**
  * The ActionManager implementation for the Host role.
@@ -158,7 +160,9 @@ public class HostActionManager implements ActionManager {
         try {
             final Action action = actionFactory.createCreateAction(newShape, userId);
             final String sa = NetActionSerializer.serializeAction(action);
-            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getBytes()));
+            byte[] data = DataSerializer.serialize(sa);
+            
+            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, data));
         } catch (Exception e) {
             System.err.println("Host failed to create shape: " + e.getMessage());
         }
@@ -170,7 +174,9 @@ public class HostActionManager implements ActionManager {
             final Action action = actionFactory.createModifyAction(
                     canvasState, prevState.getShapeId(), modifiedShape, userId);
             final String sa = NetActionSerializer.serializeAction(action);
-            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getBytes()));
+            byte[] data = DataSerializer.serialize(sa);
+
+            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, data));
         } catch (Exception e) {
             System.err.println("Host failed to modify shape: " + e.getMessage());
         }
@@ -182,7 +188,9 @@ public class HostActionManager implements ActionManager {
             final Action action = actionFactory.createDeleteAction(
                     canvasState, shapeToDelete.getShapeId(), userId);
             final String sa = NetActionSerializer.serializeAction(action);
-            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, sa.getBytes()));
+            byte[] data = DataSerializer.serialize(sa);
+
+            processIncomingMessage(new NetworkMessage(MessageType.NORMAL, data));
         } catch (Exception e) {
             System.err.println("Host failed to delete shape: " + e.getMessage());
         }
@@ -195,11 +203,14 @@ public class HostActionManager implements ActionManager {
             if (actionToUndo != null) {
                 final Action inverse = actionFactory.createInverseAction(actionToUndo, userId);
                 final String sa = NetActionSerializer.serializeAction(inverse);
-                processIncomingMessage(new NetworkMessage(MessageType.UNDO, sa.getBytes()));
+                byte[] data = DataSerializer.serialize(sa);
+
+                processIncomingMessage(new NetworkMessage(MessageType.UNDO, data));
             }
         } catch (Exception e) {
             System.err.println("Host failed to process undo: " + e.getMessage());
         }
+        
     }
 
     @Override
@@ -208,7 +219,9 @@ public class HostActionManager implements ActionManager {
             final Action actionToRedo = undoRedoManager.getActionToRedo();
             if (actionToRedo != null) {
                 final String sa = NetActionSerializer.serializeAction(actionToRedo);
-                processIncomingMessage(new NetworkMessage(MessageType.REDO, sa.getBytes()));
+                byte[] data = DataSerializer.serialize(sa);
+
+                processIncomingMessage(new NetworkMessage(MessageType.REDO, data));
             }
         } catch (Exception e) {
             System.err.println("Host failed to process redo: " + e.getMessage());
@@ -243,7 +256,14 @@ public class HostActionManager implements ActionManager {
     @Override
     public byte[] handleUpdate(final byte[] data) {
         // Placeholder for handling updates via RPC if needed
-        String dataString = new String(data, StandardCharsets.UTF_8);
+        String dataString = "";
+        try {
+            dataString = DataSerializer.deserialize(data, String.class);
+        } catch (Exception e) {
+            System.err.println("Host failed to deserialize data: " + e.getMessage());
+            return data;
+        }
+
         NetworkMessage msg = NetworkMessage.deserialize(dataString);
         
         processIncomingMessage(msg);
@@ -259,7 +279,13 @@ public class HostActionManager implements ActionManager {
         }
 
         try {
-            String json = new String(message.getSerializedAction(), StandardCharsets.UTF_8);
+            String json = "";
+            try {
+                json = DataSerializer.deserialize(message.getSerializedAction(), String.class);
+            } catch (Exception e) {
+                System.err.println("Host failed to deserialize action data: " + e.getMessage());
+                return;
+            }
 
             final Action action = NetActionSerializer.deserializeAction(json);
 

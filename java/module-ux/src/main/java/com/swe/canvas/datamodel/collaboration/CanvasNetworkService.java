@@ -13,8 +13,10 @@ package com.swe.canvas.datamodel.collaboration;
 
 import java.nio.charset.StandardCharsets;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.swe.controller.RPC;
 import com.swe.controller.RPCinterface.AbstractRPC;
+import com.swe.controller.serialize.DataSerializer;
 import com.swe.networking.ClientNode;
 import com.swe.networking.NetworkFront;
 
@@ -47,14 +49,21 @@ public class CanvasNetworkService implements NetworkService {
     }
 
     ClientNode deserializeClientNodee(byte[] data) {
-        String dataStr = new String(data);
-        String[] parts = dataStr.split(":");
-        if (parts.length != 2) {
-            throw new IllegalArgumentException("Invalid ClientNode data: " + dataStr);
+        // String dataStr = new String(data);
+
+        try {
+            String dataStr = DataSerializer.deserialize(data, String.class);
+            String[] parts = dataStr.split(":");
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("Invalid ClientNode data: " + dataStr);
+            }
+            String ip = parts[0];
+            int port = Integer.parseInt(parts[1]);
+            return new ClientNode(ip, port);    
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
-        String ip = parts[0];
-        int port = Integer.parseInt(parts[1]);
-        return new ClientNode(ip, port);
+        
     }
 
 
@@ -64,8 +73,18 @@ public class CanvasNetworkService implements NetworkService {
         System.out.println("[CanvasNetworkService] sendMessageToHost called. Type="
                 + message.getMessageType() + ", bytes=" + serializedMessage.length());
 
+        byte[] data = null;
+        try {
+            data = DataSerializer.serialize(serializedMessage);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        
+
+
         if (this.rpc != null) {
-            this.rpc.call("canvas:sendToHost", serializedMessage.getBytes(StandardCharsets.UTF_8))
+
+            this.rpc.call("canvas:sendToHost", data)
                     .whenComplete((resp, err) -> {
                         if (err != null) {
                             System.err.println("[CanvasNetworkService] sendMessageToHost failed: " + err.getMessage());
@@ -81,11 +100,19 @@ public class CanvasNetworkService implements NetworkService {
     @Override
     public void broadcastMessage(NetworkMessage message) {
         final String serializedMessage = message.serialize();
+
+        byte[] data = null;
+        try {
+            data = DataSerializer.serialize(serializedMessage);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
         System.out.println("[CanvasNetworkService] broadcastMessage called. Type="
                 + message.getMessageType() + ", bytes=" + serializedMessage.length());
 
         if (this.rpc != null) {
-            this.rpc.call("canvas:broadcast", serializedMessage.getBytes())
+            this.rpc.call("canvas:broadcast", data)
                     .whenComplete((resp, err) -> {
                         if (err != null) {
                             System.err.println("[CanvasNetworkService] broadcastMessage failed: " + err.getMessage());
