@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 
 
 import com.swe.ux.views.LoginPage;
@@ -32,7 +33,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
@@ -631,8 +631,31 @@ public class App extends JFrame {
 
         // Clear view history
         viewHistory.clear();
+        clearStoredCredentialCache();
 
         // Navigate to login view - this will trigger reset on LoginPage
         showView(LOGIN_VIEW);
+    }
+
+    /**
+     * Clears any persisted OAuth tokens so the next login starts fresh.
+     */
+    private void clearStoredCredentialCache() {
+        final Path tokensDir = Paths.get("tokens");
+        if (!Files.exists(tokensDir)) {
+            return;
+        }
+        try (var paths = Files.walk(tokensDir)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException e) {
+                    System.err.println("Failed to delete credential file: " + path + " -> " + e.getMessage());
+                }
+            });
+            System.out.println("Cleared stored credential cache.");
+        } catch (IOException e) {
+            System.err.println("Error clearing stored credentials: " + e.getMessage());
+        }
     }
 }
