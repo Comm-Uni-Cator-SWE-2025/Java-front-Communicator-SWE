@@ -10,38 +10,57 @@
 
 package com.swe.ux.canvas;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import javax.imageio.ImageIO; // ADDED: Required for clipping
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.manager.ActionManager;
-// Need to import HostActionManager to check type (or add an isHost() method to interface)
 import com.swe.canvas.datamodel.manager.HostActionManager;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.ux.analytics.CanvasShapeMetricsCollector;
+import com.swe.canvas.datamodel.serialization.ShapeSerializer;
+import com.swe.controller.RPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.canvas.util.ColorConverter;
 import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.ux.viewmodels.CanvasViewModel;
 import com.swe.ux.viewmodels.ToolType;
 
+import datastructures.Entity;
+import functionlibrary.CloudFunctionLibrary;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
-
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -80,11 +99,15 @@ public class CanvasController {
     @FXML private Canvas canvas;
     @FXML private StackPane canvasContainer;
     @FXML private StackPane canvasHolder;
+    @FXML private Button describeBtn; // Added new button reference
 
     private CanvasViewModel viewModel;
     private ActionManager actionManager;
     private CanvasRenderer renderer;
     private boolean isUpdatingUI = false;
+
+    private AbstractRPC rpc; // Added RPC reference
+    private CloudFunctionLibrary cloudLib; // Cloud Library
 
     // --- Pan and Zoom State ---
     private Translate canvasTranslate;
@@ -96,8 +119,15 @@ public class CanvasController {
     private static final double MAX_ZOOM = 5.0;
     private static final double MIN_ZOOM = 0.5;
 
-    public void initModel(ActionManager manager) {
+    public void initModel(ActionManager manager, AbstractRPC rpcInstance) {
         this.actionManager = manager;
+        this.rpc = rpcInstance; // Store RPC
+
+        if (this.rpc == null) {
+            this.rpc = RPC.getInstance(); // Fallback to default core RPC if null
+        }
+
+        this.cloudLib = new CloudFunctionLibrary();
         this.viewModel = new CanvasViewModel("user-" + System.nanoTime() % 10000, manager);
 
         initializeControls();
@@ -125,10 +155,24 @@ public class CanvasController {
     private void initializeControls() {
         renderer = new CanvasRenderer(canvas);
 
+        canvas.widthProperty().bind(canvasHolder.widthProperty());
+        canvas.heightProperty().bind(canvasHolder.heightProperty());
+        
+        // Redraw when size changes
+        canvas.widthProperty().addListener(o -> redraw());
+        canvas.heightProperty().addListener(o -> redraw());
+
         // --- Setup Transforms for Pan and Zoom ---
         canvasTranslate = new Translate();
         canvasScale = new Scale();
         canvasHolder.getTransforms().addAll(canvasTranslate, canvasScale);
+
+        // --- FIX: CLIP THE CANVAS CONTAINER ---
+        // This ensures that when zoomed in, the canvas does not bleed over the toolbar
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(canvasContainer.widthProperty());
+        clip.heightProperty().bind(canvasContainer.heightProperty());
+        canvasContainer.setClip(clip);
 
         // --- Initialize Controls ---
         sizeSlider.setValue(viewModel.activeStrokeWidth.get());
@@ -191,6 +235,219 @@ public class CanvasController {
         redraw();
         publishShapeMetrics();
     }
+
+    @FXML 
+    private void onRegularize() { 
+        if (viewModel.selectedShapeId.get() == null || rpc == null) return;
+
+        System.out.println("Regularizing selected shape...");
+        
+        // 1. Get the current shape state
+        ShapeState state = viewModel.getCanvasState().getShapeState(viewModel.selectedShapeId.get());
+        if (state == null || state.isDeleted()) return;
+
+        // 2. Serialize the shape
+        String shapeJson = ShapeSerializer.serializeShape(state);
+        
+        // 3. Call Core RPC
+        CompletableFuture.runAsync(() -> {
+            try {
+                // "core/regularizeShape" is the custom RPC you made in core
+                byte[] response = rpc.call("canvas:regularize", shapeJson.getBytes(StandardCharsets.UTF_8)).get();
+                
+                if (response != null && response.length > 0) {
+                    String updatedShapeJson = new String(response, StandardCharsets.UTF_8);
+                    
+                    // 4. Deserialize and update Canvas
+                    ShapeState validatedState = ShapeSerializer.deserializeShape(updatedShapeJson);
+                    if (validatedState != null && validatedState.getShape() != null) {
+                        Platform.runLater(() -> {
+                            // Update via ActionManager to ensure consistency
+                            actionManager.requestModify(state, validatedState.getShape());
+                            System.out.println("Shape regularized successfully.");
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("AI Regularization failed: " + e.getMessage());
+            }
+        });
+    }
+
+    // --- NEW FXML FIELDS FOR AI SIDEBAR ---
+    @FXML private VBox aiSidebar;
+    @FXML private TextArea aiDescriptionArea;
+
+    @FXML
+    private void onDescribe() {
+        if (rpc == null) {
+            new Alert(Alert.AlertType.ERROR, "RPC not initialized.").show();
+            return;
+        }
+
+        // 1. Show "Processing" state in sidebar
+        aiSidebar.setVisible(true);
+        aiSidebar.setManaged(true);
+        aiDescriptionArea.setText("Analyzing canvas... please wait.");
+
+        try {
+            // 2. Automatically Snapshot the Canvas to a Temp File
+            File tempFile = File.createTempFile("canvas_snapshot_", ".png");
+            // NOTE: WritableImage dimensions must be integers.
+            int width = (int) canvas.getWidth();
+            int height = (int) canvas.getHeight();
+            
+            // Ensure valid dimensions
+            if (width <= 0) width = 800;
+            if (height <= 0) height = 600;
+
+            WritableImage writableImage = new WritableImage(width, height);
+            canvas.snapshot(null, writableImage);
+            
+            BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
+            ImageIO.write(bufferedImage, "png", tempFile);
+            
+            System.out.println("Canvas snapshot saved to: " + tempFile.getAbsolutePath());
+
+            // 3. Send file path to AI via RPC
+            CompletableFuture.runAsync(() -> {
+                try {
+                    byte[] response = rpc.call("canvas:describe", tempFile.getAbsolutePath().getBytes(StandardCharsets.UTF_8)).get();
+                    String description = new String(response, StandardCharsets.UTF_8);
+
+                    // 4. Update UI with response
+                    Platform.runLater(() -> {
+                        aiDescriptionArea.setText(description);
+                        // Optional: delete temp file if needed, though temp files are usually cleaned up by OS later
+                        tempFile.deleteOnExit(); 
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> aiDescriptionArea.setText("Error analyzing image: " + e.getMessage()));
+                }
+            });
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            aiDescriptionArea.setText("Failed to capture canvas: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onCloseAiSidebar() {
+        aiSidebar.setVisible(false);
+        aiSidebar.setManaged(false);
+        aiDescriptionArea.clear();
+    }
+
+    @FXML
+    private void onSave() {
+        if (actionManager == null) return;
+
+        // Choice dialog: Cloud or Local
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Cloud", "Cloud", "Local File");
+        dialog.setTitle("Save Canvas");
+        dialog.setHeaderText("Where do you want to save the canvas state?");
+        dialog.setContentText("Storage Type:");
+
+        dialog.showAndWait().ifPresent(result -> {
+            try {
+                String jsonState = actionManager.saveMap();
+
+                if ("Local File".equals(result)) {
+                    // ... Existing Local Save Logic ...
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setInitialFileName("canvas.json");
+                    File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
+                    if (file != null) java.nio.file.Files.writeString(file.toPath(), jsonState);
+                } else {
+                    // --- CLOUD SAVE ---
+                    String boardId = UUID.randomUUID().toString();
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode dataNode = mapper.readTree(jsonState);
+                    
+                    // Create Entity for Cloud module
+                    Entity req = new Entity("Canvas", "Snapshots", boardId, null, -1, null, dataNode);
+                    
+                    // Call cloud library
+                    cloudLib.cloudPost(req).thenAccept(res -> {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Saved to Cloud! ID: " + boardId);
+                            alert.show();
+                        });
+                    }).exceptionally(ex -> {
+                        ex.printStackTrace();
+                        return null;
+                    });
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
+    @FXML
+    private void onRestore() {
+        if (actionManager == null) return;
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Cloud", "Cloud", "Local File");
+        dialog.setTitle("Restore Canvas");
+        dialog.setHeaderText("Source?");
+        dialog.showAndWait().ifPresent(result -> {
+            try {
+                if ("Local File".equals(result)) {
+                    // ... Existing Local Restore Logic ...
+                    FileChooser fileChooser = new FileChooser();
+                    File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
+                    if (file != null) {
+                        String json = java.nio.file.Files.readString(file.toPath());
+                        actionManager.restoreMap(json);
+                    }
+                } else {
+                    // --- CLOUD RESTORE ---
+                    
+                    
+                    // Create Request Entity
+                    Entity req = new Entity("Canvas", "Snapshots", "", null, 1, null, null);
+
+                    cloudLib.cloudGet(req).thenAccept(res -> {
+                        if (res.data() != null) {
+                            String jsonState = null;
+                            
+                            // 1. Check if the response is an Array (since you requested with empty ID)
+                            if (res.data().isArray() && !res.data().isEmpty()) {
+                                // Get the first snapshot (latest one) and extract its "data" field
+                                jsonState = res.data().get(0).get("data").toString();
+                            } 
+                            // 2. Fallback: Check if it's a single Object (in case backend behavior changes)
+                            else if (res.data().isObject() && res.data().has("data")) {
+                                jsonState = res.data().get("data").toString();
+                            }
+
+                            // 3. Restore only if we successfully extracted the state
+                            if (jsonState != null) {
+                                final String stateToRestore = jsonState;
+                                Platform.runLater(() -> {
+                                    try {
+                                        actionManager.restoreMap(stateToRestore);
+                                        System.out.println("Restored from cloud.");
+                                    } catch (Exception e) {
+                                        System.err.println("Failed to restore map: " + e.getMessage());
+                                        e.printStackTrace();
+                                    }
+                                });
+                            } else {
+                                System.out.println("No snapshots found to restore.");
+                            }
+                        }
+                    });
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
 
     private void redraw() {
         Platform.runLater(() -> {
@@ -342,7 +599,6 @@ public class CanvasController {
     @FXML private void onDelete() { viewModel.deleteSelectedShape(); }
     @FXML private void onUndo() { viewModel.undo(); }
     @FXML private void onRedo() { viewModel.redo(); }
-    @FXML private void onRegularize() { System.out.println("Regularize button clicked (no logic assigned)."); }
 
     private void onKeyPressed(KeyEvent event) {
         if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
