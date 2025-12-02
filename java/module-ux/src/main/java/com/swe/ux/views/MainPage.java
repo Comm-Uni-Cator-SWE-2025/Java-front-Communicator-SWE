@@ -202,6 +202,7 @@ public class MainPage extends FrostedBackgroundPanel {
      */
     public MainPage(final MainViewModel mainViewModel) {
         this.viewModel = mainViewModel;
+        
         this.dashboardViewModel = new DashboardViewModel();
         initializeUI();
         uiCreated = true;

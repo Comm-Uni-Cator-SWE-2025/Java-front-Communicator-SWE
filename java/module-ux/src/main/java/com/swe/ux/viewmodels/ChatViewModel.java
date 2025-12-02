@@ -175,6 +175,9 @@ public class ChatViewModel {
                 System.err.println("[FRONT] Invalid file metadata");
                 return new byte[0];
             }
+            System.out.println("[FRONT][Chat] Metadata for file id=" + message.getMessageId()
+                    + " name=" + message.getFileName()
+                    + " caption=" + message.getCaption());
 
             // Extract compressed size for UI display
             final long compressedSize;
@@ -183,6 +186,8 @@ public class ChatViewModel {
             } else {
                 compressedSize = 0;
             }
+            System.out.println("[FRONT][Chat]   reported compressed bytes=" + compressedSize
+                    + " pathMode=" + (message.getFilePath() != null));
 
             // Convert UTC to Local Time
             final String localTime = formatToLocalTime(message.getTimestamp());
@@ -350,6 +355,10 @@ public class ChatViewModel {
         }
 
         final String messageId = UUID.randomUUID().toString();
+        System.out.println("[FRONT][Chat] Sending file message id=" + messageId
+                + " name=" + file.getName()
+                + " size=" + file.length()
+                + " caption=" + caption);
 
         // Create PATH-MODE FileMessage
         final FileMessage messageToSend = new FileMessage(
@@ -363,6 +372,7 @@ public class ChatViewModel {
         );
 
         final byte[] messageBytes = FileMessageSerializer.serialize(messageToSend);
+        System.out.println("[FRONT][Chat] Serialized file metadata payload bytes=" + messageBytes.length);
         sendRpc("chat:send-file", messageBytes);
 
         // Optimistic UI update
@@ -377,6 +387,7 @@ public class ChatViewModel {
                 file.length(),  // Show original size
                 null            // NO file content
         );
+        System.out.println("[FRONT][Chat] Optimistic UI update added file bubble for id=" + messageId);
     }
 
 
@@ -489,6 +500,9 @@ public class ChatViewModel {
         );
 
         messageHistory.put(vm.getMessageId(), vm);
+        System.out.println("[FRONT][Chat] Stored message id=" + vm.getMessageId()
+                + " type=" + (vm.isFileMessage() ? "FILE" : "TEXT")
+                + " sender=" + vm.getUsername());
         if (onMessageAdded != null) {
             onMessageAdded.accept(vm);
         }
@@ -522,6 +536,8 @@ public class ChatViewModel {
         if (onAttachmentSet != null) {
             onAttachmentSet.accept("Attached: " + selectedFile.getName());
         }
+        System.out.println("[FRONT][Chat] Queued attachment: " + selectedFile.getAbsolutePath()
+                + " (" + selectedFile.length() + " bytes)");
     }
 
     /**
@@ -583,6 +599,8 @@ public class ChatViewModel {
      * @param dataParam The data
      */
     private void sendRpc(final String endpointParam, final byte[] dataParam) {
+        System.out.println("[FRONT][Chat] RPC -> " + endpointParam
+                + " payloadBytes=" + (dataParam != null ? dataParam.length : 0));
         CompletableFuture.runAsync(() -> {
             try {
                 this.rpc.call(endpointParam, dataParam)

@@ -115,8 +115,12 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
+echo "dist/" >> .gitignore
+echo "*.dmg" >> .gitignore
+echo "target/" >> .gitignore
+git add .gitignore
+git commit -m "Ignore build artifacts"
 
-# Chutzpah Test files
 _Chutzpah*
 
 # Visual C++ cache files

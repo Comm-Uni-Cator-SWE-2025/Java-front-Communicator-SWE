@@ -96,6 +96,7 @@ public class ScreenVideoTelemetryView extends VBox {
         setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
         buildLayout();
+        
         bindToViewModel();
         refresh();
     }
