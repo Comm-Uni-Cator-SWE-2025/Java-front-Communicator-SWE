@@ -22,64 +22,27 @@ import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
 
 import java.util.Map;
-// StandardCharsets not required after switching to DataSerializer
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.RPC;
+import com.swe.controller.ClientNode;
 import com.swe.controller.serialize.DataSerializer;
 
 /**
  * The ActionManager implementation for the Client role.
- *
- * <p>
- * Clients send their local requests to the Host for validation and
- * apply updates only when they receive the broadcasted confirmation.
- * </p>
  */
 public class ClientActionManager implements ActionManager {
 
-    /**
-     * The unique identifier of the client user.
-     */
     private final String userId;
-
-    /**
-     * The local state of the canvas.
-     */
     private final CanvasState canvasState;
-
-    /**
-     * Factory for creating action objects.
-     */
     private final ActionFactory actionFactory;
-
-    /**
-     * Manager for the undo/redo history stack.
-     */
     private final UndoRedoManager undoRedoManager;
-
-    /**
-     * Service for network communication.
-     */
     private final NetworkService networkService;
-
-    
-
-    /**
-     * Callback to run when the state updates.
-     */
-    private Runnable onUpdateCallback = () -> {
-    };
-
+    private Runnable onUpdateCallback = () -> {};
     private final AbstractRPC rpc;
 
-    /**
-     * Constructs a new ClientActionManager.
-     *
-     * @param clientId   The unique ID of the client user.
-     * @param state      The local canvas state.
-     * @param netService The network service for communicating with the host.
-     */
     public ClientActionManager(final String clientId,
             final CanvasState state,
             final NetworkService netService) {
@@ -104,25 +67,57 @@ public class ClientActionManager implements ActionManager {
         this.rpc.subscribe("canvas:update", this::handleUpdate);
     }
 
+    /**
+     * Initializes the client by requesting identity and then syncing history.
+     * 1. Call "canvas:whoami" to get ClientNode.
+     * 2. Send REQUEST_SHAPES with ClientNode payload to Host.
+     */
     @Override
-    public ActionFactory getActionFactory() {
-        return actionFactory;
+    public void initialize() {
+        System.out.println("[ClientActionManager] Initializing... requesting whoami.");
+        
+        CompletableFuture.runAsync(() -> {
+            try {
+                // 1. Request identity
+                byte[] whoAmIResponse = rpc.call("canvas:whoami", new byte[0]).get();
+                if (whoAmIResponse == null || whoAmIResponse.length == 0) {
+                     System.err.println("[ClientActionManager] Failed to get identity from canvas:whoami");
+                     return;
+                }
+
+                // 2. Deserialize ClientNode
+                ClientNode myClientNode = DataSerializer.deserialize(whoAmIResponse, ClientNode.class);
+                if (myClientNode == null) {
+                    System.err.println("[ClientActionManager] Deserialized ClientNode is null.");
+                    return;
+                }
+
+                // 3. Prepare Payload (Serialize ClientNode to JSON string)
+                byte[] payloadBytes = DataSerializer.serialize(myClientNode);
+                String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
+
+                // 4. Create Network Message
+                NetworkMessage requestMsg = new NetworkMessage(MessageType.REQUEST_SHAPES, null, payloadJson);
+
+                // 5. Send to Host
+                System.out.println("[ClientActionManager] Sending REQUEST_SHAPES to Host.");
+                networkService.sendMessageToHost(requestMsg);
+
+            } catch (Exception ex) {
+                System.err.println("[ClientActionManager] Initialization failed: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
     }
 
     @Override
-    public CanvasState getCanvasState() {
-        return canvasState;
-    }
+    public ActionFactory getActionFactory() { return actionFactory; }
 
     @Override
-    public UndoRedoManager getUndoRedoManager() {
-        return undoRedoManager;
-    }
+    public CanvasState getCanvasState() { return canvasState; }
 
     @Override
-    public String getUserId() {
-        return userId;
-    }
+    public UndoRedoManager getUndoRedoManager() { return undoRedoManager; }
 
     @Override
     public void setOnUpdate(final Runnable callback) {
@@ -131,16 +126,10 @@ public class ClientActionManager implements ActionManager {
         }
     }
 
-    /**
-     * Serializes and sends an action to the host.
-     *
-     * @param action The action to send.
-     * @param type   The type of message (NORMAL, UNDO, REDO).
-     */
     private void sendActionToHost(final Action action, final MessageType type) {
         try {
-            final byte[] serializedAction = DataSerializer.serialize(action);
-            final NetworkMessage message = new NetworkMessage(type, serializedAction);
+            final String serializedAction = NetActionSerializer.serializeAction(action);
+            final NetworkMessage message = new NetworkMessage(type, serializedAction.getBytes());
             networkService.sendMessageToHost(message);
         } catch (Exception e) {
             System.err.println("Client failed to send message: " + e.getMessage());
@@ -206,40 +195,36 @@ public class ClientActionManager implements ActionManager {
 
     @Override
     public String saveMap() {
-        // Return local view state
         return ShapeSerializer.serializeShapesMap(canvasState.getAllStates());
     }
 
     @Override
     public void restoreMap(final String json) {
-        // Clients typically receive RESTORE via network, but we log if called locally
         System.out.println("[Client] Local restore requested. (No-op in typical flow)");
     }
 
     @Override
     public byte[] handleUpdate(final byte[] data) {
-        // Placeholder for handling updates via RPC if needed
-        String dataString = "";
-        try {
-            dataString = DataSerializer.deserialize(data, String.class);
-        } catch (Exception e) {
-            System.err.println("Client failed to deserialize data: " + e.getMessage());
-            return data;
-        }
-
+        String dataString = new String(data, StandardCharsets.UTF_8);
         NetworkMessage msg = NetworkMessage.deserialize(dataString);
-        
         processIncomingMessage(msg);
-
         return data;
     }
 
     @Override
+    public void handleUserJoined(String userId) {
+        // Client does nothing when other users join.
+    }
+
+    @Override
     public void processIncomingMessage(final NetworkMessage message) {
-        // 1. Handle RESTORE
+        if (message == null) return;
+
+        // 1. Handle RESTORE (Sync from Host)
         if (message.getMessageType() == MessageType.RESTORE) {
             if (message.getPayload() != null) {
                 try {
+                    System.out.println("[Client] Received RESTORE/SYNC from Host.");
                     final Map<ShapeId, ShapeState> newMap = ShapeSerializer.deserializeShapesMap(message.getPayload());
                     canvasState.setAllStates(newMap);
                     undoRedoManager.clear();
@@ -253,20 +238,10 @@ public class ClientActionManager implements ActionManager {
 
         // 2. Handle Normal Actions
         try {
-            String json = "";
-            try {
-                json = DataSerializer.deserialize(message.getSerializedAction(), String.class);
-            } catch (Exception e) {
-                System.err.println("Client failed to deserialize action data: " + e.getMessage());
-                return;
-            }
-
+            String json = new String(message.getSerializedAction(), StandardCharsets.UTF_8);
             final Action action = NetActionSerializer.deserializeAction(json);
 
-            System.out.println("Client received action: " + action);
-            if (action == null) {
-                return;
-            }
+            if (action == null) return;
 
             final boolean isMyAction = action.getNewState()
                     .getShape().getLastUpdatedBy().equals(userId);
@@ -278,8 +253,7 @@ public class ClientActionManager implements ActionManager {
                     case NORMAL -> undoRedoManager.push(action);
                     case UNDO -> undoRedoManager.applyHostUndo();
                     case REDO -> undoRedoManager.applyHostRedo();
-                    default -> {
-                    }
+                    default -> { }
                 }
             }
             onUpdateCallback.run();

@@ -16,11 +16,6 @@ import com.swe.canvas.datamodel.manager.ActionManager;
 
 /**
  * A network stub that simulates the Host-Client connection in memory.
- *
- * <p>This class implements {@link NetworkService} by holding direct references
- * to the Host and Client managers. Calls to send/broadcast directly invoke
- * the `processIncomingMessage` methods on the recipients, simulating instantaneous
- * network transmission.</p>
  */
 public class NetworkSimulator implements NetworkService {
 
@@ -31,20 +26,7 @@ public class NetworkSimulator implements NetworkService {
     private final List<ActionManager> clientManagers = new ArrayList<>();
 
     @Override
-    public void registerHost(final ActionManager host) {
-        this.hostManager = host;
-    }
-
-    @Override
-    public void registerClient(final ActionManager client) {
-        if (client != null) {
-            this.clientManagers.add(client);
-        }
-    }
-
-    @Override
     public void sendMessageToHost(final NetworkMessage message) {
-        // System.out.println("[NETWORK] Client -> Host: " + message.getMessageType());
         if (hostManager != null) {
             hostManager.processIncomingMessage(message);
         }
@@ -52,7 +34,15 @@ public class NetworkSimulator implements NetworkService {
 
     @Override
     public void broadcastMessage(final NetworkMessage message) {
-        // System.out.println("[NETWORK] Host -> ALL Clients: " + message.getMessageType());
+        for (ActionManager client : clientManagers) {
+            client.processIncomingMessage(message);
+        }
+    }
+
+    @Override
+    public void sendToClient(NetworkMessage message, String targetClientId) {
+        // Simple simulation: broadcast to all for now in tests, or ignore.
+        // In a real simulation we'd map IDs to managers.
         for (ActionManager client : clientManagers) {
             client.processIncomingMessage(message);
         }

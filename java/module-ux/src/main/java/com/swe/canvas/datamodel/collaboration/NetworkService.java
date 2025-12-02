@@ -9,7 +9,6 @@
 
 package com.swe.canvas.datamodel.collaboration;
 
-import com.swe.canvas.datamodel.manager.ActionManager;
 
 /**
  * Abstract interface for the network layer.
@@ -37,16 +36,12 @@ public interface NetworkService {
     void broadcastMessage(NetworkMessage message);
 
     /**
-     * Registers the host action manager when using simulated transports.
+     * Sends a message from the Host to a specific Client.
+     * Used for syncing state when a new user joins.
      *
-     * @param hostManager host-side manager
+     * @param message The message to send.
+     * @param targetClientId The ID (email) of the target client.
      */
-    default void registerHost(final ActionManager hostManager) { }
-
-    /**
-     * Registers a client action manager when using simulated transports.
-     *
-     * @param clientManager client-side manager
-     */
-    default void registerClient(final ActionManager clientManager) { }
+    void sendToClient(NetworkMessage message, String targetClientId);
+    
 }
