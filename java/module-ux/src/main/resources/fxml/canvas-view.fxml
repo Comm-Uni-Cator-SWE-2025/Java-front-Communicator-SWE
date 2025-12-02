@@ -15,8 +15,12 @@
 <?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+
 
 <BorderPane prefHeight="600.0" prefWidth="900.0" minHeight="0.0" minWidth="0.0"
             maxHeight="Infinity" maxWidth="Infinity"
@@ -186,5 +190,21 @@
             </StackPane>
         </StackPane>
     </center>
+
+
+    <right>
+        <VBox fx:id="aiSidebar" spacing="10" 
+              style="-fx-background-color: #F8F9FA; -fx-border-color: #DDDDDD; -fx-border-width: 0 0 0 1; -fx-padding: 15;"
+              prefWidth="300" visible="false" managed="false">
+            
+            <Label text="AI Description" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" />
+            
+            <TextArea fx:id="aiDescriptionArea" wrapText="true" editable="false" VBox.vgrow="ALWAYS" 
+                      style="-fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px;"/>
+            
+            <Button text="Close" onAction="#onCloseAiSidebar" maxWidth="Infinity" 
+                    style="-fx-background-color: #E0E0E0; -fx-text-fill: #333; -fx-cursor: hand;"/>
+        </VBox>
+    </right>
 
 </BorderPane>

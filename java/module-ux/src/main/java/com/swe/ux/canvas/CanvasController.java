@@ -25,6 +25,7 @@ import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.manager.ActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
+import com.swe.controller.RPC;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.canvas.util.ColorConverter;
 import com.swe.ux.viewmodels.CanvasViewModel;
@@ -43,6 +44,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -51,6 +53,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
@@ -110,6 +113,11 @@ public class CanvasController {
     public void initModel(ActionManager manager, AbstractRPC rpcInstance) {
         this.actionManager = manager;
         this.rpc = rpcInstance; // Store RPC
+
+        if (this.rpc == null) {
+            this.rpc = RPC.getInstance(); // Fallback to default core RPC if null
+        }
+
         this.cloudLib = new CloudFunctionLibrary();
         this.viewModel = new CanvasViewModel("user-" + System.nanoTime() % 10000, manager);
 
@@ -234,7 +242,7 @@ public class CanvasController {
         CompletableFuture.runAsync(() -> {
             try {
                 // "core/regularizeShape" is the custom RPC you made in core
-                byte[] response = rpc.call("core/regularizeShape", shapeJson.getBytes(StandardCharsets.UTF_8)).get();
+                byte[] response = rpc.call("canvas:regularize", shapeJson.getBytes(StandardCharsets.UTF_8)).get();
                 
                 if (response != null && response.length > 0) {
                     String updatedShapeJson = new String(response, StandardCharsets.UTF_8);
@@ -255,40 +263,70 @@ public class CanvasController {
         });
     }
 
+    // --- NEW FXML FIELDS FOR AI SIDEBAR ---
+    @FXML private VBox aiSidebar;
+    @FXML private TextArea aiDescriptionArea;
+
     @FXML
     private void onDescribe() {
-        if (rpc == null) return;
+        if (rpc == null) {
+            new Alert(Alert.AlertType.ERROR, "RPC not initialized.").show();
+            return;
+        }
 
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select File to Analyze");
-        File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
+        // 1. Show "Processing" state in sidebar
+        aiSidebar.setVisible(true);
+        aiSidebar.setManaged(true);
+        aiDescriptionArea.setText("Analyzing canvas... please wait.");
 
-        if (file != null) {
-            String path = file.getAbsolutePath();
-            System.out.println("Sending file path to AI: " + path);
+        try {
+            // 2. Automatically Snapshot the Canvas to a Temp File
+            File tempFile = File.createTempFile("canvas_snapshot_", ".png");
+            // NOTE: WritableImage dimensions must be integers.
+            int width = (int) canvas.getWidth();
+            int height = (int) canvas.getHeight();
+            
+            // Ensure valid dimensions
+            if (width <= 0) width = 800;
+            if (height <= 0) height = 600;
 
+            WritableImage writableImage = new WritableImage(width, height);
+            canvas.snapshot(null, writableImage);
+            
+            BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
+            ImageIO.write(bufferedImage, "png", tempFile);
+            
+            System.out.println("Canvas snapshot saved to: " + tempFile.getAbsolutePath());
+
+            // 3. Send file path to AI via RPC
             CompletableFuture.runAsync(() -> {
                 try {
-                    // Send path to core RPC
-                    byte[] response = rpc.call("core/describeImage", path.getBytes(StandardCharsets.UTF_8)).get();
+                    byte[] response = rpc.call("canvas:describe", tempFile.getAbsolutePath().getBytes(StandardCharsets.UTF_8)).get();
                     String description = new String(response, StandardCharsets.UTF_8);
 
+                    // 4. Update UI with response
                     Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                        alert.setTitle("AI Analysis Result");
-                        alert.setHeaderText("Description of " + file.getName());
-                        alert.setContentText(description);
-                        alert.showAndWait();
+                        aiDescriptionArea.setText(description);
+                        // Optional: delete temp file if needed, though temp files are usually cleaned up by OS later
+                        tempFile.deleteOnExit(); 
                     });
                 } catch (Exception e) {
-                    Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setContentText("Analysis failed: " + e.getMessage());
-                        alert.show();
-                    });
+                    e.printStackTrace();
+                    Platform.runLater(() -> aiDescriptionArea.setText("Error analyzing image: " + e.getMessage()));
                 }
             });
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            aiDescriptionArea.setText("Failed to capture canvas: " + e.getMessage());
         }
+    }
+
+    @FXML
+    private void onCloseAiSidebar() {
+        aiSidebar.setVisible(false);
+        aiSidebar.setManaged(false);
+        aiDescriptionArea.clear();
     }
 
     @FXML
@@ -554,44 +592,5 @@ public class CanvasController {
     // --- HOST ONLY: SAVE & RESTORE ---
     // =========================================================================
 
-    // @FXML
-    // private void onSave() {
-    //     if (actionManager == null) return;
-
-    //     FileChooser fileChooser = new FileChooser();
-    //     fileChooser.setTitle("Save Canvas State");
-    //     fileChooser.setInitialFileName("canvas-state.json");
-    //     fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json"));
-    //     File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
-
-    //     if (file != null) {
-    //         try {
-    //             String json = actionManager.saveMap();
-    //             Files.writeString(file.toPath(), json);
-    //             System.out.println("State saved to: " + file.getAbsolutePath());
-    //         } catch (Exception ex) {
-    //             System.err.println("Error saving state: " + ex.getMessage());
-    //         }
-    //     }
-    // }
-
-    // @FXML
-    // private void onRestore() {
-    //     if (actionManager == null) return;
-
-    //     FileChooser fileChooser = new FileChooser();
-    //     fileChooser.setTitle("Restore Canvas State");
-    //     fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json"));
-    //     File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
-
-    //     if (file != null) {
-    //         try {
-    //             String json = Files.readString(file.toPath());
-    //             actionManager.restoreMap(json);
-    //             System.out.println("State restored from: " + file.getAbsolutePath());
-    //         } catch (Exception ex) {
-    //             System.err.println("Error restoring state: " + ex.getMessage());
-    //         }
-    //     }
-    // }
+ 
 }
