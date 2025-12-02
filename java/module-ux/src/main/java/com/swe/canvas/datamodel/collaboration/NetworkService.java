@@ -9,15 +9,12 @@
 
 package com.swe.canvas.datamodel.collaboration;
 
-
 /**
  * Abstract interface for the network layer.
  *
- * <p>
- * This interface defines the contract for sending messages between the
+ * <p>This interface defines the contract for sending messages between the
  * Client and the Host. It abstracts the underlying transport mechanism
- * (e.g., sockets, WebSockets, or in-memory simulation).
- * </p>
+ * (e.g., sockets, WebSockets, or in-memory simulation).</p>
  */
 public interface NetworkService {
 
@@ -39,9 +36,9 @@ public interface NetworkService {
      * Sends a message from the Host to a specific Client.
      * Used for syncing state when a new user joins.
      *
-     * @param message The message to send.
+     * @param message        The message to send.
      * @param targetClientId The ID (email) of the target client.
      */
     void sendToClient(NetworkMessage message, String targetClientId);
-    
+
 }

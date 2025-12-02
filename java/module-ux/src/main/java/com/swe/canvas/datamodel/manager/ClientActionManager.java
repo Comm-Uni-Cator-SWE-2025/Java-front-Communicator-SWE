@@ -20,39 +20,66 @@ import com.swe.canvas.datamodel.serialization.NetActionSerializer;
 import com.swe.canvas.datamodel.serialization.ShapeSerializer;
 import com.swe.canvas.datamodel.shape.Shape;
 import com.swe.canvas.datamodel.shape.ShapeId;
-
-import java.util.Map;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
-
-import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.controller.RPC;
 import com.swe.controller.ClientNode;
+import com.swe.controller.RPC;
+import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.controller.serialize.DataSerializer;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The ActionManager implementation for the Client role.
  */
 public class ClientActionManager implements ActionManager {
 
+    /** The ID of the user (client). */
     private final String userId;
+
+    /** The shared canvas state. */
     private final CanvasState canvasState;
+
+    /** Factory for creating actions. */
     private final ActionFactory actionFactory;
+
+    /** Manager for handling undo/redo stacks. */
     private final UndoRedoManager undoRedoManager;
+
+    /** Service for network communication. */
     private final NetworkService networkService;
-    private Runnable onUpdateCallback = () -> {};
+
+    /** Callback to execute on state updates. */
+    private Runnable onUpdateCallback = () -> {
+    };
+
+    /** RPC interface for communication. */
     private final AbstractRPC rpc;
 
+    /**
+     * Constructs a new ClientActionManager with default RPC.
+     *
+     * @param clientId   The unique ID of the client.
+     * @param state      The shared canvas state.
+     * @param netService The network service instance.
+     */
     public ClientActionManager(final String clientId,
-            final CanvasState state,
-            final NetworkService netService) {
+                               final CanvasState state,
+                               final NetworkService netService) {
         this(clientId, state, netService, null);
     }
 
+    /**
+     * Constructs a new ClientActionManager with specific RPC.
+     *
+     * @param clientId   The unique ID of the client.
+     * @param state      The shared canvas state.
+     * @param netService The network service instance.
+     * @param rpcParam   The RPC instance to use.
+     */
     public ClientActionManager(final String clientId,
-            final CanvasState state,
-            final NetworkService netService,
-            final AbstractRPC rpcParam) {
+                               final CanvasState state,
+                               final NetworkService netService,
+                               final AbstractRPC rpcParam) {
         this.userId = clientId;
         this.canvasState = state;
         this.networkService = netService;
@@ -75,35 +102,35 @@ public class ClientActionManager implements ActionManager {
     @Override
     public void initialize() {
         System.out.println("[ClientActionManager] Initializing... requesting whoami.");
-        
+
         CompletableFuture.runAsync(() -> {
             try {
                 // 1. Request identity
-                byte[] whoAmIResponse = rpc.call("canvas:whoami", new byte[0]).get();
+                final byte[] whoAmIResponse = rpc.call("canvas:whoami", new byte[0]).get();
                 if (whoAmIResponse == null || whoAmIResponse.length == 0) {
-                     System.err.println("[ClientActionManager] Failed to get identity from canvas:whoami");
-                     return;
+                    System.err.println("[ClientActionManager] Failed to get identity from canvas:whoami");
+                    return;
                 }
 
                 // 2. Deserialize ClientNode
-                ClientNode myClientNode = DataSerializer.deserialize(whoAmIResponse, ClientNode.class);
+                final ClientNode myClientNode = DataSerializer.deserialize(whoAmIResponse, ClientNode.class);
                 if (myClientNode == null) {
                     System.err.println("[ClientActionManager] Deserialized ClientNode is null.");
                     return;
                 }
 
                 // 3. Prepare Payload (Serialize ClientNode to JSON string)
-                byte[] payloadBytes = DataSerializer.serialize(myClientNode);
-                String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
+                final byte[] payloadBytes = DataSerializer.serialize(myClientNode);
+                final String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
 
                 // 4. Create Network Message
-                NetworkMessage requestMsg = new NetworkMessage(MessageType.REQUEST_SHAPES, null, payloadJson);
+                final NetworkMessage requestMsg = new NetworkMessage(MessageType.REQUEST_SHAPES, null, payloadJson);
 
                 // 5. Send to Host
                 System.out.println("[ClientActionManager] Sending REQUEST_SHAPES to Host.");
                 networkService.sendMessageToHost(requestMsg);
 
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 System.err.println("[ClientActionManager] Initialization failed: " + ex.getMessage());
                 ex.printStackTrace();
             }
@@ -111,13 +138,19 @@ public class ClientActionManager implements ActionManager {
     }
 
     @Override
-    public ActionFactory getActionFactory() { return actionFactory; }
+    public ActionFactory getActionFactory() {
+        return actionFactory;
+    }
 
     @Override
-    public CanvasState getCanvasState() { return canvasState; }
+    public CanvasState getCanvasState() {
+        return canvasState;
+    }
 
     @Override
-    public UndoRedoManager getUndoRedoManager() { return undoRedoManager; }
+    public UndoRedoManager getUndoRedoManager() {
+        return undoRedoManager;
+    }
 
     @Override
     public void setOnUpdate(final Runnable callback) {
@@ -131,7 +164,7 @@ public class ClientActionManager implements ActionManager {
             final String serializedAction = NetActionSerializer.serializeAction(action);
             final NetworkMessage message = new NetworkMessage(type, serializedAction.getBytes());
             networkService.sendMessageToHost(message);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Client failed to send message: " + e.getMessage());
         }
     }
@@ -141,7 +174,7 @@ public class ClientActionManager implements ActionManager {
         try {
             final Action action = actionFactory.createCreateAction(newShape, userId);
             sendActionToHost(action, MessageType.NORMAL);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Client create request failed: " + e.getMessage());
         }
     }
@@ -152,7 +185,7 @@ public class ClientActionManager implements ActionManager {
             final Action action = actionFactory.createModifyAction(
                     canvasState, prevState.getShapeId(), modifiedShape, userId);
             sendActionToHost(action, MessageType.NORMAL);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Client modify request failed: " + e.getMessage());
         }
     }
@@ -163,7 +196,7 @@ public class ClientActionManager implements ActionManager {
             final Action action = actionFactory.createDeleteAction(
                     canvasState, shapeToDelete.getShapeId(), userId);
             sendActionToHost(action, MessageType.NORMAL);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Client delete request failed: " + e.getMessage());
         }
     }
@@ -176,7 +209,7 @@ public class ClientActionManager implements ActionManager {
                 final Action inverse = actionFactory.createInverseAction(action, userId);
                 sendActionToHost(inverse, MessageType.UNDO);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Client undo request failed: " + e.getMessage());
         }
     }
@@ -188,7 +221,7 @@ public class ClientActionManager implements ActionManager {
             if (action != null) {
                 sendActionToHost(action, MessageType.REDO);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Client redo request failed: " + e.getMessage());
         }
     }
@@ -205,43 +238,53 @@ public class ClientActionManager implements ActionManager {
 
     @Override
     public byte[] handleUpdate(final byte[] data) {
-        String dataString = new String(data, StandardCharsets.UTF_8);
-        NetworkMessage msg = NetworkMessage.deserialize(dataString);
+        final String dataString = new String(data, StandardCharsets.UTF_8);
+        final NetworkMessage msg = NetworkMessage.deserialize(dataString);
         processIncomingMessage(msg);
         return data;
     }
 
     @Override
-    public void handleUserJoined(String userId) {
+    public void handleUserJoined(final String joiningUserId) {
         // Client does nothing when other users join.
     }
 
     @Override
     public void processIncomingMessage(final NetworkMessage message) {
-        if (message == null) return;
-
-        // 1. Handle RESTORE (Sync from Host)
-        if (message.getMessageType() == MessageType.RESTORE) {
-            if (message.getPayload() != null) {
-                try {
-                    System.out.println("[Client] Received RESTORE/SYNC from Host.");
-                    final Map<ShapeId, ShapeState> newMap = ShapeSerializer.deserializeShapesMap(message.getPayload());
-                    canvasState.setAllStates(newMap);
-                    undoRedoManager.clear();
-                    onUpdateCallback.run();
-                } catch (Exception e) {
-                    System.err.println("Client restore failed: " + e.getMessage());
-                }
-            }
+        if (message == null) {
             return;
         }
 
-        // 2. Handle Normal Actions
+        if (message.getMessageType() == MessageType.RESTORE) {
+            handleRestoreMessage(message);
+        } else {
+            handleActionMessage(message);
+        }
+    }
+
+    private void handleRestoreMessage(final NetworkMessage message) {
+        if (message.getPayload() != null) {
+            try {
+                System.out.println("[Client] Received RESTORE/SYNC from Host.");
+                final Map<ShapeId, ShapeState> newMap = ShapeSerializer
+                        .deserializeShapesMap(message.getPayload());
+                canvasState.setAllStates(newMap);
+                undoRedoManager.clear();
+                onUpdateCallback.run();
+            } catch (final Exception e) {
+                System.err.println("Client restore failed: " + e.getMessage());
+            }
+        }
+    }
+
+    private void handleActionMessage(final NetworkMessage message) {
         try {
-            String json = new String(message.getSerializedAction(), StandardCharsets.UTF_8);
+            final String json = new String(message.getSerializedAction(), StandardCharsets.UTF_8);
             final Action action = NetActionSerializer.deserializeAction(json);
 
-            if (action == null) return;
+            if (action == null) {
+                return;
+            }
 
             final boolean isMyAction = action.getNewState()
                     .getShape().getLastUpdatedBy().equals(userId);
@@ -249,16 +292,21 @@ public class ClientActionManager implements ActionManager {
             canvasState.applyState(action.getShapeId(), action.getNewState());
 
             if (isMyAction) {
-                switch (message.getMessageType()) {
-                    case NORMAL -> undoRedoManager.push(action);
-                    case UNDO -> undoRedoManager.applyHostUndo();
-                    case REDO -> undoRedoManager.applyHostRedo();
-                    default -> { }
-                }
+                updateUndoRedoStack(message.getMessageType(), action);
             }
             onUpdateCallback.run();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println("Client failed to process message: " + e.getMessage());
+        }
+    }
+
+    private void updateUndoRedoStack(final MessageType type, final Action action) {
+        switch (type) {
+            case NORMAL -> undoRedoManager.push(action);
+            case UNDO -> undoRedoManager.applyHostUndo();
+            case REDO -> undoRedoManager.applyHostRedo();
+            default -> {
+            }
         }
     }
 }

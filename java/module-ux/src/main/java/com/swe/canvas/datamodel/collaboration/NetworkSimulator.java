@@ -9,10 +9,9 @@
 
 package com.swe.canvas.datamodel.collaboration;
 
+import com.swe.canvas.datamodel.manager.ActionManager;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.swe.canvas.datamodel.manager.ActionManager;
 
 /**
  * A network stub that simulates the Host-Client connection in memory.
@@ -34,16 +33,16 @@ public class NetworkSimulator implements NetworkService {
 
     @Override
     public void broadcastMessage(final NetworkMessage message) {
-        for (ActionManager client : clientManagers) {
+        for (final ActionManager client : clientManagers) {
             client.processIncomingMessage(message);
         }
     }
 
     @Override
-    public void sendToClient(NetworkMessage message, String targetClientId) {
+    public void sendToClient(final NetworkMessage message, final String targetClientId) {
         // Simple simulation: broadcast to all for now in tests, or ignore.
         // In a real simulation we'd map IDs to managers.
-        for (ActionManager client : clientManagers) {
+        for (final ActionManager client : clientManagers) {
             client.processIncomingMessage(message);
         }
     }
