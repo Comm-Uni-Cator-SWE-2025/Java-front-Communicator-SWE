@@ -394,6 +394,7 @@ public class MainPage extends FrostedBackgroundPanel {
             welcomeText = "Welcome";
         }
         welcomeLabel.setText(welcomeText);
+        dashboardViewModel.refreshForUser(user);
     }
 
     private void startClock() {
@@ -430,7 +431,6 @@ public class MainPage extends FrostedBackgroundPanel {
         meetingCodeField.setBackground(theme.getInputBackgroundColor());
         meetingCodeField.setForeground(theme.getTextColor());
         meetingCodeField.setCaretColor(theme.getTextColor());
-
         ThemeManager.getInstance().applyThemeRecursively(headerCard);
         ThemeManager.getInstance().applyThemeRecursively(insightsCard);
 

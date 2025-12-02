@@ -6,6 +6,7 @@ import com.swe.canvas.datamodel.manager.ClientActionManager;
 import com.swe.canvas.datamodel.manager.HostActionManager;
 import com.swe.controller.Meeting.ParticipantRole;
 import com.swe.screenNVideo.Utils;
+import com.swe.ux.analytics.NetworkHeartbeatMonitor;
 import com.swe.ux.App;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.theme.ThemeManager;
@@ -123,8 +124,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private static final int CONTROLS_CORNER_RADIUS = 36;
     /** Controls layout gap horizontal. */
     private static final int CONTROLS_GAP_H = 12;
-    /** Controls layout gap vertical. */
-    private static final int CONTROLS_GAP_V = 10;
+    /** Controls layout gap vertical (reduced for slimmer bar). */
+    private static final int CONTROLS_GAP_V = 0;
     /** Leave button red color component. */
     private static final int LEAVE_RED = 229;
     /** Leave button green color component. */
@@ -211,6 +212,8 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
     /** Meeting ID badge. */
     private FrostedBadgeLabel meetingIdBadge;
+    /** Network status badge. */
+    private FrostedBadgeLabel networkStatusBadge;
     /** Live clock label. */
     private JLabel liveClockLabel;
     /** Role label. */
@@ -236,7 +239,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
     public MeetingPage(final MeetingViewModel meetingViewModelParam) {
         this.meetingViewModel = meetingViewModelParam;
         initializeUI();
+        startNetworkStatusWatcher();
         quickDoubtPopup = new QuickDoubtPopup();
+        quickDoubtPopup.setOnSend(this::handleQuickDoubtSent);
         quickDoubtPopup.addPopupMenuListener(new PopupMenuListener() {
             @Override
             public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
@@ -298,6 +303,9 @@ public class MeetingPage extends FrostedBackgroundPanel {
 
         final FrostedBadgeLabel ipBadge = new FrostedBadgeLabel("IP: " + Utils.getSelfIP());
         leftCluster.add(ipBadge);
+
+        networkStatusBadge = new FrostedBadgeLabel("Status: Checking…");
+        leftCluster.add(networkStatusBadge);
 
         roleLabel = new JLabel(buildRoleLabelText());
         roleLabel.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE, Font.PLAIN));
@@ -471,6 +479,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private JPanel createParticipantsPanel() {
         final SoftCardPanel panel = new SoftCardPanel(PANEL_BLUR_RADIUS);
         panel.setLayout(new BorderLayout());
+        panel.setBorder(new EmptyBorder(12, 12, 12, 12));
         final ParticipantsViewModel pvm = new ParticipantsViewModel(meetingViewModel);
         panel.add(new ParticipantsView(pvm), BorderLayout.CENTER);
         return panel;
@@ -479,6 +488,7 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private JPanel createChatPanel() {
         final SoftCardPanel panel = new SoftCardPanel(PANEL_BLUR_RADIUS);
         panel.setLayout(new BorderLayout());
+        panel.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         if (meetingViewModel == null || meetingViewModel.getRpc() == null) {
             final JLabel fallback = new JLabel("<html><center>Chat unavailable<br>(no RPC connection)</center></html>",
@@ -729,27 +739,36 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private SoftCardPanel buildControlsBar() {
         final SoftCardPanel bar = new SoftCardPanel(CONTROLS_BLUR_RADIUS);
         bar.setCornerRadius(CONTROLS_CORNER_RADIUS);
-        bar.setLayout(new FlowLayout(FlowLayout.CENTER, CONTROLS_GAP_H, CONTROLS_GAP_V));
+        // Use BorderLayout so we can tightly control padding + height
+        bar.setLayout(new BorderLayout());
+        // Slim vertical padding for the whole bar
+        bar.setBorder(new EmptyBorder(4, 8, 4, 8));
 
-        btnMute = new MeetingControlButton("Mute", MeetingControlButton.ControlIcon.MIC);
+        // Create buttons
+        btnMute = new MeetingControlButton("Mic", MeetingControlButton.ControlIcon.MIC);
+        btnMute.setShowIcon(false);
         btnMute.setAccentColor(ACCENT_BLUE);
         btnMute.addActionListener(evt -> meetingViewModel.toggleAudio());
 
         btnCamera = new MeetingControlButton("Video", MeetingControlButton.ControlIcon.VIDEO);
+        btnCamera.setShowIcon(false);
         btnCamera.setAccentColor(ACCENT_BLUE);
         btnCamera.addActionListener(evt -> meetingViewModel.toggleVideo());
 
         btnShare = new MeetingControlButton("Share", MeetingControlButton.ControlIcon.SHARE);
+        btnShare.setShowIcon(false);
         btnShare.setAccentColor(ACCENT_BLUE);
         btnShare.addActionListener(evt -> meetingViewModel.toggleScreenSharing());
 
         btnRaiseHand = new MeetingControlButton("Raise", MeetingControlButton.ControlIcon.HAND);
+        btnRaiseHand.setShowIcon(false);
         btnRaiseHand.setAccentColor(ACCENT_BLUE);
         btnRaiseHand.addActionListener(evt -> toggleQuickDoubt());
 
         final boolean isInstructor = isCurrentUserInstructor();
         final String leaveLabel = isInstructor ? "End" : "Leave";
         btnLeave = new MeetingControlButton(leaveLabel, MeetingControlButton.ControlIcon.LEAVE);
+        btnLeave.setShowIcon(false);
         final Color leaveAccent = new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE);
         btnLeave.setActiveColorOverride(new Color(LEAVE_RED, LEAVE_GREEN, LEAVE_BLUE, LEAVE_ALPHA));
         btnLeave.setAccentColor(leaveAccent);
@@ -759,45 +778,38 @@ public class MeetingPage extends FrostedBackgroundPanel {
         });
 
         btnChat = new MeetingControlButton("Chat", MeetingControlButton.ControlIcon.CHAT);
+        btnChat.setShowIcon(false);
         btnChat.setAccentColor(ACCENT_BLUE);
         btnChat.addActionListener(evt -> handleControlTabButton("Chat"));
 
         btnPeople = new MeetingControlButton("People", MeetingControlButton.ControlIcon.PEOPLE);
+        btnPeople.setShowIcon(false);
         btnPeople.setAccentColor(ACCENT_BLUE);
         btnPeople.addActionListener(evt -> handleControlTabButton("Participants"));
 
-        final JPanel controlsContent = new JPanel(new BorderLayout());
+        // Make all controls a bit shorter
+        final Dimension compactButtonSize = new Dimension(76, 34);
+        btnMute.setPreferredSize(compactButtonSize);
+        btnCamera.setPreferredSize(compactButtonSize);
+        btnShare.setPreferredSize(compactButtonSize);
+        btnRaiseHand.setPreferredSize(compactButtonSize);
+        btnLeave.setPreferredSize(compactButtonSize);
+        btnChat.setPreferredSize(compactButtonSize);
+        btnPeople.setPreferredSize(compactButtonSize);
+
+        final JPanel controlsContent = new JPanel(new FlowLayout(FlowLayout.CENTER, CONTROLS_GAP_H, CONTROLS_GAP_V));
         controlsContent.setOpaque(false);
-
-        final JPanel primaryRow = createControlsRow(FlowLayout.LEFT);
-        primaryRow.add(btnMute);
-        primaryRow.add(btnCamera);
-        primaryRow.add(btnShare);
-        primaryRow.add(btnRaiseHand);
-        primaryRow.add(btnLeave);
-
-        final JPanel secondaryRow = createControlsRow(FlowLayout.RIGHT);
-        secondaryRow.add(btnChat);
-        secondaryRow.add(btnPeople);
-
-        final JLabel controlsLabel = new JLabel("Meeting Controls");
-        controlsLabel.setFont(FontUtil.getJetBrainsMono(DEFAULT_FONT_SIZE + 1, Font.BOLD));
-        controlsLabel.setBorder(new EmptyBorder(0, 0, 6, 0));
-
-        controlsContent.add(controlsLabel, BorderLayout.NORTH);
-        controlsContent.add(primaryRow, BorderLayout.CENTER);
-        controlsContent.add(secondaryRow, BorderLayout.EAST);
+        controlsContent.add(btnMute);
+        controlsContent.add(btnCamera);
+        controlsContent.add(btnShare);
+        controlsContent.add(btnRaiseHand);
+        controlsContent.add(btnLeave);
+        controlsContent.add(btnChat);
+        controlsContent.add(btnPeople);
 
         bar.add(controlsContent, BorderLayout.CENTER);
 
         return bar;
-    }
-
-    private JPanel createControlsRow(final int alignment) {
-        final FlowLayout layout = new FlowLayout(alignment, CONTROLS_GAP_H, CONTROLS_GAP_V);
-        final JPanel row = new JPanel(layout);
-        row.setOpaque(false);
-        return row;
     }
 
     // ---------------- Bindings & Theme ----------------
@@ -866,6 +878,23 @@ public class MeetingPage extends FrostedBackgroundPanel {
     private void updateLeaveButtonLabel() {
         if (btnLeave != null) {
             btnLeave.setText(isCurrentUserInstructor() ? "End" : "Leave");
+        }
+    }
+
+    private void startNetworkStatusWatcher() {
+        NetworkHeartbeatMonitor.getInstance().addListener(alive ->
+                SwingUtilities.invokeLater(() -> updateNetworkBadge(alive)));
+    }
+
+    private void updateNetworkBadge(final boolean alive) {
+        if (networkStatusBadge == null) {
+            return;
+        }
+        networkStatusBadge.setText("Status: " + (alive ? "Online" : "Offline"));
+        if (alive) {
+            networkStatusBadge.setForeground(new Color(34, 197, 94));
+        } else {
+            networkStatusBadge.setForeground(new Color(234, 88, 12));
         }
     }
 
@@ -948,6 +977,17 @@ public class MeetingPage extends FrostedBackgroundPanel {
                 btnRaiseHand.setActive(false);
             }
         }
+    }
+
+    private void handleQuickDoubtSent(final String message) {
+        if (meetingViewModel != null) {
+            meetingViewModel.submitQuickDoubt(message);
+        }
+        SwingUtilities.invokeLater(() -> {
+            quickDoubtPopup.setVisible(false);
+            quickDoubtPopup.reset();
+            handleQuickDoubtClosed();
+        });
     }
 
     private void applyTheme() {

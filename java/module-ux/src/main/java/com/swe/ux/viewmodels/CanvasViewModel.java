@@ -304,6 +304,15 @@ public class CanvasViewModel {
     }
 
     /**
+     * Exposes the tracked shape counts for analytics and tests.
+     *
+     * @return current shape count snapshot
+     */
+    public CanvasShapeCount getShapeCount() {
+        return shapeCount;
+    }
+
+    /**
      * FIX: Revised logic to check for conflict resolution correctly. Only
      * clears the ghost if the server state matches the intent.
      */

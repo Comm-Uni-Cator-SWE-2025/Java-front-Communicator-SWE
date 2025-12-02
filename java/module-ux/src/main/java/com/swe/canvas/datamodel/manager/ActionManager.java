@@ -45,6 +45,15 @@ public interface ActionManager {
     UndoRedoManager getUndoRedoManager();
 
     /**
+     * Returns the identifier associated with this action manager's user.
+     *
+     * @return user id string
+     */
+    default String getUserId() {
+        return "";
+    }
+
+    /**
      * Sets a callback to be executed whenever the canvas state changes.
      *
      * @param callback The Runnable to execute on update.
@@ -105,5 +114,7 @@ public interface ActionManager {
     void processIncomingMessage(NetworkMessage message);
 
 
-    byte[] handleUpdate(byte[] data);
+    default byte[] handleUpdate(final byte[] data) {
+        return new byte[0];
+    }
 }

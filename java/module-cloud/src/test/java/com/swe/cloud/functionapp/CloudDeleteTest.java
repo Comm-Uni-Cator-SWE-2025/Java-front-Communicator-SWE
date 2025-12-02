@@ -1,4 +1,4 @@
-package functionapp;
+package com.swe.cloud.functionapp;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,15 +8,12 @@ import static org.mockito.Mockito.when;
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpStatus;
-import datastructures.CloudResponse;
+import com.swe.cloud.datastructures.CloudResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-
-import cosmosoperations.DbConnectorFactory;
-import datastructures.Entity;
-import interfaces.IdbConnector;
+import com.swe.cloud.cosmosoperations.DbConnectorFactory;
+import com.swe.cloud.datastructures.Entity;
+import com.swe.cloud.interfaces.IdbConnector;
 
 import java.util.Optional;
 
@@ -36,16 +33,14 @@ class CloudDeleteTest extends CloudTestBase {
         IdbConnector mockConnector = mock(IdbConnector.class);
         CloudResponse mockCloudResponse = new CloudResponse(200, "success", null);
 
-        try (MockedStatic<DbConnectorFactory> factoryMock = Mockito.mockStatic(DbConnectorFactory.class)) {
-            factoryMock.when(() -> DbConnectorFactory.getDbConnector(any())).thenReturn(mockConnector);
-            when(mockConnector.deleteData(any(Entity.class))).thenReturn(mockCloudResponse);
+        DbConnectorFactory.setDbConnectorForTesting(mockConnector);
+        when(mockConnector.deleteData(any(Entity.class))).thenReturn(mockCloudResponse);
 
-            CloudDelete cloudDelete = new CloudDelete();
-            var response = cloudDelete.runCloudDelete(request, context);
+        CloudDelete cloudDelete = new CloudDelete();
+        var response = cloudDelete.runCloudDelete(request, context);
 
-            assertNotNull(response);
-            assertEquals(HttpStatus.OK, response.getStatus());
-        }
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatus());
     }
 
     @Test

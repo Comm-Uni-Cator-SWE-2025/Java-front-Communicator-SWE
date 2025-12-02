@@ -1,6 +1,6 @@
-package cosmosoperations;
+package com.swe.cloud.cosmosoperations;
 
-import interfaces.IdbConnector;
+import com.swe.cloud.interfaces.IdbConnector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

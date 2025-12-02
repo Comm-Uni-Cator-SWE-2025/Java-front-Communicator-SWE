@@ -9,6 +9,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Consumer;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -90,6 +91,10 @@ public class QuickDoubtPopup extends JPopupMenu {
      * Date time formatter.
      */
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+    /**
+     * Listener invoked whenever the user submits a quick doubt.
+     */
+    private Consumer<String> onSendListener;
 
     /**
      * Creates a new quick doubt popup.
@@ -119,6 +124,14 @@ public class QuickDoubtPopup extends JPopupMenu {
                 reset();
             }
         });
+    }
+
+    /**
+     * Registers a listener that is notified whenever the user submits the form.
+     * @param listener callback receiving the raw quick doubt text
+     */
+    public void setOnSend(final Consumer<String> listener) {
+        this.onSendListener = listener;
     }
 
     private void buildInputCard() {
@@ -156,10 +169,14 @@ public class QuickDoubtPopup extends JPopupMenu {
     }
 
     private void handleSend() {
-        if (inputArea.getText().trim().isEmpty()) {
+        final String rawText = inputArea.getText().trim();
+        if (rawText.isEmpty()) {
             return;
         }
-        summaryLabel.setText("<html><b>Sent:</b> " + sanitize(inputArea.getText().trim()) + "</html>");
+        if (onSendListener != null) {
+            onSendListener.accept(rawText);
+        }
+        summaryLabel.setText("<html><b>Sent:</b> " + sanitize(rawText) + "</html>");
         timestampLabel.setText("at " + formatter.format(LocalDateTime.now()));
         cardLayout.show(cardPanel, CARD_SUMMARY);
     }

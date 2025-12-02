@@ -7,9 +7,9 @@
  *               database connector used for cloud database operations.
  *****************************************************************************/
 
-package cosmosoperations;
+package com.swe.cloud.cosmosoperations;
 
-import interfaces.IdbConnector;
+import com.swe.cloud.interfaces.IdbConnector;
 import java.util.Objects;
 
 /**
@@ -48,5 +48,14 @@ public class DbConnectorFactory {
      */
     public static void resetInstance() {
         dbConnector = null;
+    }
+
+    /**
+     * Overrides the connector instance. Intended for tests to inject mocks.
+     *
+     * @param connector mocked or preconfigured connector
+     */
+    public static void setDbConnectorForTesting(final IdbConnector connector) {
+        dbConnector = connector;
     }
 }

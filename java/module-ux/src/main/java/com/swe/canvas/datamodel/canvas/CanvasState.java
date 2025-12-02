@@ -114,6 +114,15 @@ public class CanvasState {
                 .collect(Collectors.toUnmodifiableList());
     }
 
+    /**
+     * Returns an unmodifiable view of all tracked shape states.
+     *
+     * @return collection of shape states
+     */
+    public Collection<ShapeState> getShapeStates() {
+        return Collections.unmodifiableCollection(state.values());
+    }
+
     // --- NEW METHODS FOR SAVE/RESTORE ---
 
     /**

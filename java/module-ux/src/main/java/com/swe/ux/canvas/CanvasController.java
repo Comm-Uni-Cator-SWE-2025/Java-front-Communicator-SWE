@@ -14,7 +14,10 @@ import com.swe.canvas.datamodel.canvas.ShapeState;
 import com.swe.canvas.datamodel.manager.ActionManager;
 // Need to import HostActionManager to check type (or add an isHost() method to interface)
 import com.swe.canvas.datamodel.manager.HostActionManager;
+import com.swe.canvas.datamodel.shape.Shape;
+import com.swe.ux.analytics.CanvasShapeMetricsCollector;
 import com.swe.ux.canvas.util.ColorConverter;
+import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.ux.viewmodels.CanvasViewModel;
 import com.swe.ux.viewmodels.ToolType;
 
@@ -45,6 +48,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collection;
 
 /**
  * Controller for the fxml view.
@@ -170,6 +174,7 @@ public class CanvasController {
             Platform.runLater(() -> {
                 if (viewModel != null) {
                     viewModel.handleValidatedUpdate();
+                    publishShapeMetrics();
                 }
                 redraw();
             });
@@ -184,6 +189,7 @@ public class CanvasController {
         triangleBtn.setUserData(ToolType.TRIANGLE);
 
         redraw();
+        publishShapeMetrics();
     }
 
     private void redraw() {
@@ -192,6 +198,33 @@ public class CanvasController {
                 renderer.render(viewModel.getCanvasState(), viewModel.getTransientShape(), viewModel.selectedShapeId.get(), viewModel.isDraggingSelection);
             }
         });
+    }
+
+    private void publishShapeMetrics() {
+        if (viewModel == null) {
+            return;
+        }
+        final Collection<Shape> shapes = viewModel.getCanvasState().getVisibleShapes();
+        int freeHand = 0;
+        int straightLine = 0;
+        int rectangle = 0;
+        int ellipse = 0;
+        int triangle = 0;
+
+        for (Shape shape : shapes) {
+            switch (shape.getShapeType()) {
+                case FREEHAND -> freeHand++;
+                case LINE -> straightLine++;
+                case RECTANGLE -> rectangle++;
+                case ELLIPSE -> ellipse++;
+                case TRIANGLE -> triangle++;
+                default -> {
+                }
+            }
+        }
+
+        CanvasShapeMetricsCollector.getInstance().recordSnapshot(
+                new ShapeCount(freeHand, straightLine, rectangle, ellipse, triangle));
     }
 
     // =========================================================================

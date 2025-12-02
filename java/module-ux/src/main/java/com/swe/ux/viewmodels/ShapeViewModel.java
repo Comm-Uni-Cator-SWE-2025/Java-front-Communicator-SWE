@@ -6,6 +6,7 @@
 
 package com.swe.ux.viewmodels;
 
+import com.swe.ux.analytics.CanvasShapeMetricsCollector;
 import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.ux.service.ShapeDataService;
 import javafx.beans.property.BooleanProperty;
@@ -14,6 +15,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import java.util.List;
 
 /**
  * ViewModel for shape analytics.
@@ -24,6 +26,8 @@ public class ShapeViewModel {
     
     /** Data service for shape analytics. */
     private final ShapeDataService dataService;
+    /** Live metrics collector fed by the canvas module. */
+    private final CanvasShapeMetricsCollector metricsCollector;
     /** All shape count data. */
     private final ObservableList<ShapeCount> allData;
     /** Current start index property. */
@@ -38,6 +42,7 @@ public class ShapeViewModel {
      */
     public ShapeViewModel() {
         this.dataService = new ShapeDataService();
+        this.metricsCollector = CanvasShapeMetricsCollector.getInstance();
         this.allData = FXCollections.observableArrayList();
         this.currentStartIndex = new SimpleIntegerProperty(0);
         this.autoMode = new SimpleBooleanProperty(true);
@@ -48,14 +53,18 @@ public class ShapeViewModel {
      * Fetches and updates data.
      */
     public void fetchAndUpdateData() {
-        final String json = dataService.fetchNextData();
-
-        if (!json.isEmpty()) {
-            final ShapeCount newData = dataService.parseJson(json);
-            allData.add(newData);
+        final List<ShapeCount> liveSnapshots = metricsCollector.getHistory();
+        if (!liveSnapshots.isEmpty()) {
+            allData.setAll(liveSnapshots);
             autoMode.set(true);
+        } else {
+            final String json = dataService.fetchNextData();
+            if (!json.isEmpty()) {
+                final ShapeCount newData = dataService.parseJson(json);
+                allData.add(newData);
+                autoMode.set(true);
+            }
         }
-
         calculateViewBounds();
     }
 

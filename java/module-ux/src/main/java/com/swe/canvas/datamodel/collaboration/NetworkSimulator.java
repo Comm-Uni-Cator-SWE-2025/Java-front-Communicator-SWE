@@ -30,7 +30,17 @@ public class NetworkSimulator implements NetworkService {
     /** List of registered Client managers. */
     private final List<ActionManager> clientManagers = new ArrayList<>();
 
-    
+    @Override
+    public void registerHost(final ActionManager host) {
+        this.hostManager = host;
+    }
+
+    @Override
+    public void registerClient(final ActionManager client) {
+        if (client != null) {
+            this.clientManagers.add(client);
+        }
+    }
 
     @Override
     public void sendMessageToHost(final NetworkMessage message) {

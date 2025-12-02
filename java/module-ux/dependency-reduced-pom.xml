@@ -79,6 +79,9 @@
             <goals>
               <goal>report</goal>
             </goals>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
           </execution>
           <execution>
             <id>check</id>
@@ -107,12 +110,21 @@
             </configuration>
           </execution>
         </executions>
+        <configuration>
+          <excludes>
+            <exclude>**/MessageVM$*.class</exclude>
+            <exclude>**/FileMessageSerializer*.class</exclude>
+            <exclude>**/ChatMessageSerializer*.class</exclude>
+          </excludes>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>${checkstyle.version}</version>
         <configuration>
-          <skip>true</skip>
+          <skip>false</skip>
+          <configLocation>${session.executionRootDirectory}/config/checkstyle/checkstyle.xml</configLocation>
+          <suppressionsLocation>${session.executionRootDirectory}/config/checkstyle/suppressions.xml</suppressionsLocation>
         </configuration>
       </plugin>
       <plugin>
@@ -239,6 +251,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.10.1</junit.version>
     <maven.surefire.version>3.2.2</maven.surefire.version>
-    <jacoco.version>0.8.11</jacoco.version>
+    <jacoco.version>0.8.12</jacoco.version>
   </properties>
 </project>

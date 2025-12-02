@@ -1,4 +1,4 @@
-package crashhandler;
+package com.swe.cloud.crashhandler;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -7,9 +7,9 @@ import java.time.Instant;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import datastructures.Entity;
-import functionlibrary.CloudFunctionLibrary;
-import interfaces.ICrashHandler;
+import com.swe.cloud.datastructures.Entity;
+import com.swe.cloud.functionlibrary.CloudFunctionLibrary;
+import com.swe.cloud.interfaces.ICrashHandler;
 
 /**
  * Class which handles logging and storing call stack and other exception

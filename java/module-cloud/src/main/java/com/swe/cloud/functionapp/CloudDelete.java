@@ -6,7 +6,7 @@
  * Description = Defines custom Azure Function App API for deleting a record.
  *****************************************************************************/
 
-package functionapp;
+package com.swe.cloud.functionapp;
 
 import java.util.Optional;
 
@@ -19,10 +19,10 @@ import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 
-import cosmosoperations.DbConnectorFactory;
-import datastructures.CloudResponse;
-import datastructures.Entity;
-import interfaces.IdbConnector;
+import com.swe.cloud.cosmosoperations.DbConnectorFactory;
+import com.swe.cloud.datastructures.CloudResponse;
+import com.swe.cloud.datastructures.Entity;
+import com.swe.cloud.interfaces.IdbConnector;
 
 /**
  * Azure Function App API for deleting a record.

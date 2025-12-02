@@ -13,6 +13,8 @@ public class DashboardModel {
 
     /** Meeting summary text. */
     private String meetingSummary;
+    /** Raw payload string shown to the user. */
+    private String rawPayload;
 
     /**
      * Creates a new dashboard model.
@@ -20,13 +22,16 @@ public class DashboardModel {
      * @param present number of users present
      * @param loggedOut number of users logged out
      * @param summary meeting summary
+     * @param payload full payload string
      */
     public DashboardModel(final int present,
                           final int loggedOut,
-                          final String summary) {
+                          final String summary,
+                          final String payload) {
         this.usersPresent = present;
         this.usersLoggedOut = loggedOut;
         this.meetingSummary = summary;
+        this.rawPayload = payload;
     }
 
     /**
@@ -54,5 +59,13 @@ public class DashboardModel {
      */
     public String getMeetingSummary() {
         return meetingSummary;
+    }
+
+    /**
+     * Gets the raw payload text.
+     * @return raw payload text
+     */
+    public String getRawPayload() {
+        return rawPayload;
     }
 }

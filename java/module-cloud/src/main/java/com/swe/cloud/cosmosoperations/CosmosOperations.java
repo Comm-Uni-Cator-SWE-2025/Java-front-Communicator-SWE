@@ -1,4 +1,4 @@
-package cosmosoperations;
+package com.swe.cloud.cosmosoperations;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,9 +18,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import datastructures.CloudResponse;
-import datastructures.Entity;
-import interfaces.IdbConnector;
+import com.swe.cloud.datastructures.CloudResponse;
+import com.swe.cloud.datastructures.Entity;
+import com.swe.cloud.interfaces.IdbConnector;
 import io.github.cdimascio.dotenv.Dotenv;
 
 

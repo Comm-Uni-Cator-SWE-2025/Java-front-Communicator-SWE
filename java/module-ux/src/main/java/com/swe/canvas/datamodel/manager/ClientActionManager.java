@@ -119,6 +119,11 @@ public class ClientActionManager implements ActionManager {
     }
 
     @Override
+    public String getUserId() {
+        return userId;
+    }
+
+    @Override
     public void setOnUpdate(final Runnable callback) {
         if (callback != null) {
             this.onUpdateCallback = callback;

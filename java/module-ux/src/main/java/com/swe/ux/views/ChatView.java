@@ -1,6 +1,8 @@
 package com.swe.ux.views;
 
 import com.swe.chat.MessageVM;
+import com.swe.ux.theme.Theme;
+import com.swe.ux.theme.ThemeManager;
 import com.swe.ux.viewmodels.ChatViewModel;
 
 import javax.swing.BorderFactory;
@@ -25,11 +27,16 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -95,42 +102,44 @@ public class ChatView extends JPanel {
     private static final int FONT_SIZE_14 = 14;
     /** Font size 16. */
     private static final int FONT_SIZE_16 = 16;
-    /** Background color value. */
-    private static final int COLOR_BACKGROUND = 0xE5DDD5;
-    /** Border gray color value. */
-    private static final int COLOR_BORDER_GRAY = 0xCCCCCC;
-    /** Panel background color value. */
-    private static final int COLOR_PANEL_BG = 0xEFEFEF;
     /** Highlight color value. */
     private static final int COLOR_HIGHLIGHT = 0xFFFAD2;
-    /** AI purple color value. */
-    private static final int COLOR_AI_PURPLE = 0x6A0DAD;
-    /** AI indigo color value. */
-    private static final int COLOR_AI_INDIGO = 0x4B0082;
-    /** AI text color value. */
-    private static final int COLOR_AI_TEXT = 0x202020;
-    /** AI background color value. */
-    private static final int COLOR_AI_BG = 0xF5F0FF;
-    /** Sent message background color value. */
-    private static final int COLOR_SENT_BG = 0xE1F5FE;
-    /** Sent message username color value. */
-    private static final int COLOR_SENT_USERNAME = 0x005A9E;
-    /** Received message background color value. */
-    private static final int COLOR_RECEIVED_BG = 0xF1F1F1;
-    /** Blue color value. */
-    private static final int COLOR_BLUE = 0x007BFF;
-    /** Dark blue color value. */
-    private static final int COLOR_DARK_BLUE = 0x00008B;
-    /** Quote background color value. */
-    private static final int COLOR_QUOTE_BG = 0xDDDDDD;
-    /** Quote text color value. */
-    private static final int COLOR_QUOTE_TEXT = 0x555555;
-    /** Send button red component. */
-    private static final int COLOR_SEND_BUTTON_R = 0x00;
-    /** Send button green component. */
-    private static final int COLOR_SEND_BUTTON_G = 0x7B;
-    /** Send button blue component. */
-    private static final int COLOR_SEND_BUTTON_B = 0xFF;
+    /** Default sent bubble color. */
+    private static final Color DEFAULT_SENT_COLOR = new Color(0xE1F5FE);
+    /** Default received bubble color. */
+    private static final Color DEFAULT_RECEIVED_COLOR = new Color(0xF1F1F1);
+    /** Default AI bubble color. */
+    private static final Color DEFAULT_AI_COLOR = new Color(0xF5F0FF);
+    /** Default accent color. */
+    private static final Color DEFAULT_ACCENT = new Color(0x4A86E8);
+    /** Default muted text color. */
+    private static final Color DEFAULT_MUTED = Color.GRAY;
+    /** Default normal text color. */
+    private static final Color DEFAULT_TEXT = Color.DARK_GRAY;
+    /** Default danger color for destructive actions. */
+    private static final Color DEFAULT_DANGER = new Color(0xE53935);
+    /** Bubble rounding radius. */
+    private static final int BUBBLE_CORNER_RADIUS = 22;
+    /** Card rounding radius. */
+    private static final int CARD_CORNER_RADIUS = 18;
+    /** Input rounding radius. */
+    private static final int INPUT_CORNER_RADIUS = 26;
+    /** Client property key for bubble role. */
+    private static final String CHAT_ROLE_KEY = "chatRole";
+    /** Client property key for username label. */
+    private static final String USERNAME_LABEL_KEY = "usernameLabel";
+    /** Client property key for quote panels. */
+    private static final String QUOTE_PANEL_KEY = "quotePanel";
+    /** Client property key for muted labels. */
+    private static final String MUTED_LABEL_KEY = "mutedLabel";
+    /** Client property key for wrapped bubble panels. */
+    private static final String BUBBLE_PANEL_KEY = "bubblePanel";
+    /** Client property key to skip label theming. */
+    private static final String SKIP_LABEL_THEME_KEY = "skipLabelTheme";
+    /** Client property key to mark AI question labels. */
+    private static final String AI_QUESTION_LABEL_KEY = "aiQuestion";
+    /** Bubble roles for styling. */
+    private enum BubbleRole { SENT, RECEIVED, AI }
 
     /**
      * The view model for this chat view.
@@ -141,6 +150,26 @@ public class ChatView extends JPanel {
      * Container panel for all messages.
      */
     private JPanel messageContainer;
+    /**
+     * Stacked column holding preview + message list.
+     */
+    private JPanel conversationColumn;
+    /**
+     * Wrapper panel to allow background changes.
+     */
+    private JPanel messageContainerWrapper;
+    /**
+     * Panel that shows a pending upload preview.
+     */
+    private RoundedPanel uploadPreviewPanel;
+    /**
+     * Preview label for pending uploads.
+     */
+    private JLabel uploadPreviewLabel;
+    /**
+     * Cancel button for preview.
+     */
+    private JButton uploadPreviewCancelButton;
 
     /**
      * Scroll pane containing the message container.
@@ -151,16 +180,24 @@ public class ChatView extends JPanel {
      * Text field for entering new messages.
      */
     private JTextField messageInputField;
+    /**
+     * Rounded wrapper for the input field.
+     */
+    private RoundedPanel messageInputWrapper;
 
     /**
      * Button to send messages.
      */
     private JButton sendButton;
+    /**
+     * Input panel reference for theming.
+     */
+    private JPanel inputPanel;
 
     /**
      * Panel showing reply quote information.
      */
-    private JPanel replyQuotePanel;
+    private RoundedPanel replyQuotePanel;
 
     /**
      * Label displaying the reply quote text.
@@ -175,7 +212,7 @@ public class ChatView extends JPanel {
     /**
      * Panel showing attachment information.
      */
-    private JPanel attachmentPanel;
+    private RoundedPanel attachmentPanel;
 
     /**
      * Label displaying attachment file name.
@@ -191,6 +228,21 @@ public class ChatView extends JPanel {
      * Map of message IDs to their UI components.
      */
     private final Map<String, Component> messageComponentMap = new HashMap<>();
+    /** Cached theme colors. */
+    private Color backgroundColor;
+    private Color panelBackgroundColor;
+    private Color borderColor;
+    private Color textColor;
+    private Color accentColor;
+    private Color inputBackgroundColor;
+    private Color mutedTextColor;
+    private Color sentBubbleColor;
+    private Color receivedBubbleColor;
+    private Color aiBubbleColor;
+    private Color quoteBackgroundColor;
+    private Color quoteBorderColor;
+    private Color sentUsernameColor;
+    private Color receivedUsernameColor;
 
     /**
      * Constructor for ChatView.
@@ -204,6 +256,10 @@ public class ChatView extends JPanel {
         setupMessageContainer();
         setupBottomPanel();
         bindViewModelCallbacks();
+
+        ThemeManager.getInstance().addThemeChangeListener(() ->
+                SwingUtilities.invokeLater(this::applyTheme));
+        applyTheme();
     }
 
     /**
@@ -211,7 +267,7 @@ public class ChatView extends JPanel {
      */
     private void setupMainPanel() {
         setLayout(new BorderLayout(ZERO, ZERO));
-        setBackground(new Color(COLOR_BACKGROUND));
+        setBackground(Color.WHITE);
     }
 
     /**
@@ -220,22 +276,57 @@ public class ChatView extends JPanel {
     private void setupMessageContainer() {
         messageContainer = new JPanel();
         messageContainer.setLayout(new BoxLayout(messageContainer, BoxLayout.Y_AXIS));
-        messageContainer.setBackground(Color.WHITE);
+        messageContainer.setOpaque(false);
+        messageContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        final JPanel messageContainerWrapper = new JPanel(new BorderLayout());
-        messageContainerWrapper.setBackground(Color.WHITE);
+        conversationColumn = new JPanel();
+        conversationColumn.setLayout(new BoxLayout(conversationColumn, BoxLayout.Y_AXIS));
+        conversationColumn.setOpaque(false);
+        conversationColumn.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        uploadPreviewPanel = buildUploadPreviewPanel();
+        conversationColumn.add(uploadPreviewPanel);
+        conversationColumn.add(Box.createRigidArea(new Dimension(ZERO, SMALL_PADDING)));
+        conversationColumn.add(messageContainer);
+
+        messageContainerWrapper = new JPanel(new BorderLayout());
         messageContainerWrapper.setBorder(new EmptyBorder(BORDER_PADDING, BORDER_PADDING,
                 BORDER_PADDING, BORDER_PADDING));
-        messageContainerWrapper.add(messageContainer, BorderLayout.NORTH);
+        messageContainerWrapper.add(conversationColumn, BorderLayout.NORTH);
 
         scrollPane = new JScrollPane(messageContainerWrapper);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBorder(BorderFactory.createMatteBorder(ZERO, ZERO, ONE, ZERO,
-                new Color(COLOR_BORDER_GRAY)));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getVerticalScrollBar().setUnitIncrement(SIXTEEN);
 
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    /**
+     * Builds the upload preview banner shown above the conversation.
+     * @return configured preview panel
+     */
+    private RoundedPanel buildUploadPreviewPanel() {
+        final RoundedPanel panel = new RoundedPanel(CARD_CORNER_RADIUS);
+        panel.setLayout(new BorderLayout(SMALL_PADDING, ZERO));
+        panel.setBorder(new EmptyBorder(SMALL_PADDING, BORDER_PADDING, SMALL_PADDING, BORDER_PADDING));
+        panel.setVisible(false);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        uploadPreviewLabel = new JLabel();
+        uploadPreviewLabel.setFont(new Font("Arial", Font.PLAIN, FONT_SIZE_12));
+        uploadPreviewLabel.putClientProperty(MUTED_LABEL_KEY, Boolean.TRUE);
+        applyLabelTheme(uploadPreviewLabel);
+
+        uploadPreviewCancelButton = new JButton("Cancel");
+        uploadPreviewCancelButton.setMargin(new Insets(TWO, TWELVE, TWO, TWELVE));
+        uploadPreviewCancelButton.setFocusPainted(false);
+        uploadPreviewCancelButton.addActionListener(e -> viewModel.cancelAttachment());
+
+        panel.add(uploadPreviewLabel, BorderLayout.CENTER);
+        panel.add(uploadPreviewCancelButton, BorderLayout.EAST);
+        return panel;
     }
 
     /**
@@ -258,20 +349,22 @@ public class ChatView extends JPanel {
      * @param parentPanel the parent panel to add the attachment panel to
      */
     private void setupAttachmentPanel(final JPanel parentPanel) {
-        attachmentPanel = new JPanel(new BorderLayout(SMALL_PADDING, SMALL_PADDING));
-        attachmentPanel.setBackground(new Color(COLOR_PANEL_BG));
-        attachmentPanel.setBorder(new CompoundBorder(
-                BorderFactory.createMatteBorder(ONE, ZERO, ZERO, ZERO,
-                        new Color(COLOR_BORDER_GRAY)),
-                new EmptyBorder(SMALL_PADDING, BORDER_PADDING, SMALL_PADDING, BORDER_PADDING)
-        ));
-        attachmentLabel = new JLabel("Attached: file.txt");
+        attachmentPanel = new RoundedPanel(CARD_CORNER_RADIUS);
+        attachmentPanel.setLayout(new BorderLayout(SMALL_PADDING, SMALL_PADDING));
+        attachmentPanel.setBorder(new EmptyBorder(SMALL_PADDING, BORDER_PADDING,
+                SMALL_PADDING, BORDER_PADDING));
+        attachmentLabel = new JLabel("");
         attachmentLabel.setFont(new Font("Arial", Font.ITALIC, TWELVE));
-        attachmentLabel.setForeground(Color.GRAY);
+        attachmentLabel.putClientProperty(MUTED_LABEL_KEY, Boolean.TRUE);
+        applyLabelTheme(attachmentLabel);
 
         final JButton cancelAttachmentButton = new JButton("X");
         cancelAttachmentButton.setMargin(new Insets(TWO, FOUR, TWO, FOUR));
+        cancelAttachmentButton.setFocusPainted(false);
         cancelAttachmentButton.addActionListener(e -> viewModel.cancelAttachment());
+        attachmentPanel.add(attachmentLabel, BorderLayout.CENTER);
+        attachmentPanel.add(cancelAttachmentButton, BorderLayout.EAST);
+        attachmentPanel.setVisible(false);
         parentPanel.add(attachmentPanel);
     }
 
@@ -281,19 +374,18 @@ public class ChatView extends JPanel {
      * @param parentPanel the parent panel to add the reply panel to
      */
     private void setupReplyPanel(final JPanel parentPanel) {
-        replyQuotePanel = new JPanel(new BorderLayout(SMALL_PADDING, SMALL_PADDING));
-        replyQuotePanel.setBackground(new Color(COLOR_PANEL_BG));
-        replyQuotePanel.setBorder(new CompoundBorder(
-                BorderFactory.createMatteBorder(ONE, ZERO, ZERO, ZERO,
-                        new Color(COLOR_BORDER_GRAY)),
-                new EmptyBorder(SMALL_PADDING, BORDER_PADDING, SMALL_PADDING, BORDER_PADDING)
-        ));
-        replyQuoteLabel = new JLabel("Replying to...");
+        replyQuotePanel = new RoundedPanel(CARD_CORNER_RADIUS);
+        replyQuotePanel.setLayout(new BorderLayout(SMALL_PADDING, SMALL_PADDING));
+        replyQuotePanel.setBorder(new EmptyBorder(SMALL_PADDING, BORDER_PADDING,
+                SMALL_PADDING, BORDER_PADDING));
+        replyQuoteLabel = new JLabel("");
         replyQuoteLabel.setFont(new Font("Arial", Font.ITALIC, TWELVE));
-        replyQuoteLabel.setForeground(Color.GRAY);
+        replyQuoteLabel.putClientProperty(MUTED_LABEL_KEY, Boolean.TRUE);
+        applyLabelTheme(replyQuoteLabel);
 
         final JButton cancelReplyButton = new JButton("X");
         cancelReplyButton.setMargin(new Insets(TWO, FOUR, TWO, FOUR));
+        cancelReplyButton.setFocusPainted(false);
         cancelReplyButton.addActionListener(e -> viewModel.cancelReply());
 
         replyQuotePanel.add(replyQuoteLabel, BorderLayout.CENTER);
@@ -308,32 +400,40 @@ public class ChatView extends JPanel {
      * @param parentPanel the parent panel to add the input panel to
      */
     private void setupInputPanel(final JPanel parentPanel) {
-        final JPanel inputHBox = new JPanel(new BorderLayout(BORDER_PADDING, BORDER_PADDING));
+        inputPanel = new JPanel(new BorderLayout(BORDER_PADDING, BORDER_PADDING));
+        final JPanel inputHBox = inputPanel;
         inputHBox.setBorder(new EmptyBorder(BORDER_PADDING, BORDER_PADDING,
                 BORDER_PADDING, BORDER_PADDING));
 
         messageInputField = new JTextField();
         messageInputField.setFont(new Font("Arial", Font.PLAIN, FOURTEEN));
+        messageInputField.setBorder(BorderFactory.createEmptyBorder(SMALL_PADDING, SMALL_PADDING,
+                SMALL_PADDING, SMALL_PADDING));
+        messageInputField.setOpaque(false);
 
         sendButton = new JButton("Send");
-        sendButton.setBackground(new Color(COLOR_SEND_BUTTON_R, COLOR_SEND_BUTTON_G,
-                COLOR_SEND_BUTTON_B));
-        sendButton.setForeground(Color.WHITE);
         sendButton.setFocusPainted(false);
         sendButton.setFont(new Font("Arial", Font.BOLD, TWELVE));
 
         attachButton = new JButton("+");
         attachButton.setFont(new Font("Arial", Font.BOLD, FONT_SIZE_16));
         attachButton.setMargin(new Insets(ONE, SMALL_PADDING, ONE, SMALL_PADDING));
+        attachButton.setFocusPainted(false);
+
+        messageInputWrapper = new RoundedPanel(INPUT_CORNER_RADIUS);
+        messageInputWrapper.setLayout(new BorderLayout());
+        messageInputWrapper.setBorder(new EmptyBorder(TWO, SMALL_PADDING, TWO, SMALL_PADDING));
+        messageInputWrapper.add(messageInputField, BorderLayout.CENTER);
 
         final JPanel buttonPanel = new JPanel(new BorderLayout(SMALL_PADDING, ZERO));
+        buttonPanel.setOpaque(false);
         buttonPanel.add(attachButton, BorderLayout.WEST);
         buttonPanel.add(sendButton, BorderLayout.CENTER);
 
         sendButton.addActionListener(e -> viewModel.send(messageInputField.getText()));
         messageInputField.addActionListener(e -> viewModel.send(messageInputField.getText()));
 
-        inputHBox.add(messageInputField, BorderLayout.CENTER);
+        inputHBox.add(messageInputWrapper, BorderLayout.CENTER);
         inputHBox.add(buttonPanel, BorderLayout.EAST);
         parentPanel.add(inputHBox);
     }
@@ -353,14 +453,8 @@ public class ChatView extends JPanel {
             repaint();
         });
 
-        viewModel.setOnAttachmentSet(attachmentName -> {
-            attachmentPanel.setVisible(attachmentName != null);
-            if (attachmentName != null) {
-                attachmentLabel.setText(attachmentName);
-            }
-            revalidate();
-            repaint();
-        });
+        viewModel.setOnAttachmentSet(attachmentName ->
+                SwingUtilities.invokeLater(() -> handleAttachmentStateChanged(attachmentName)));
 
         viewModel.setOnMessageAdded(this::addMessageToView);
         viewModel.setOnMessageRemoved(this::removeMessageFromView);
@@ -375,6 +469,64 @@ public class ChatView extends JPanel {
             JOptionPane.showMessageDialog(this, message, "File Saved",
                     JOptionPane.INFORMATION_MESSAGE);
         });
+    }
+
+    /**
+     * Handles attachment panel visibility + preview banner.
+     * @param attachmentName descriptive label from the view model
+     */
+    private void handleAttachmentStateChanged(final String attachmentName) {
+        if (attachmentPanel == null || attachmentLabel == null) {
+            return;
+        }
+
+        if (attachmentName != null) {
+            final String normalized = normalizeAttachmentName(attachmentName);
+            attachmentPanel.setVisible(true);
+            attachmentLabel.setText("Attached: " + normalized);
+            showUploadPreview(normalized);
+        } else {
+            attachmentPanel.setVisible(false);
+            showUploadPreview(null);
+        }
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Normalizes the attachment label text.
+     * @param attachmentName raw label
+     * @return formatted label
+     */
+    private String normalizeAttachmentName(final String attachmentName) {
+        if (attachmentName == null) {
+            return "";
+        }
+        final String trimmed = attachmentName.replace("Attached:", "").trim();
+        if (trimmed.isEmpty()) {
+            return attachmentName.trim();
+        }
+        return trimmed;
+    }
+
+    /**
+     * Shows/ hides the inline upload preview banner.
+     * @param displayText preview text
+     */
+    private void showUploadPreview(final String displayText) {
+        if (uploadPreviewPanel == null || uploadPreviewLabel == null) {
+            return;
+        }
+        if (displayText == null || displayText.isBlank()) {
+            uploadPreviewPanel.setVisible(false);
+        } else {
+            uploadPreviewPanel.setVisible(true);
+            uploadPreviewLabel.setText("[File] " + displayText + " - ready to send");
+        }
+        if (conversationColumn != null) {
+            conversationColumn.revalidate();
+            conversationColumn.repaint();
+        }
     }
 
     /**
@@ -542,29 +694,37 @@ public class ChatView extends JPanel {
     }
 
     /**
+     * Builds a rounded bubble container with shared padding.
+     * @return rounded panel
+     */
+    private RoundedPanel createBubblePanel() {
+        final RoundedPanel bubble = new RoundedPanel(BUBBLE_CORNER_RADIUS);
+        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
+        bubble.setBorder(new EmptyBorder(EIGHT, EIGHT, EIGHT, TWELVE));
+        bubble.setOpaque(false);
+        bubble.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return bubble;
+    }
+
+    /**
      * ⭐ AI Special Bubble (Distinct Look).
      *
      * @param messageVM the message view model
      * @return the created AI bubble component
      */
     private Component createAiBubble(final MessageVM messageVM) {
-        final JPanel bubble = new JPanel();
-        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
-        bubble.setBorder(new CompoundBorder(
-                BorderFactory.createLineBorder(new Color(COLOR_AI_PURPLE), ONE, true),
-                new EmptyBorder(EIGHT, EIGHT, EIGHT, TWELVE)
-        ));
+        final RoundedPanel bubble = createBubblePanel();
         bubble.setMaximumSize(new Dimension(AI_BUBBLE_MAX_WIDTH, MAX_DIMENSION));
 
         // Header with Robot Icon
         final JLabel usernameLabel = new JLabel("✨ AI Assistant");
         usernameLabel.setFont(new Font("Arial", Font.BOLD, FONT_SIZE_13));
-        usernameLabel.setForeground(new Color(COLOR_AI_INDIGO));
+        usernameLabel.putClientProperty(SKIP_LABEL_THEME_KEY, Boolean.TRUE);
 
         final JLabel contentLabel = new JLabel("<html><p style=\"width:" + AI_CONTENT_WIDTH
                 + "px; font-family:SansSerif;\">" + messageVM.getContent() + "</p></html>");
         contentLabel.setFont(new Font("Segoe UI", Font.PLAIN, FOURTEEN));
-        contentLabel.setForeground(new Color(COLOR_AI_TEXT));
+        applyLabelTheme(contentLabel);
 
         final JPanel footer = createFooterPanel(messageVM);
 
@@ -584,9 +744,7 @@ public class ChatView extends JPanel {
      * @return the created text bubble component
      */
     private Component createTextBubble(final MessageVM messageVM) {
-        final JPanel bubble = new JPanel();
-        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
-        bubble.setBorder(new EmptyBorder(EIGHT, EIGHT, EIGHT, TWELVE));
+        final RoundedPanel bubble = createBubblePanel();
         bubble.setMaximumSize(new Dimension(BUBBLE_MAX_WIDTH, MAX_DIMENSION));
 
         if (messageVM.hasQuote()) {
@@ -596,24 +754,21 @@ public class ChatView extends JPanel {
 
         final JLabel usernameLabel = new JLabel(messageVM.getUsername());
         usernameLabel.setFont(new Font("Arial", Font.BOLD, FONT_SIZE_13));
+        usernameLabel.putClientProperty(SKIP_LABEL_THEME_KEY, Boolean.TRUE);
 
         // Highlight my questions to AI
         final boolean isQuestionToAi = messageVM.getContent().trim().startsWith("@AI");
         if (isQuestionToAi) {
             usernameLabel.setText(messageVM.getUsername() + " (Asking AI)");
-            usernameLabel.setForeground(new Color(COLOR_DARK_BLUE));
+            usernameLabel.putClientProperty(AI_QUESTION_LABEL_KEY, Boolean.TRUE);
+        } else {
+            usernameLabel.putClientProperty(AI_QUESTION_LABEL_KEY, null);
         }
 
         final JLabel contentLabel = new JLabel("<html><p style=\"width:" + QUOTE_WIDTH
                 + "px;\">" + messageVM.getContent() + "</p></html>");
-        contentLabel.setFont(new Font("Arial", Font.PLAIN, FOURTEEN));
-
-        // Italicize the @AI part if it's a question
-        if (isQuestionToAi) {
-            contentLabel.setFont(new Font("Arial", Font.ITALIC, FOURTEEN));
-        }
-
-        contentLabel.setForeground(Color.BLACK);
+        contentLabel.setFont(new Font("Arial", isQuestionToAi ? Font.ITALIC : Font.PLAIN, FOURTEEN));
+        applyLabelTheme(contentLabel);
 
         final JPanel footer = createFooterPanel(messageVM);
 
@@ -633,9 +788,7 @@ public class ChatView extends JPanel {
      * @return the created file bubble component
      */
     private Component createFileBubble(final MessageVM messageVM) {
-        final JPanel bubble = new JPanel();
-        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
-        bubble.setBorder(new EmptyBorder(EIGHT, EIGHT, EIGHT, TWELVE));
+        final RoundedPanel bubble = createBubblePanel();
         bubble.setMaximumSize(new Dimension(BUBBLE_MAX_WIDTH, MAX_DIMENSION));
 
         if (messageVM.hasQuote()) {
@@ -697,7 +850,7 @@ public class ChatView extends JPanel {
 
         final JLabel fileNameLabel = new JLabel(messageVM.getFileName());
         fileNameLabel.setFont(new Font("Arial", Font.BOLD, FOURTEEN));
-        fileNameLabel.setForeground(Color.BLACK);
+        applyLabelTheme(fileNameLabel);
         infoPanel.add(fileNameLabel);
 
         final String sizeDisplay;
@@ -708,7 +861,8 @@ public class ChatView extends JPanel {
         }
         final JLabel sizeLabel = new JLabel(sizeDisplay);
         sizeLabel.setFont(new Font("Arial", Font.PLAIN, TWELVE));
-        sizeLabel.setForeground(Color.GRAY);
+        sizeLabel.putClientProperty(MUTED_LABEL_KEY, Boolean.TRUE);
+        applyLabelTheme(sizeLabel);
         infoPanel.add(sizeLabel);
 
         if (!messageVM.isSentByMe()) {
@@ -751,7 +905,7 @@ public class ChatView extends JPanel {
                             + messageVM.getContent() + "</p></html>"
             );
             captionLabel.setFont(new Font("Arial", Font.PLAIN, FOURTEEN));
-            captionLabel.setForeground(Color.BLACK);
+            applyLabelTheme(captionLabel);
             captionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             bubble.add(captionLabel);
         }
@@ -765,17 +919,15 @@ public class ChatView extends JPanel {
      * @return the created quote panel component
      */
     private Component createQuotePanel(final String quotedContent, final String replyToId) {
-        final JPanel quotePanel = new JPanel(new BorderLayout());
-        quotePanel.setBackground(new Color(COLOR_QUOTE_BG));
-        quotePanel.setBorder(new CompoundBorder(
-                BorderFactory.createMatteBorder(ZERO, QUOTE_BORDER_WIDTH, ZERO, ZERO,
-                        new Color(COLOR_BLUE)),
-                new EmptyBorder(TINY_PADDING, SMALL_PADDING, TINY_PADDING, SMALL_PADDING)
-        ));
+        final RoundedPanel quotePanel = new RoundedPanel(BUBBLE_CORNER_RADIUS - 6);
+        quotePanel.setLayout(new BorderLayout());
+        quotePanel.putClientProperty(QUOTE_PANEL_KEY, Boolean.TRUE);
+        styleQuotePanel(quotePanel);
 
         final JLabel quoteLabel = new JLabel(quotedContent);
         quoteLabel.setFont(new Font("Arial", Font.ITALIC, FONT_SIZE_11));
-        quoteLabel.setForeground(new Color(COLOR_QUOTE_TEXT));
+        quoteLabel.putClientProperty(MUTED_LABEL_KEY, Boolean.TRUE);
+        applyLabelTheme(quoteLabel);
         quotePanel.add(quoteLabel, BorderLayout.CENTER);
         quotePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -809,7 +961,8 @@ public class ChatView extends JPanel {
         // 1. Always show the timestamp
         final JLabel timeLabel = new JLabel(messageVM.getTimestamp());
         timeLabel.setFont(new Font("Arial", Font.PLAIN, FONT_SIZE_10));
-        timeLabel.setForeground(Color.GRAY);
+        timeLabel.putClientProperty(MUTED_LABEL_KEY, Boolean.TRUE);
+        applyLabelTheme(timeLabel);
         footer.add(timeLabel, BorderLayout.WEST);
 
         // 2. CHECK IF MESSAGE IS DELETED
@@ -825,9 +978,7 @@ public class ChatView extends JPanel {
             // --- Reply Button ---
             final JButton replyBtn = new JButton("Reply");
             replyBtn.setFont(new Font("Arial", Font.PLAIN, FONT_SIZE_10));
-            replyBtn.setBorderPainted(false);
-            replyBtn.setContentAreaFilled(false);
-            replyBtn.setForeground(new Color(COLOR_BLUE));
+            styleLinkButton(replyBtn, safeAccentColor());
             replyBtn.setMargin(new Insets(ZERO, ZERO, ZERO, ZERO));
             replyBtn.addActionListener(e -> {
                 viewModel.startReply(messageVM);
@@ -839,9 +990,7 @@ public class ChatView extends JPanel {
             if (messageVM.isSentByMe()) {
                 final JButton deleteBtn = new JButton("Delete");
                 deleteBtn.setFont(new Font("Arial", Font.PLAIN, FONT_SIZE_10));
-                deleteBtn.setBorderPainted(false);
-                deleteBtn.setContentAreaFilled(false);
-                deleteBtn.setForeground(Color.RED);
+                styleLinkButton(deleteBtn, safeDangerColor());
                 deleteBtn.setMargin(new Insets(ZERO, SMALL_PADDING, ZERO, ZERO));
                 deleteBtn.addActionListener(e -> {
                     final int choice = JOptionPane.showConfirmDialog(this,
@@ -873,23 +1022,402 @@ public class ChatView extends JPanel {
     private Component wrapBubble(final JPanel bubble, final JLabel usernameLabel,
                                   final boolean isSentByMe, final boolean isAi) {
         final JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBackground(Color.WHITE);
+        wrapper.setOpaque(false);
         wrapper.setBorder(new EmptyBorder(TINY_PADDING, ZERO, TINY_PADDING, ZERO));
 
+        final BubbleRole role;
         if (isAi) {
-            // ⭐ AI Messages: Centered or Left, Distinct Color
-            bubble.setBackground(new Color(COLOR_AI_BG));
-            wrapper.add(bubble, BorderLayout.WEST);
+            role = BubbleRole.AI;
         } else if (isSentByMe) {
-            bubble.setBackground(new Color(COLOR_SENT_BG));
-            usernameLabel.setForeground(new Color(COLOR_SENT_USERNAME));
+            role = BubbleRole.SENT;
+        } else {
+            role = BubbleRole.RECEIVED;
+        }
+
+        usernameLabel.putClientProperty(SKIP_LABEL_THEME_KEY, Boolean.TRUE);
+        bubble.putClientProperty(CHAT_ROLE_KEY, role);
+        bubble.putClientProperty(USERNAME_LABEL_KEY, usernameLabel);
+        wrapper.putClientProperty(BUBBLE_PANEL_KEY, bubble);
+        applyBubbleTheme(bubble, role);
+
+        if (role == BubbleRole.SENT) {
             wrapper.add(bubble, BorderLayout.EAST);
         } else {
-            bubble.setBackground(new Color(COLOR_RECEIVED_BG));
-            usernameLabel.setForeground(new Color(COLOR_BLUE));
             wrapper.add(bubble, BorderLayout.WEST);
         }
         return wrapper;
     }
 
+
+    /**
+     * Applies the active theme to the chat view.
+     */
+    private void applyTheme() {
+        final Theme theme = ThemeManager.getInstance().getCurrentTheme();
+
+        backgroundColor = theme.getBackgroundColor();
+        panelBackgroundColor = theme.getPanelBackground();
+        borderColor = theme.getPanelBorder();
+        textColor = theme.getTextColor();
+        accentColor = theme.getPrimaryColor();
+        inputBackgroundColor = theme.getInputBackgroundColor();
+        mutedTextColor = blendColors(textColor, backgroundColor, theme.isDark() ? 0.5 : 0.7);
+        sentBubbleColor = blendColors(accentColor, backgroundColor, theme.isDark() ? 0.35 : 0.75);
+        receivedBubbleColor = blendColors(panelBackgroundColor, backgroundColor,
+                theme.isDark() ? 0.2 : 0.45);
+        aiBubbleColor = blendColors(accentColor, panelBackgroundColor, 0.85);
+        quoteBackgroundColor = blendColors(panelBackgroundColor, backgroundColor,
+                theme.isDark() ? 0.15 : 0.4);
+        quoteBorderColor = safeAccentColor();
+        sentUsernameColor = blendColors(accentColor, textColor, 0.25);
+        receivedUsernameColor = blendColors(textColor, accentColor, 0.85);
+
+        setBackground(backgroundColor);
+
+        if (messageContainerWrapper != null) {
+            messageContainerWrapper.setBackground(panelBackgroundColor);
+            messageContainerWrapper.setOpaque(true);
+        }
+        if (conversationColumn != null) {
+            conversationColumn.setBackground(panelBackgroundColor);
+        }
+        if (messageContainer != null) {
+            messageContainer.setBackground(panelBackgroundColor);
+        }
+
+        styleScrollPane();
+        styleSurfacePanel(attachmentPanel);
+        styleSurfacePanel(replyQuotePanel);
+        styleUploadPreviewPanel();
+        styleInputPanel();
+
+        applyLabelTheme(attachmentLabel);
+        applyLabelTheme(replyQuoteLabel);
+        applyLabelTheme(uploadPreviewLabel);
+
+        refreshAllBubbleThemes();
+        retintLabels(messageContainerWrapper);
+        refreshQuotePanels(messageContainerWrapper);
+
+        revalidate();
+        repaint();
+    }
+
+    private void styleScrollPane() {
+        if (scrollPane == null) {
+            return;
+        }
+        final Color border = borderColor != null ? borderColor : DEFAULT_MUTED;
+        scrollPane.setBorder(BorderFactory.createMatteBorder(ZERO, ZERO, ONE, ZERO, border));
+        if (scrollPane.getViewport() != null) {
+            scrollPane.getViewport()
+                    .setBackground(panelBackgroundColor != null ? panelBackgroundColor : Color.WHITE);
+        }
+        scrollPane.setBackground(panelBackgroundColor != null ? panelBackgroundColor : Color.WHITE);
+    }
+
+    private void styleSurfacePanel(final JPanel panel) {
+        if (panel == null) {
+            return;
+        }
+        final Color fill = panelBackgroundColor != null ? panelBackgroundColor : Color.WHITE;
+        final Color borderCol = blendColors(fallbackColor(borderColor, DEFAULT_MUTED), fill, 0.65);
+        if (panel instanceof RoundedPanel) {
+            final RoundedPanel rp = (RoundedPanel) panel;
+            rp.setGradient(null, null);
+            rp.setFillColor(fill);
+            rp.setBorderColor(borderCol);
+        } else {
+            panel.setOpaque(true);
+            panel.setBackground(fill);
+        }
+    }
+
+    private void styleUploadPreviewPanel() {
+        if (uploadPreviewPanel == null) {
+            return;
+        }
+        styleSurfacePanel(uploadPreviewPanel);
+        final RoundedPanel rounded = uploadPreviewPanel;
+        final Color accent = safeAccentColor();
+        rounded.setBorderColor(blendColors(accent, panelBackgroundColor, 0.2));
+        rounded.setGradient(
+                blendColors(accent, Color.WHITE, 0.4),
+                blendColors(accent, panelBackgroundColor, 0.4));
+        applyLabelTheme(uploadPreviewLabel);
+        styleSecondaryButton(uploadPreviewCancelButton);
+    }
+
+    private void styleInputPanel() {
+        if (inputPanel == null) {
+            return;
+        }
+        final Color bg = panelBackgroundColor != null ? panelBackgroundColor : Color.WHITE;
+        inputPanel.setBackground(bg);
+        inputPanel.setBorder(new EmptyBorder(BORDER_PADDING, BORDER_PADDING,
+                BORDER_PADDING, BORDER_PADDING));
+
+        if (messageInputField != null) {
+            messageInputField.setForeground(fallbackColor(textColor, DEFAULT_TEXT));
+            messageInputField.setCaretColor(fallbackColor(textColor, DEFAULT_TEXT));
+            messageInputField.setBackground(new Color(0, 0, 0, 0));
+        }
+
+        if (messageInputWrapper != null) {
+            final Color inputBg = blendColors(inputBackgroundColor, panelBackgroundColor, 0.5);
+            messageInputWrapper.setGradient(null, null);
+            messageInputWrapper.setFillColor(fallbackColor(inputBg, Color.WHITE));
+            messageInputWrapper.setBorderColor(new Color(0, 0, 0, 0));
+        }
+
+        stylePrimaryButton(sendButton);
+        styleSecondaryButton(attachButton);
+    }
+
+    private void refreshAllBubbleThemes() {
+        if (messageContainer == null) {
+            return;
+        }
+        for (Component component : messageContainer.getComponents()) {
+            if (!(component instanceof JPanel)) {
+                continue;
+            }
+            final JPanel wrapper = (JPanel) component;
+            final Object bubbleObj = wrapper.getClientProperty(BUBBLE_PANEL_KEY);
+            if (bubbleObj instanceof JPanel) {
+                final JPanel bubblePanel = (JPanel) bubbleObj;
+                final Object roleObj = bubblePanel.getClientProperty(CHAT_ROLE_KEY);
+                if (roleObj instanceof BubbleRole) {
+                    applyBubbleTheme(bubblePanel, (BubbleRole) roleObj);
+                }
+            }
+        }
+        messageContainer.revalidate();
+        messageContainer.repaint();
+    }
+
+    private void retintLabels(final Component component) {
+        if (component == null) {
+            return;
+        }
+        if (component instanceof JLabel) {
+            applyLabelTheme((JLabel) component);
+        }
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                retintLabels(child);
+            }
+        }
+    }
+
+    private void refreshQuotePanels(final Component component) {
+        if (component == null) {
+            return;
+        }
+        if (component instanceof JPanel) {
+            final JPanel panel = (JPanel) component;
+            if (Boolean.TRUE.equals(panel.getClientProperty(QUOTE_PANEL_KEY))) {
+                styleQuotePanel(panel);
+            }
+        }
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                refreshQuotePanels(child);
+            }
+        }
+    }
+
+    private void applyBubbleTheme(final JPanel bubble, final BubbleRole role) {
+        if (bubble == null || role == null) {
+            return;
+        }
+        final Color fillColor;
+        final Color usernameColor;
+        switch (role) {
+            case SENT:
+                fillColor = fallbackColor(sentBubbleColor, DEFAULT_SENT_COLOR);
+                usernameColor = fallbackColor(sentUsernameColor, safeAccentColor());
+                break;
+            case AI:
+                fillColor = fallbackColor(aiBubbleColor, DEFAULT_AI_COLOR);
+                usernameColor = safeAccentColor();
+                break;
+            default:
+                fillColor = fallbackColor(receivedBubbleColor, DEFAULT_RECEIVED_COLOR);
+                usernameColor = fallbackColor(receivedUsernameColor, DEFAULT_TEXT);
+                break;
+        }
+
+        if (bubble instanceof RoundedPanel) {
+            final RoundedPanel rounded = (RoundedPanel) bubble;
+            rounded.setGradient(null, null);
+            rounded.setFillColor(fillColor);
+            rounded.setBorderColor(new Color(0, 0, 0, 0));
+        } else {
+            bubble.setOpaque(true);
+            bubble.setBackground(fillColor);
+        }
+
+        final Object usernameObj = bubble.getClientProperty(USERNAME_LABEL_KEY);
+        if (usernameObj instanceof JLabel) {
+            final JLabel usernameLabel = (JLabel) usernameObj;
+            Color finalColor = usernameColor;
+            if (Boolean.TRUE.equals(usernameLabel.getClientProperty(AI_QUESTION_LABEL_KEY))) {
+                finalColor = safeAccentColor();
+            }
+            usernameLabel.setForeground(finalColor != null ? finalColor : DEFAULT_TEXT);
+        }
+    }
+
+    private void styleQuotePanel(final JPanel quotePanel) {
+        if (quotePanel == null) {
+            return;
+        }
+        final Color fill = fallbackColor(quoteBackgroundColor, DEFAULT_RECEIVED_COLOR);
+        final Color border = blendColors(fallbackColor(quoteBorderColor, safeAccentColor()), fill, 0.4);
+        quotePanel.setBorder(new EmptyBorder(SMALL_PADDING, SMALL_PADDING, SMALL_PADDING, SMALL_PADDING));
+        if (quotePanel instanceof RoundedPanel) {
+            final RoundedPanel rounded = (RoundedPanel) quotePanel;
+            rounded.setFillColor(fill);
+            rounded.setGradient(null, null);
+            rounded.setBorderColor(border);
+        } else {
+            quotePanel.setOpaque(true);
+            quotePanel.setBackground(fill);
+        }
+    }
+
+    private void applyLabelTheme(final JLabel label) {
+        if (label == null || Boolean.TRUE.equals(label.getClientProperty(SKIP_LABEL_THEME_KEY))) {
+            return;
+        }
+        final boolean muted = Boolean.TRUE.equals(label.getClientProperty(MUTED_LABEL_KEY));
+        if (muted) {
+            label.setForeground(fallbackColor(mutedTextColor, DEFAULT_MUTED));
+        } else {
+            label.setForeground(fallbackColor(textColor, DEFAULT_TEXT));
+        }
+    }
+
+    private void stylePrimaryButton(final JButton button) {
+        if (button == null) {
+            return;
+        }
+        button.setOpaque(true);
+        button.setBackground(safeAccentColor());
+        button.setForeground(Color.WHITE);
+        button.setBorder(new EmptyBorder(SMALL_PADDING, TWELVE, SMALL_PADDING, TWELVE));
+        button.setFocusPainted(false);
+    }
+
+    private void styleSecondaryButton(final JButton button) {
+        if (button == null) {
+            return;
+        }
+        final Color accent = safeAccentColor();
+        button.setOpaque(true);
+        button.setBackground(panelBackgroundColor != null ? panelBackgroundColor : Color.WHITE);
+        button.setForeground(accent);
+        button.setBorder(BorderFactory.createLineBorder(accent));
+        button.setFocusPainted(false);
+    }
+
+    private void styleLinkButton(final JButton button, final Color color) {
+        if (button == null) {
+            return;
+        }
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setForeground(color != null ? color : safeAccentColor());
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setFocusPainted(false);
+    }
+
+    private Color safeAccentColor() {
+        return accentColor != null ? accentColor : DEFAULT_ACCENT;
+    }
+
+    private Color safeDangerColor() {
+        return DEFAULT_DANGER;
+    }
+
+    private Color blendColors(final Color base, final Color mix, final double ratioParam) {
+        if (base == null && mix == null) {
+            return null;
+        }
+        if (base == null) {
+            return mix;
+        }
+        if (mix == null) {
+            return base;
+        }
+        final double ratio = Math.max(0, Math.min(1, ratioParam));
+        final double inverse = 1 - ratio;
+        final int r = (int) Math.round(base.getRed() * inverse + mix.getRed() * ratio);
+        final int g = (int) Math.round(base.getGreen() * inverse + mix.getGreen() * ratio);
+        final int b = (int) Math.round(base.getBlue() * inverse + mix.getBlue() * ratio);
+        return new Color(r, g, b);
+    }
+
+    private Color fallbackColor(final Color candidate, final Color fallback) {
+        return candidate != null ? candidate : fallback;
+    }
+
+    /**
+     * Simple rounded panel with optional gradient support.
+     */
+    private static final class RoundedPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private final int cornerRadius;
+        private Color fillColor;
+        private Color borderColor;
+        private Color gradientStart;
+        private Color gradientEnd;
+
+        RoundedPanel(final int radius) {
+            this.cornerRadius = radius;
+            setOpaque(false);
+        }
+
+        void setFillColor(final Color color) {
+            this.fillColor = color;
+            repaint();
+        }
+
+        void setBorderColor(final Color color) {
+            this.borderColor = color;
+            repaint();
+        }
+
+        void setGradient(final Color start, final Color end) {
+            this.gradientStart = start;
+            this.gradientEnd = end;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(final Graphics g) {
+            final Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            final int width = getWidth();
+            final int height = getHeight();
+            if (gradientStart != null && gradientEnd != null) {
+                g2.setPaint(new GradientPaint(0, 0, gradientStart, width, height, gradientEnd));
+            } else if (fillColor != null) {
+                g2.setColor(fillColor);
+            } else {
+                g2.setColor(getBackground());
+            }
+            g2.fillRoundRect(0, 0, Math.max(0, width - 1), Math.max(0, height - 1),
+                    cornerRadius, cornerRadius);
+
+            if (borderColor != null) {
+                g2.setColor(borderColor);
+                g2.drawRoundRect(0, 0, Math.max(0, width - 1), Math.max(0, height - 1),
+                        cornerRadius, cornerRadius);
+            }
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
 }

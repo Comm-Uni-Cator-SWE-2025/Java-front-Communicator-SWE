@@ -236,6 +236,8 @@ public class MeetingControlButton extends JButton {
      * Icon type for this button.
      */
     private final ControlIcon iconType;
+    /** Whether to draw icon glyphs. */
+    private boolean showIcon = true;
     /**
      * Whether button is active.
      */
@@ -265,6 +267,15 @@ public class MeetingControlButton extends JButton {
         setRolloverEnabled(true);
         setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
+    }
+
+    /**
+     * Enables/disables icon rendering.
+     * @param visible true to draw the icon
+     */
+    public void setShowIcon(final boolean visible) {
+        this.showIcon = visible;
+        repaint();
     }
 
     /**
@@ -345,12 +356,19 @@ public class MeetingControlButton extends JButton {
         final int textHeight = fm.getHeight();
         final int textWidth = fm.stringWidth(getText());
         final int textX = (getWidth() - textWidth) / 2;
-        final int textY = getHeight() - PADDING;
+        final int textY;
+        if (showIcon) {
+            textY = getHeight() - PADDING;
+        } else {
+            textY = (getHeight() + fm.getAscent()) / 2;
+        }
         g2.drawString(getText(), textX, textY);
 
-        final Rectangle iconBounds = new Rectangle(PADDING, PADDING, getWidth() - PADDING * 2,
-                getHeight() - PADDING * 2 - textHeight - ICON_TEXT_SPACING);
-        drawIcon(g2, iconBounds, foreground, accent);
+        if (showIcon) {
+            final Rectangle iconBounds = new Rectangle(PADDING, PADDING, getWidth() - PADDING * 2,
+                    getHeight() - PADDING * 2 - textHeight - ICON_TEXT_SPACING);
+            drawIcon(g2, iconBounds, foreground, accent);
+        }
         g2.dispose();
     }
 

@@ -1,4 +1,4 @@
-package functionapp;
+package com.swe.cloud.functionapp;
 
 import static org.mockito.Mockito.*;
 

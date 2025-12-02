@@ -11,11 +11,11 @@ class DashboardModelTest {
 
     @Test
     void gettersReturnConstructorValues() {
-        DashboardModel model = new DashboardModel(42, 7, "Summary");
+        DashboardModel model = new DashboardModel(42, 7, "Summary", "{raw}");
 
         assertEquals(42, model.getUsersPresent());
         assertEquals(7, model.getUsersLoggedOut());
         assertEquals("Summary", model.getMeetingSummary());
+        assertEquals("{raw}", model.getRawPayload());
     }
 }
-

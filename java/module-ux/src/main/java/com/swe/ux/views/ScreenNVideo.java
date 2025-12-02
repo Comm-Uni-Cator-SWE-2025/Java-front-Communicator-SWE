@@ -1,6 +1,7 @@
 package com.swe.ux.views;
 
 import com.swe.screenNVideo.Utils;
+import com.swe.ux.analytics.ScreenShareTelemetryCollector;
 import com.swe.ux.binding.PropertyListeners;
 import com.swe.ux.model.UIImage;
 import com.swe.controller.Meeting.UserProfile;
@@ -105,10 +106,6 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
      * Current gallery column count.
      */
     private int currentGalleryCols = -1;
-    /**
-     * Start time tracking.
-     */
-    private static long start = 0;
     /**
      * Atomic boolean for update tracking.
      */
@@ -380,10 +377,9 @@ public class ScreenNVideo extends JPanel implements ParticipantPanel.Participant
 
         SwingUtilities.invokeLater(() -> {
             try {
-//                System.out.println("Client FPS : " + (int)(1000.0 / ((System.nanoTime() - start) / 1_000_000.0)));
                 activeParticipantPanel.setImage(bufferedImage);
                 activeParticipantPanel.setDataRate(uiImage.dataRate());
-                start = System.nanoTime();
+                ScreenShareTelemetryCollector.getInstance().recordFrameRendered();
             } finally {
                 // release flag so next frame can proceed
                 UPDATING.set(false);

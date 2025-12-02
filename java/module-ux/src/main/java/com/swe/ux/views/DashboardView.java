@@ -57,17 +57,9 @@ class DashboardView extends VBox {
     private static final int CARD_RADIUS = 8;
     
     /**
-     * Label for users present value.
+     * Label for raw payload value.
      */
-    private Label usersPresentValueLabel;
-    /**
-     * Label for users logged out value.
-     */
-    private Label usersLoggedOutValueLabel;
-    /**
-     * Label for meeting summary value.
-     */
-    private Label meetingSummaryValueLabel;
+    private Label rawPayloadValueLabel;
     
     DashboardView() {
         setPadding(new Insets(DEFAULT_PADDING));
@@ -80,50 +72,65 @@ class DashboardView extends VBox {
         titleLabel.setFont(Font.font("System", FontWeight.BOLD, TITLE_FONT_SIZE));
         titleLabel.setTextFill(Color.web("#333333"));
         
-        // Users Present Section (Card)
-        final VBox usersPresentCard = createCard();
-        final Label usersPresentLabel = new Label("Users Present");
-        usersPresentLabel.setFont(Font.font("System", FontWeight.NORMAL, LABEL_FONT_SIZE));
-        usersPresentLabel.setTextFill(Color.web("#666666"));
+        // // Users Present Section (Card)
+        // final VBox usersPresentCard = createCard();
+        // final Label usersPresentLabel = new Label("Users Present");
+        // usersPresentLabel.setFont(Font.font("System", FontWeight.NORMAL, LABEL_FONT_SIZE));
+        // usersPresentLabel.setTextFill(Color.web("#666666"));
         
-        usersPresentValueLabel = new Label();
-        usersPresentValueLabel.setFont(Font.font("System", FontWeight.BOLD, VALUE_FONT_SIZE));
-        usersPresentValueLabel.setTextFill(Color.web("#2196F3"));
+        // usersPresentValueLabel = new Label();
+        // usersPresentValueLabel.setFont(Font.font("System", FontWeight.BOLD, VALUE_FONT_SIZE));
+        // usersPresentValueLabel.setTextFill(Color.web("#2196F3"));
         
-        usersPresentCard.getChildren().addAll(usersPresentLabel, usersPresentValueLabel);
+        // usersPresentCard.getChildren().addAll(usersPresentLabel, usersPresentValueLabel);
         
-        // Users Logged Out Section (Card)
-        final VBox usersLoggedOutCard = createCard();
-        final Label usersLoggedOutLabel = new Label("Users Logged Out");
-        usersLoggedOutLabel.setFont(Font.font("System", FontWeight.NORMAL, LABEL_FONT_SIZE));
-        usersLoggedOutLabel.setTextFill(Color.web("#666666"));
+        // // Users Logged Out Section (Card)
+        // final VBox usersLoggedOutCard = createCard();
+        // final Label usersLoggedOutLabel = new Label("Users Logged Out");
+        // usersLoggedOutLabel.setFont(Font.font("System", FontWeight.NORMAL, LABEL_FONT_SIZE));
+        // usersLoggedOutLabel.setTextFill(Color.web("#666666"));
         
-        usersLoggedOutValueLabel = new Label();
-        usersLoggedOutValueLabel.setFont(Font.font("System", FontWeight.BOLD, VALUE_FONT_SIZE));
-        usersLoggedOutValueLabel.setTextFill(Color.web("#F44336"));
+        // usersLoggedOutValueLabel = new Label();
+        // usersLoggedOutValueLabel.setFont(Font.font("System", FontWeight.BOLD, VALUE_FONT_SIZE));
+        // usersLoggedOutValueLabel.setTextFill(Color.web("#F44336"));
         
-        usersLoggedOutCard.getChildren().addAll(usersLoggedOutLabel, usersLoggedOutValueLabel);
+        // usersLoggedOutCard.getChildren().addAll(usersLoggedOutLabel, usersLoggedOutValueLabel);
         
-        // Previous Meeting Summary Section (Card)
-        final VBox meetingSummaryCard = createCard();
-        meetingSummaryCard.setPrefHeight(SUMMARY_CARD_HEIGHT);
-        final Label meetingSummaryLabel = new Label("Previous Meeting Summary");
-        meetingSummaryLabel.setFont(Font.font("System", FontWeight.NORMAL, LABEL_FONT_SIZE));
-        meetingSummaryLabel.setTextFill(Color.web("#666666"));
+        // // Previous Meeting Summary Section (Card)
+        // final VBox meetingSummaryCard = createCard();
+        // meetingSummaryCard.setPrefHeight(SUMMARY_CARD_HEIGHT);
+        // final Label meetingSummaryLabel = new Label("Previous Meeting Summary");
+        // meetingSummaryLabel.setFont(Font.font("System", FontWeight.NORMAL, LABEL_FONT_SIZE));
+        // meetingSummaryLabel.setTextFill(Color.web("#666666"));
         
-        meetingSummaryValueLabel = new Label();
-        meetingSummaryValueLabel.setFont(Font.font("System", FontWeight.NORMAL, SUMMARY_FONT_SIZE));
-        meetingSummaryValueLabel.setTextFill(Color.web("#757575"));
-        meetingSummaryValueLabel.setWrapText(true);
-        meetingSummaryValueLabel.setMaxWidth(SUMMARY_MAX_WIDTH);
+        // meetingSummaryValueLabel = new Label();
+        // meetingSummaryValueLabel.setFont(Font.font("System", FontWeight.NORMAL, SUMMARY_FONT_SIZE));
+        // meetingSummaryValueLabel.setTextFill(Color.web("#757575"));
+        // meetingSummaryValueLabel.setWrapText(true);
+        // meetingSummaryValueLabel.setMaxWidth(SUMMARY_MAX_WIDTH);
         
-        meetingSummaryCard.getChildren().addAll(meetingSummaryLabel, meetingSummaryValueLabel);
+        // meetingSummaryCard.getChildren().addAll(meetingSummaryLabel, meetingSummaryValueLabel);
         
+        // Raw payload card
+        final VBox rawPayloadCard = createCard();
+        final Label rawPayloadLabel = new Label("Raw Cloud Payload");
+        rawPayloadLabel.setFont(Font.font("System", FontWeight.NORMAL, LABEL_FONT_SIZE));
+        rawPayloadLabel.setTextFill(Color.web("#666666"));
+
+        rawPayloadValueLabel = new Label();
+        rawPayloadValueLabel.setFont(Font.font("Monospaced", FontWeight.NORMAL, SUMMARY_FONT_SIZE));
+        rawPayloadValueLabel.setTextFill(Color.web("#424242"));
+        rawPayloadValueLabel.setWrapText(true);
+        rawPayloadValueLabel.setMaxWidth(SUMMARY_MAX_WIDTH);
+
+        rawPayloadCard.getChildren().addAll(rawPayloadLabel, rawPayloadValueLabel);
+
         getChildren().addAll(
             titleLabel,
-            usersPresentCard,
-            usersLoggedOutCard,
-            meetingSummaryCard
+            // usersPresentCard,
+            // usersLoggedOutCard,
+            // meetingSummaryCard,
+            rawPayloadCard
         );
     }
     
@@ -138,14 +145,8 @@ class DashboardView extends VBox {
     }
     
     public void setViewModel(final DashboardViewModel viewModel) {
-        usersPresentValueLabel.textProperty().bind(
-            viewModel.usersPresentProperty().asString()
-        );
-        usersLoggedOutValueLabel.textProperty().bind(
-            viewModel.usersLoggedOutProperty().asString()
-        );
-        meetingSummaryValueLabel.textProperty().bind(
-            viewModel.meetingSummaryProperty()
+        rawPayloadValueLabel.textProperty().bind(
+            viewModel.rawPayloadProperty()
         );
     }
 }

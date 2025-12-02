@@ -6,10 +6,10 @@
  * Description = Defines an interface for database operations in the cloud module.
  *****************************************************************************/
 
-package interfaces;
+package com.swe.cloud.interfaces;
 
-import datastructures.CloudResponse;
-import datastructures.Entity;
+import com.swe.cloud.datastructures.CloudResponse;
+import com.swe.cloud.datastructures.Entity;
 
 /**
  * Interface for performing CRUD operations on cloud database entities.

@@ -14,12 +14,11 @@ import javax.swing.UIManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swe.cloud.datastructures.Entity;
+import com.swe.cloud.datastructures.TimeRange;
+import com.swe.cloud.functionlibrary.CloudFunctionLibrary;
 import com.swe.ux.App;
 import com.swe.ux.ui.ModernTabbedPaneUI;
-
-import datastructures.Entity;
-import datastructures.TimeRange;
-import functionlibrary.CloudFunctionLibrary;
 
 /**
  * Manages theme switching and persistence across the application.
@@ -121,18 +120,29 @@ public class ThemeManager {
     // ======================================
 
     /**
-     * Loads theme preference from cloud storage.
+     * Loads theme preference for the currently tracked user.
      */
     public void loadThemeFromCloud() {
-        if (app == null || app.getCurrentUser() == null) {
+        final String username;
+        if (app != null && app.getCurrentUser() != null) {
+            username = app.getCurrentUser().getEmail();
+        } else {
+            username = null;
+        }
+        loadThemeFromCloudForUser(username);
+    }
+
+    /**
+     * Loads theme preference for the supplied username.
+     * @param username email/id of the user whose theme should be fetched
+     */
+    public void loadThemeFromCloudForUser(final String username) {
+        if (username == null || username.isEmpty()) {
+            System.err.println("ThemeManager: No username provided for cloud theme load.");
             return;
         }
 
-        final String username = app.getCurrentUser().getEmail();
         System.out.println("Loading theme for user: " + username);
-        if (username == null || username.isEmpty()) {
-            return;
-        }
 
         final Entity req = new Entity(THEME_CONTAINER, THEME_TYPE, username,
                 THEME_KEY, -1, new TimeRange(0, 0), null);
@@ -140,21 +150,18 @@ public class ThemeManager {
             System.out.println("Theme fetch response: " + res);
             if (res.data() != null) {
                 try {
-                    final JsonNode dataNode = res.data();
-                    final String themeStr;
-                    if (dataNode.isTextual()) {
-                        themeStr = dataNode.asText();
+                    final String themeStr = extractThemeValue(res.data());
+                    if (themeStr != null) {
+                        if ("dark".equalsIgnoreCase(themeStr)) {
+                            currentTheme = new DarkTheme();
+                        } else {
+                            currentTheme = new LightTheme();
+                        }
+                        System.out.println("Theme loaded from cloud: " + themeStr);
+                        SwingUtilities.invokeLater(this::applyThemeToUI);
                     } else {
-                        themeStr = dataNode.get(THEME_KEY).asText();
+                        System.out.println("Theme response missing color information, keeping default.");
                     }
-
-                    if ("dark".equalsIgnoreCase(themeStr)) {
-                        currentTheme = new DarkTheme();
-                    } else {
-                        currentTheme = new LightTheme();
-                    }
-                    System.out.println("Theme loaded from cloud: " + themeStr);
-                    SwingUtilities.invokeLater(this::applyThemeToUI);
                 } catch (Exception e) {
                     System.err.println("Error parsing theme data: " + e.getMessage());
                     // Keep current theme as default
@@ -170,6 +177,36 @@ public class ThemeManager {
             saveThemeToCloud();
             return null;
         });
+    }
+
+    private String extractThemeValue(final JsonNode node) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        if (node.isTextual()) {
+            return node.asText();
+        }
+        if (node.has(THEME_KEY)) {
+            final JsonNode colorNode = node.get(THEME_KEY);
+            if (colorNode != null && !colorNode.isNull()) {
+                return colorNode.asText();
+            }
+        }
+        if (node.has("data")) {
+            final String nested = extractThemeValue(node.get("data"));
+            if (nested != null) {
+                return nested;
+            }
+        }
+        if (node.isArray()) {
+            for (JsonNode child : node) {
+                final String candidate = extractThemeValue(child);
+                if (candidate != null) {
+                    return candidate;
+                }
+            }
+        }
+        return null;
     }
 
     private void saveThemeToCloud() {

@@ -7,6 +7,8 @@ import java.util.List;
 import com.swe.controller.Meeting.UserProfile;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.screenNVideo.Utils;
+import com.swe.ux.analytics.CanvasShapeMetricsCollector;
+import com.swe.ux.analytics.ScreenShareTelemetryCollector;
 import com.swe.ux.binding.BindableProperty;
 import com.swe.ux.model.Meeting;
 
@@ -140,6 +142,8 @@ public class MeetingViewModel extends BaseViewModel {
             currentMeeting = null;
             // Clear meeting ID when meeting ends
             meetingId.set("");
+            CanvasShapeMetricsCollector.getInstance().reset();
+            ScreenShareTelemetryCollector.getInstance().resetSession();
         }
     }
 
@@ -153,6 +157,24 @@ public class MeetingViewModel extends BaseViewModel {
             updateMessages();
             messageText.set("");
         }
+    }
+
+    /**
+     * Captures a quick doubt entry and surfaces it to the meeting chat log so
+     * analytics panels can pick it up.
+     * @param quickDoubt the quick doubt text entered by the participant
+     */
+    public void submitQuickDoubt(final String quickDoubt) {
+        if (currentMeeting == null || quickDoubt == null) {
+            return;
+        }
+        final String trimmed = quickDoubt.trim();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+        final String formatted = "[Quick Doubt] " + trimmed;
+        currentMeeting.addMessage(new Meeting.ChatMessage(currentUser, formatted));
+        updateMessages();
     }
 
     /**
@@ -198,6 +220,7 @@ public class MeetingViewModel extends BaseViewModel {
                 rpc.call(Utils.STOP_VIDEO_CAPTURE, new byte[0]);
             }
             currentMeeting.setVideoEnabled(newState);
+            ScreenShareTelemetryCollector.getInstance().setCameraActive(newState);
             if (newState) {
                 addSystemMessage("Video enabled");
             } else {
@@ -240,6 +263,7 @@ public class MeetingViewModel extends BaseViewModel {
                 rpc.call(Utils.STOP_SCREEN_CAPTURE, new byte[0]);
             }
             currentMeeting.setScreenSharingEnabled(newState);
+            ScreenShareTelemetryCollector.getInstance().setScreenActive(newState);
             if (newState) {
                 addSystemMessage("Screen sharing enabled");
             } else {

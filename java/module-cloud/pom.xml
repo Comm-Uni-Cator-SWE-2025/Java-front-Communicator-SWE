@@ -64,7 +64,11 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.11</version>
+                <version>0.8.12</version>
+                <configuration>
+                    <!-- JaCoCo does not yet support class file version 68 (JDK 24), so skip instrumentation for now -->
+                    <skip>true</skip>
+                </configuration>
                 <executions>
                     <!-- Attach JaCoCo agent before tests -->
                     <execution>
@@ -81,6 +85,16 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <!-- Allow Mockito's inline mock maker to attach to the current JVM -->
+                    <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
+                </configuration>
             </plugin>
 
         </plugins>

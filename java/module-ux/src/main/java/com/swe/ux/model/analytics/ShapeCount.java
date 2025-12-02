@@ -10,19 +10,19 @@ package com.swe.ux.model.analytics;
 public class ShapeCount {
 
     /** Count of freehand shapes. */
-    private final int freeHand;
+    private int freeHand;
 
     /** Count of straight line shapes. */
-    private final int straightLine;
+    private int straightLine;
 
     /** Count of rectangle shapes. */
-    private final int rectangle;
+    private int rectangle;
 
     /** Count of ellipse shapes. */
-    private final int ellipse;
+    private int ellipse;
 
     /** Count of triangle shapes. */
-    private final int triangle;
+    private int triangle;
 
     /**
      * Creates a new shape count model.
@@ -90,36 +90,53 @@ public class ShapeCount {
         return triangle;
     }
 
+    /** Increments the freehand count. */
+    public void incrementFreeHand() {
+        setFreeHand(this.freeHand + 1);
+    }
+
+    /** Increments the straight line count. */
+    public void incrementStraightLine() {
+        setStraightLine(this.straightLine + 1);
+    }
+
+    /** Increments the rectangle count. */
+    public void incrementRectangle() {
+        setRectangle(this.rectangle + 1);
+    }
+
+    /** Increments the ellipse count. */
+    public void incrementEllipse() {
+        setEllipse(this.ellipse + 1);
+    }
+
+    /** Increments the triangle count. */
+    public void incrementTriangle() {
+        setTriangle(this.triangle + 1);
+    }
+
     /**
      * Sets the freehand shape count.
      *
      * @param count new freehand count
      */
-    public void setFreeHand(int count) {
-        // This method is intentionally left blank to maintain immutability
-        // Subclasses can override this method to provide mutability
+    public void setFreeHand(final int count) {
+        this.freeHand = count;
     }
 
-    public void setStraightLine(int count) {
-        // This method is intentionally left blank to maintain immutability
-        // Subclasses can override this method to provide mutability
+    public void setStraightLine(final int count) {
+        this.straightLine = count;
     }
 
-    public void setRectangle(int count) {
-        // This method is intentionally left blank to maintain immutability
-        // Subclasses can override this method to provide mutability
+    public void setRectangle(final int count) {
+        this.rectangle = count;
     }
 
-    public void setEllipse(int count) {
-        // This method is intentionally left blank to maintain immutability
-        // Subclasses can override this method to provide mutability
+    public void setEllipse(final int count) {
+        this.ellipse = count;
     }
 
-    public void setTriangle(int count) {
-        // This method is intentionally left blank to maintain immutability
-        // Subclasses can override this method to provide mutability
+    public void setTriangle(final int count) {
+        this.triangle = count;
     }
-
-
-    
 }

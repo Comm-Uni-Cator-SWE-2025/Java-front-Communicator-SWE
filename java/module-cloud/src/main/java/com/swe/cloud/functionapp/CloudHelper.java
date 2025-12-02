@@ -6,7 +6,7 @@
  * Description = Defines helper functions for handling HTTP requests and errors.
  *****************************************************************************/
 
-package functionapp;
+package com.swe.cloud.functionapp;
 
 import java.util.Optional;
 
@@ -16,7 +16,7 @@ import com.microsoft.azure.functions.HttpRequestMessage;
 import com.microsoft.azure.functions.HttpResponseMessage;
 import com.microsoft.azure.functions.HttpStatus;
 
-import datastructures.CloudResponse;
+import com.swe.cloud.datastructures.CloudResponse;
 
 /**
  * Provides common helper methods for Azure Function HTTP handlers,

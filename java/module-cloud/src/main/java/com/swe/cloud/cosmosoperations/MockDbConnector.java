@@ -6,13 +6,13 @@
  * Description = Mock implementation of IdbConnector for testing CRUD operations.
  *****************************************************************************/
 
-package cosmosoperations;
+package com.swe.cloud.cosmosoperations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import datastructures.CloudResponse;
-import datastructures.Entity;
-import interfaces.IdbConnector;
+import com.swe.cloud.datastructures.CloudResponse;
+import com.swe.cloud.datastructures.Entity;
+import com.swe.cloud.interfaces.IdbConnector;
 
 /** Mock database connector for testing. */
 public class MockDbConnector implements IdbConnector {

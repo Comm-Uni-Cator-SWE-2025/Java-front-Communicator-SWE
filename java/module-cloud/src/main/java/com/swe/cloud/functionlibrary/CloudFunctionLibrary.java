@@ -6,11 +6,11 @@
  * Description = ASYNC Function Library for calling Azure Function APIs
  *****************************************************************************/
 
-package functionlibrary;
+package com.swe.cloud.functionlibrary;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import datastructures.CloudResponse;
-import datastructures.Entity;
+import com.swe.cloud.datastructures.CloudResponse;
+import com.swe.cloud.datastructures.Entity;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.net.URI;

@@ -4,8 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.swe.ux.analytics.ScreenShareTelemetryCollector;
 import com.swe.ux.model.analytics.ScreenVideoTelemetryModel;
-import com.swe.ux.service.TelemetryDataService;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -33,8 +33,8 @@ public class ScreenVideoTelemetryViewModel {
     /** Rounding factor constant. */
     private static final double ROUNDING_FACTOR = 10.0;
     
-    /** Data service for telemetry. */
-    private final TelemetryDataService dataService;
+    /** Collector that surfaces live telemetry from screen sharing module. */
+    private final ScreenShareTelemetryCollector telemetryCollector;
     /** Observable list of snapshots. */
     private final ObservableList<ScreenVideoTelemetryModel> snapshots;
     /** Max snapshots property. */
@@ -63,7 +63,16 @@ public class ScreenVideoTelemetryViewModel {
      * Creates a new ScreenVideoTelemetryViewModel.
      */
     public ScreenVideoTelemetryViewModel() {
-        this.dataService = new TelemetryDataService();
+        this(ScreenShareTelemetryCollector.getInstance());
+    }
+
+    /**
+     * Creates a new ScreenVideoTelemetryViewModel with custom collector.
+     * Primarily useful for tests.
+     * @param collector collector supplying telemetry snapshots
+     */
+    public ScreenVideoTelemetryViewModel(final ScreenShareTelemetryCollector collector) {
+        this.telemetryCollector = collector;
         this.snapshots = FXCollections.observableArrayList();
         this.latestSnapshot = new SimpleObjectProperty<>(null);
         this.fpsHistory = FXCollections.observableArrayList();
@@ -82,12 +91,10 @@ public class ScreenVideoTelemetryViewModel {
      * Fetches and updates telemetry data.
      */
     public void fetchAndUpdateData() {
-        final String json = dataService.fetchNextData();
-        if (json == null || json.isEmpty()) {
+        final ScreenVideoTelemetryModel model = telemetryCollector.buildSnapshotModel();
+        if (model == null) {
             return;
         }
-
-        final ScreenVideoTelemetryModel model = dataService.parseJson(json);
         snapshots.add(model);
         trimToMaxSnapshots();
         latestSnapshot.set(model);

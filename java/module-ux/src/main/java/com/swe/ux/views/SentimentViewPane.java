@@ -1,9 +1,9 @@
 package com.swe.ux.views;
 
+import com.swe.controller.Meeting.UserProfile;
 import com.swe.ux.model.analytics.ShapeCount;
 import com.swe.controller.RPCinterface.AbstractRPC;
 import com.swe.ux.model.analytics.SentimentPoint;
-import com.swe.ux.service.MessageDataService;
 import com.swe.ux.viewmodels.MeetingViewModel;
 import com.swe.ux.viewmodels.ScreenVideoTelemetryViewModel;
 
@@ -13,6 +13,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
@@ -29,7 +30,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -71,8 +74,8 @@ public class SentimentViewPane extends StackPane {
     private static final int TITLE_FONT_SIZE = 14;
     /** Font size for message label. */
     private static final int MESSAGE_FONT_SIZE = 12;
-    /** Content snippet max length. */
-    private static final int CONTENT_SNIPPET_MAX_LENGTH = 20;
+    /** Maximum samples to keep for user count chart. */
+    private static final int MAX_USER_COUNT_POINTS = 30;
 
     /** Sentiment view model. */
     private final SentimentViewModel viewModel;
@@ -80,8 +83,6 @@ public class SentimentViewPane extends StackPane {
     private final ShapeViewModel shapeViewModel;
     /** Telemetry view model. */
     private final ScreenVideoTelemetryViewModel telemetryViewModel;
-    /** Message data service. */
-    private final MessageDataService messageDataService;
     /** All messages list. */
     private final List<String> allMessages;
 
@@ -107,6 +108,12 @@ public class SentimentViewPane extends StackPane {
     private NumberAxis xAxis;
     /** Y axis. */
     private NumberAxis yAxis;
+    /** User count chart. */
+    private LineChart<Number, Number> userCountChart;
+    /** User count X axis. */
+    private NumberAxis userCountXAxis;
+    /** User count Y axis. */
+    private NumberAxis userCountYAxis;
     /** Bar chart. */
     private BarChart<String, Number> barChart;
     /** Category axis. */
@@ -117,6 +124,10 @@ public class SentimentViewPane extends StackPane {
     private AbstractRPC rpc;
     /** Meeting view model. */
     private MeetingViewModel meetingViewModel;
+    /** Rolling user count history. */
+    private final Deque<UserCountSample> userCountHistory;
+    /** Sample index for user counts. */
+    private int userCountSampleIndex;
 
     /**
      * Creates a new SentimentViewPane.
@@ -128,8 +139,11 @@ public class SentimentViewPane extends StackPane {
         this.viewModel = new SentimentViewModel(rpc);
         this.shapeViewModel = new ShapeViewModel();
         this.telemetryViewModel = new ScreenVideoTelemetryViewModel();
-        this.messageDataService = new MessageDataService();
         this.allMessages = new ArrayList<>();
+        this.userCountHistory = new ArrayDeque<>();
+        this.userCountSampleIndex = 0;
+        this.meetingViewModel.messages.addListener(evt ->
+                Platform.runLater(this::updateMessages));
 
         setPadding(new Insets(DEFAULT_PADDING));
         setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
@@ -140,7 +154,10 @@ public class SentimentViewPane extends StackPane {
     }
 
     private void buildLayout() {
+        
+        
         System.out.println("Building Sentiment View Pane Layout...");
+
         root = new GridPane();
         root.setHgap(DEFAULT_GAP);
         root.setVgap(DEFAULT_GAP);
@@ -219,8 +236,23 @@ public class SentimentViewPane extends StackPane {
         shapeButtonBox.getChildren().addAll(shapePrevBtn, shapeNextBtn);
 
         createChart();
-        topLeftPane.getChildren().addAll(buttonBox, chart);
-        VBox.setVgrow(chart, Priority.ALWAYS);
+        createUserCountChart();
+        final VBox participantSection = new VBox(5);
+        participantSection.setAlignment(Pos.TOP_LEFT);
+        participantSection.setPrefWidth(320);
+        participantSection.setMaxWidth(360);
+        final Label participantsLabel = new Label("Participants Over Time");
+        participantsLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        participantSection.getChildren().addAll(participantsLabel, userCountChart);
+        VBox.setVgrow(userCountChart, Priority.ALWAYS);
+
+        final HBox chartsRow = new HBox(DEFAULT_SPACING);
+        chartsRow.setAlignment(Pos.TOP_LEFT);
+        chartsRow.getChildren().addAll(chart, participantSection);
+        HBox.setHgrow(chart, Priority.ALWAYS);
+
+        topLeftPane.getChildren().addAll(buttonBox, chartsRow);
+        VBox.setVgrow(chartsRow, Priority.ALWAYS);
 
         createBarChart();
         topRightPane.getChildren().addAll(shapeButtonBox, barChart);
@@ -230,6 +262,8 @@ public class SentimentViewPane extends StackPane {
 
         telemetryViewModel.fetchAndUpdateData();
         telemetryView.refresh();
+        updateUserCountChart();
+        com.swe.launcher.FrontendStateChecker.markUIReady();
     }
 
     private void bindPaneSizing() {
@@ -283,14 +317,22 @@ public class SentimentViewPane extends StackPane {
         VBox.setVgrow(messageScrollPane, Priority.ALWAYS);
 
         bottomLeftPane.getChildren().addAll(titleLabel, messageScrollPane);
+        updateMessages();
     }
 
     private void updateMessages() {
-        final String json = messageDataService.fetchNextData(rpc);
-        final List<String> messages = messageDataService.parseJson(json);
-
-        for (int i = messages.size() - 1; i >= 0; i--) {
-            allMessages.add(0, messages.get(i));
+        if (messageContainer == null || meetingViewModel == null) {
+            return;
+        }
+        final List<String> meetingMessages = meetingViewModel.messages.get();
+        allMessages.clear();
+        if (meetingMessages != null) {
+            for (int i = meetingMessages.size() - 1; i >= 0; i--) {
+                final String message = meetingMessages.get(i);
+                if (message != null && !message.isBlank()) {
+                    allMessages.add(message);
+                }
+            }
         }
 
         messageContainer.getChildren().clear();
@@ -356,6 +398,22 @@ public class SentimentViewPane extends StackPane {
         chart = new LineChart<>(xAxis, yAxis);
         chart.setTitle("Sentiment Trend");
         chart.setAnimated(false);
+        chart.setLegendVisible(false);
+        chart.setMinHeight(260);
+    }
+
+    private void createUserCountChart() {
+        userCountXAxis = new NumberAxis();
+        userCountYAxis = new NumberAxis();
+        userCountXAxis.setLabel("Sample");
+        userCountYAxis.setLabel("Users");
+
+        userCountChart = new LineChart<>(userCountXAxis, userCountYAxis);
+        userCountChart.setTitle(null);
+        userCountChart.setLegendVisible(false);
+        userCountChart.setAnimated(false);
+        userCountChart.setCreateSymbols(true);
+        userCountChart.setMinHeight(220);
     }
 
     private void createBarChart() {
@@ -500,6 +558,79 @@ public class SentimentViewPane extends StackPane {
         chart.getData().add(series);
     }
 
+    private void updateUserCountChart() {
+        if (meetingViewModel == null || userCountChart == null) {
+            return;
+        }
+        recordUserCountSample();
+
+        final XYChart.Series<Number, Number> series = new XYChart.Series<>();
+        int minCount = Integer.MAX_VALUE;
+        int maxCount = Integer.MIN_VALUE;
+        for (UserCountSample sample : userCountHistory) {
+            series.getData().add(new XYChart.Data<>(sample.index(), sample.count()));
+            minCount = Math.min(minCount, sample.count());
+            maxCount = Math.max(maxCount, sample.count());
+        }
+
+        userCountChart.getData().setAll(series);
+
+        if (!userCountHistory.isEmpty()) {
+            final UserCountSample first = userCountHistory.peekFirst();
+            final UserCountSample last = userCountHistory.peekLast();
+            userCountXAxis.setAutoRanging(false);
+            userCountXAxis.setLowerBound(first.index());
+            userCountXAxis.setUpperBound(last.index());
+            final double tickUnit = Math.max(1, (last.index() - first.index()) / 5.0);
+            userCountXAxis.setTickUnit(tickUnit);
+
+            if (minCount == Integer.MAX_VALUE) {
+                minCount = 0;
+            }
+            if (maxCount == Integer.MIN_VALUE) {
+                maxCount = 0;
+            }
+            final int padding = Math.max(1, (maxCount - minCount) / 4);
+            userCountYAxis.setAutoRanging(false);
+            userCountYAxis.setLowerBound(Math.max(0, minCount - padding));
+            userCountYAxis.setUpperBound(maxCount + padding);
+        } else {
+            userCountXAxis.setAutoRanging(true);
+            userCountYAxis.setAutoRanging(true);
+        }
+    }
+
+    private void recordUserCountSample() {
+        if (meetingViewModel == null || meetingViewModel.getParticipants() == null) {
+            return;
+        }
+        final List<UserProfile> participantsList = meetingViewModel.getParticipants().get();
+        final int count = participantsList == null ? 0 : participantsList.size();
+        userCountSampleIndex++;
+        userCountHistory.addLast(new UserCountSample(userCountSampleIndex, count));
+        while (userCountHistory.size() > MAX_USER_COUNT_POINTS) {
+            userCountHistory.removeFirst();
+        }
+    }
+
+    private static final class UserCountSample {
+        private final int index;
+        private final int count;
+
+        UserCountSample(final int idx, final int value) {
+            this.index = idx;
+            this.count = value;
+        }
+
+        int index() {
+            return index;
+        }
+
+        int count() {
+            return count;
+        }
+    }
+
     private void startPeriodicUpdates() {
         final Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -530,6 +661,7 @@ public class SentimentViewPane extends StackPane {
                                     updateChartWithAnimation(false);
                                     updateMessages();
                                     updateBarChartWithAnimation(false);
+                                    updateUserCountChart();
                                 });
                             });
                 }
