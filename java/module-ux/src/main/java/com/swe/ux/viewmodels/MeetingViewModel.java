@@ -149,7 +149,12 @@ public class MeetingViewModel extends BaseViewModel {
         currentMeeting.setMeetingTitle(title);
         currentMeeting.addParticipant(currentUser);
 
-        ipToMail.put(currentUser.getEmail(), Utils.getSelfIP());
+        try {
+            ipToMail.put(currentUser.getEmail(), Utils.getSelfIP());
+        } catch (final RuntimeException ex) {
+            System.err.println("MeetingViewModel: Unable to detect self IP, using loopback. " + ex.getMessage());
+            ipToMail.put(currentUser.getEmail(), "127.0.0.1");
+        }
 
         isMeetingActive.set(true);
         updateParticipants();

@@ -259,12 +259,15 @@ public class MainPage extends FrostedBackgroundPanel {
         final JPanel textStack = new JPanel();
         textStack.setOpaque(false);
         textStack.setLayout(new BoxLayout(textStack, BoxLayout.Y_AXIS));
+        textStack.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         welcomeLabel = new JLabel("Welcome");
         welcomeLabel.setFont(FontUtil.getJetBrainsMono(WELCOME_FONT_SIZE, Font.BOLD));
+        welcomeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         subtitleLabel = new JLabel("A quick meeting can solve a lot!");
         subtitleLabel.setFont(FontUtil.getJetBrainsMono(SUBTITLE_FONT_SIZE, Font.PLAIN));
+        subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         textStack.add(welcomeLabel);
         textStack.add(Box.createVerticalStrut(VERTICAL_STRUT_4));
@@ -272,6 +275,7 @@ public class MainPage extends FrostedBackgroundPanel {
 
         final JPanel metaRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         metaRow.setOpaque(false);
+        metaRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         dateLabel = new JLabel(formatDate(new Date()));
         dateLabel.setFont(FontUtil.getJetBrainsMono(DATE_FONT_SIZE, Font.PLAIN));

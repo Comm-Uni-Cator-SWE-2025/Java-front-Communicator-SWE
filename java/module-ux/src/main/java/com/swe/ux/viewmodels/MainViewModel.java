@@ -77,7 +77,11 @@ public class MainViewModel extends BaseViewModel {
     public void joinMeeting(final String meetingCodeParam) {
         joinMeetingRequested.set(true);
         try {
-            final byte[] response = rpc.call("core/joinMeeting", DataSerializer.serialize(meetingCodeParam)).get();
+            rpc.call("core/joinMeeting", DataSerializer.serialize(meetingCodeParam))
+                    .exceptionally(ex -> {
+                        ex.printStackTrace();
+                        return new byte[0];
+                    });
         } catch (final Exception e) {
             e.printStackTrace();
         }

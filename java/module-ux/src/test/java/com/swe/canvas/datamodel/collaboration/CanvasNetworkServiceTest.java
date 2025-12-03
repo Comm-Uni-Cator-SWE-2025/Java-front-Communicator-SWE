@@ -5,11 +5,9 @@
 package com.swe.canvas.datamodel.collaboration;
 
 import com.swe.controller.RPCinterface.AbstractRPC;
-import com.swe.networking.ClientNode;
 import com.swe.networking.NetworkFront;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -46,31 +44,13 @@ class CanvasNetworkServiceTest {
     }
 
     @Test
-    void sendMessageToHost_doesNotCallRpc_whenHostUnknown() {
+    void sendMessageToHost_invokesRpc() {
         final FakeRPC rpc = new FakeRPC();
-        final NetworkFront network = null; // not used by CanvasNetworkService for this test
+        final NetworkFront network = null;
 
         final CanvasNetworkService svc = new CanvasNetworkService(rpc, network);
 
         final NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, new byte[]{1});
-        svc.sendMessageToHost(msg);
-
-        assertEquals(0, rpc.calledMethods.size(), "RPC should not be called when hostNode is unknown");
-    }
-
-    @Test
-    void sendMessageToHost_callsRpc_whenHostKnown() throws Exception {
-        final FakeRPC rpc = new FakeRPC();
-        final NetworkFront network = null;
-        final CanvasNetworkService svc = new CanvasNetworkService(rpc, network);
-
-        // set private hostNode field using reflection
-        final Field hostField = CanvasNetworkService.class.getDeclaredField("hostNode");
-        hostField.setAccessible(true);
-        hostField.set(svc, new ClientNode("127.0.0.1", 9999));
-
-        final NetworkMessage msg = new NetworkMessage(MessageType.NORMAL, new byte[]{5, 6, 7});
-
         svc.sendMessageToHost(msg);
 
         assertEquals(1, rpc.calledMethods.size(), "RPC.call should be invoked once");

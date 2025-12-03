@@ -35,17 +35,20 @@ public class MessageDataService {
     public String fetchNextData(final AbstractRPC rpc) {
         String data = null;
         try {
+            if (rpc == null) {
+                return "";
+            }
             System.out.println("Fetching Message Data from Core Module...");
-            // final byte[] json = rpc.call("core/AiAction", new byte[0]).get();
-
-            String message = "true";
-            final byte[] json = message.getBytes(StandardCharsets.UTF_8);
-            System.out.println("Received Message Data: " + new String(json));
-            if (json != null) {
+            final byte[] json = rpc.call("core/AiAction", new byte[0]).get();
+            if (json != null && json.length > 0) {
                 data = DataSerializer.deserialize(json, String.class);
+                System.out.println("Received Message Data: " + data);
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
         if (data == null || data.isEmpty()) {

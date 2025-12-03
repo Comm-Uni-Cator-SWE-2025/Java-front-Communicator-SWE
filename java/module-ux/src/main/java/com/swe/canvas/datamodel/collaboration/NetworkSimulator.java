@@ -9,18 +9,12 @@
 
 package com.swe.canvas.datamodel.collaboration;
 
+import com.swe.canvas.datamodel.manager.ActionManager;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.swe.canvas.datamodel.manager.ActionManager;
-
 /**
  * A network stub that simulates the Host-Client connection in memory.
- *
- * <p>This class implements {@link NetworkService} by holding direct references
- * to the Host and Client managers. Calls to send/broadcast directly invoke
- * the `processIncomingMessage` methods on the recipients, simulating instantaneous
- * network transmission.</p>
  */
 public class NetworkSimulator implements NetworkService {
 
@@ -30,21 +24,28 @@ public class NetworkSimulator implements NetworkService {
     /** List of registered Client managers. */
     private final List<ActionManager> clientManagers = new ArrayList<>();
 
-    @Override
+    /**
+     * Registers the authoritative host manager that receives direct messages.
+     *
+     * @param host the host ActionManager instance.
+     */
     public void registerHost(final ActionManager host) {
         this.hostManager = host;
     }
 
-    @Override
+    /**
+     * Registers a client manager that should receive broadcast updates.
+     *
+     * @param client the client ActionManager instance.
+     */
     public void registerClient(final ActionManager client) {
         if (client != null) {
-            this.clientManagers.add(client);
+            clientManagers.add(client);
         }
     }
 
     @Override
     public void sendMessageToHost(final NetworkMessage message) {
-        // System.out.println("[NETWORK] Client -> Host: " + message.getMessageType());
         if (hostManager != null) {
             hostManager.processIncomingMessage(message);
         }
@@ -52,8 +53,16 @@ public class NetworkSimulator implements NetworkService {
 
     @Override
     public void broadcastMessage(final NetworkMessage message) {
-        // System.out.println("[NETWORK] Host -> ALL Clients: " + message.getMessageType());
-        for (ActionManager client : clientManagers) {
+        for (final ActionManager client : clientManagers) {
+            client.processIncomingMessage(message);
+        }
+    }
+
+    @Override
+    public void sendToClient(final NetworkMessage message, final String targetClientId) {
+        // Simple simulation: broadcast to all for now in tests, or ignore.
+        // In a real simulation we'd map IDs to managers.
+        for (final ActionManager client : clientManagers) {
             client.processIncomingMessage(message);
         }
     }

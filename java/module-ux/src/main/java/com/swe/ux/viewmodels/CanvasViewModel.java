@@ -55,7 +55,7 @@ public class CanvasViewModel {
     public boolean isDraggingSelection = false;
     private ShapeState originalShapeForDrag = null;
 
-    private static CanvasShapeCount shapeCount = null;
+    private final CanvasShapeCount shapeCount;
     
     public CanvasViewModel(final String userId, final ActionManager actionManager) {
 
@@ -64,7 +64,7 @@ public class CanvasViewModel {
         this.canvasState = actionManager.getCanvasState();
         this.actionFactory = actionManager.getActionFactory();
         this.shapeFactory = new ShapeFactory();
-        shapeCount = new CanvasShapeCount(0, 0, 0, 0, 0);
+        this.shapeCount = new CanvasShapeCount(0, 0, 0, 0, 0);
 
     }
 

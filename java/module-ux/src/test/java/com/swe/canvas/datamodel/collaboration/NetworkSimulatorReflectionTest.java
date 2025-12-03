@@ -21,6 +21,11 @@ class NetworkSimulatorReflectionTest {
         NetworkMessage lastMessage;
 
         @Override
+        public void initialize() {
+            // no-op
+        }
+
+        @Override
         public com.swe.canvas.datamodel.action.ActionFactory getActionFactory() {
             return new ActionFactory();
         }
@@ -79,6 +84,16 @@ class NetworkSimulatorReflectionTest {
         @Override
         public void processIncomingMessage(final NetworkMessage message) {
             this.lastMessage = message;
+        }
+
+        @Override
+        public byte[] handleUpdate(final byte[] data) {
+            return new byte[0];
+        }
+
+        @Override
+        public void handleUserJoined(final String userId) {
+            // no-op
         }
     }
 

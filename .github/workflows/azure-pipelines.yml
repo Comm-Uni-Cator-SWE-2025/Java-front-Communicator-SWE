@@ -49,17 +49,6 @@ jobs:
       displayName: "Run Checkstyle"
       continueOnError: true
 
-    # 3️⃣ Download & extract JDK 21 — guaranteed to work
-    - script: |
-        echo "🔽 Downloading JDK 21..."
-        curl -L -o jdk21.tar.gz https://download.oracle.com/java/21/latest/jdk-21_macos-x64_bin.tar.gz
-        mkdir jdk21
-        tar -xzf jdk21.tar.gz -C jdk21 --strip-components=1
-        export JAVA_HOME=$(pwd)/jdk21
-        export PATH=$JAVA_HOME/bin:$PATH
-        echo "JAVA_HOME set to $JAVA_HOME"
-        java -version
-      displayName: "Install Java 21 for Coverage"
 
     # 4️⃣ Run tests + coverage under Java 21
     - script: |

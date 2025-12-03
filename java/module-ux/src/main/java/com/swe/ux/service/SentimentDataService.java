@@ -37,23 +37,25 @@ public class SentimentDataService {
     public String fetchNextData(final AbstractRPC rpc) {
         String data = null;
         try {
+            if (rpc == null) {
+                return "";
+            }
             System.out.println("Fetching Sentiment Data from Core Module...");
-            // final byte[] json = rpc.call("core/AiSentiment", new byte[0]).get();
-            
-            String sentiment = "true";
-            final byte[] json = sentiment.getBytes(StandardCharsets.UTF_8);
-            System.out.println("Received Sentiment Data: " + new String(json));
-            if (json != null) {
+            final byte[] json = rpc.call("core/AiSentiment", new byte[0]).get();
+            if (json != null && json.length > 0) {
                 data = DataSerializer.deserialize(json, String.class);
+                System.out.println("Received Sentiment Data: " + data);
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
         if (data == null || data.isEmpty()) {
             return "";
         }
-        
         JSON_LIST.add(data);
 
         final String response = JSON_LIST.get(currentIndex);

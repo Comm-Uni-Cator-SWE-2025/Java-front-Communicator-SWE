@@ -11,15 +11,6 @@ import com.swe.controller.serialize.DataSerializer;
 import com.swe.networking.AbstractController;
 import com.swe.networking.NetworkFront;
 import com.swe.ux.theme.ThemeManager;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
 import com.swe.ux.views.LoginPage;
 import com.swe.ux.views.MainPage;
 import com.swe.ux.views.MeetingPage;
@@ -28,15 +19,24 @@ import com.swe.ux.viewmodels.MainViewModel;
 import com.swe.ux.viewmodels.MeetingViewModel;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+
 import com.swe.ux.binding.PropertyListeners;
 
 /**
@@ -59,73 +59,6 @@ public class App extends JFrame {
     public static final String MAIN_VIEW = "MAIN";
     /** Meeting view identifier. */
     public static final String MEETING_VIEW = "MEETING";
-    /** Relative path to the core backend JAR at runtime. */
-    private static final String CORE_JAR_RELATIVE_PATH = "backend/core-server.jar";
-
-    /** Process handle for the backend core. */
-    private static Process backendProcess = null;
-
-    /**
-     * Starts the backend core JAR in a separate process.
-     * Uses the same JRE that is running the frontend (works with jpackage).
-     */
-    private static void startBackendCore() {
-        try {
-            // Resolve core jar relative to where THIS app is located
-            File currentJar = new File(App.class
-                    .getProtectionDomain()
-                    .getCodeSource()
-                    .getLocation()
-                    .toURI());
-
-            // If running from IDE or Maven exec, location is target/classes
-            File appDir = currentJar.getParentFile();
-            Path coreJarPath = appDir.toPath().resolve("backend/core.jar");
-
-            System.out.println("Searching core at: " + coreJarPath);
-
-            if (!Files.exists(coreJarPath)) {
-                System.err.println("❌ Backend core JAR not found!");
-                return;
-            }
-
-            String javaBin = System.getProperty("java.home")
-                    + File.separator + "bin" + File.separator + "java";
-
-            ProcessBuilder pb = new ProcessBuilder(
-                    javaBin,
-                    "-jar",
-                    coreJarPath.toAbsolutePath().toString());
-
-            pb.inheritIO();
-            pb.directory(appDir);
-
-            backendProcess = pb.start();
-            System.out.println("🔥 Backend core started successfully!");
-
-        } catch (Exception e) {
-            System.err.println("❌ Failed to start backend core:");
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Starts backend core with a delay after the frontend has initialized.
-     * Currently hard-coded to 5 seconds.
-     */
-    private static void startBackendCoreWithDelay() {
-        Thread t = new Thread(() -> {
-            try {
-                // Wait 5 seconds after frontend is up
-                Thread.sleep(5000);
-                startBackendCore();
-            } catch (InterruptedException ignored) {
-                // ignore
-            }
-        }, "backend-core-starter");
-        t.setDaemon(true);
-        t.start();
-    }
 
     /** Default window width. */
     private static final int DEFAULT_WIDTH = 1200;
@@ -196,6 +129,7 @@ public class App extends JFrame {
         themeManager.setMainFrame(this);
         themeManager.setApp(this);
 
+        // Show login view by default
         showView(LOGIN_VIEW);
 
         // Center the window
@@ -221,21 +155,6 @@ public class App extends JFrame {
         return ipVal.substring(0, ipVal.indexOf(","));
     }
 
-    private static void startBackend() {
-        try {
-            String java = System.getProperty("java.home") + "/bin/java";
-            String jarPath = App.class.getResource("/backend/core.jar").getPath();
-
-            ProcessBuilder builder = new ProcessBuilder(java, "-jar", jarPath);
-            builder.redirectErrorStream(true);
-            backendProcess = builder.start();
-
-            System.out.println("Backend started: " + jarPath);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * Initializes all the views and adds them to the card layout.
      */
@@ -252,10 +171,7 @@ public class App extends JFrame {
 
         // Initialize Views with their respective ViewModels
         final LoginPage loginView = new LoginPage(loginViewModel);
-        System.out.println("Starting backend");
-        startBackendCoreWithDelay();
         final MainPage mainView = new MainPage(mainViewModel);
-
         final MeetingPage meetingView = new MeetingPage(meetingViewModel);
 
         // Add views to card layout
@@ -391,6 +307,8 @@ public class App extends JFrame {
                     return;
                 }
 
+                // Ensure the local profile reflects instructor role
+                currentUser.setRole(ParticipantRole.INSTRUCTOR);
                 // Create a new meeting view model for this meeting with Instructor role
                 final MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Instructor", rpc);
 
@@ -455,6 +373,7 @@ public class App extends JFrame {
                 mainViewModel.joinMeeting(meetingCode);
 
                 // Create a new meeting view model for joining meeting with Student role
+                currentUser.setRole(ParticipantRole.STUDENT);
                 final MeetingViewModel newMeetingViewModel = new MeetingViewModel(currentUser, "Student", rpc);
 
                 // Create a new MeetingPage with the new view model
@@ -576,7 +495,6 @@ public class App extends JFrame {
                 System.err.println("Warning: Could not initialize JavaFX early: " + e.getMessage());
             }
         });
-
         javaFXInitThread.setDaemon(true);
         javaFXInitThread.start();
 
@@ -598,9 +516,13 @@ public class App extends JFrame {
 
             app.start();
             app.setVisible(true);
-            startBackendCoreWithDelay();
         });
 
+        try {
+            handler.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // Getters
@@ -665,7 +587,7 @@ public class App extends JFrame {
         if (tokensDir == null || !Files.exists(tokensDir)) {
             return;
         }
-        try (java.util.stream.Stream<Path> paths = Files.walk(tokensDir)) {
+        try (Stream<Path> paths = Files.walk(tokensDir)) {
             paths.sorted(Comparator.reverseOrder()).forEach(path -> {
                 try {
                     Files.deleteIfExists(path);

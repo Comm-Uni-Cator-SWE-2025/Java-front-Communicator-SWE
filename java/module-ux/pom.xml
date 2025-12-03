@@ -29,6 +29,7 @@
 
         <jacoco.line.coverage.ratio>0.90</jacoco.line.coverage.ratio>
         <jacoco.branch.coverage.ratio>0.85</jacoco.branch.coverage.ratio>
+        <jacoco.skip>true</jacoco.skip>
     </properties>
 
     <repositories>

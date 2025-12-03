@@ -40,7 +40,7 @@ public class MeetingControlButton extends JButton {
     /**
      * Preferred button height.
      */
-    private static final int PREFERRED_HEIGHT = 56;
+    private static final int PREFERRED_HEIGHT = 44;
     /**
      * Minimum button width.
      */
@@ -48,7 +48,7 @@ public class MeetingControlButton extends JButton {
     /**
      * Minimum button height.
      */
-    private static final int MIN_HEIGHT = 52;
+    private static final int MIN_HEIGHT = 38;
     /**
      * Color mixing ratio.
      */
@@ -238,6 +238,8 @@ public class MeetingControlButton extends JButton {
     private final ControlIcon iconType;
     /** Whether to draw icon glyphs. */
     private boolean showIcon = true;
+    /** Whether to force accent fill even when not active. */
+    private boolean forceAccentFill;
     /**
      * Whether button is active.
      */
@@ -320,6 +322,17 @@ public class MeetingControlButton extends JButton {
         }
     }
 
+    /**
+     * Forces the button background to always use accent color.
+     * @param enabled whether accent fill should be forced
+     */
+    public void setForceAccentFill(final boolean enabled) {
+        if (this.forceAccentFill != enabled) {
+            this.forceAccentFill = enabled;
+            repaint();
+        }
+    }
+
     @Override
     protected void paintComponent(final Graphics g) {
         final Graphics2D g2 = (Graphics2D) g.create();
@@ -337,7 +350,7 @@ public class MeetingControlButton extends JButton {
         final Color foreground = theme.getTextColor();
 
         final Color fillColor;
-        if (active) {
+        if (active || forceAccentFill) {
             fillColor = new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), ACTIVE_ALPHA);
         } else if (getModel().isPressed()) {
             fillColor = new Color(base.getRed(), base.getGreen(), base.getBlue(), PRESSED_ALPHA);

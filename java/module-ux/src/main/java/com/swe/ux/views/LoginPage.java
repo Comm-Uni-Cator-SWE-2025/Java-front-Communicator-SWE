@@ -110,7 +110,7 @@ public class LoginPage extends FrostedBackgroundPanel {
 
         final JPanel subtitleWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
         subtitleWrapper.setOpaque(false);
-        dateLabel = new JLabel("Secure video conferencing for education");
+        dateLabel = new JLabel("Built with Hope and Tears");
         dateLabel.setFont(FontUtil.getJetBrainsMono(SUBTITLE_FONT_SIZE, Font.PLAIN));
         subtitleWrapper.add(dateLabel);
         content.add(subtitleWrapper);

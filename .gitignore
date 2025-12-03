@@ -6,6 +6,20 @@
 
 **/**.jar
 
+# macOS & IDE artifacts
+.DS_Store
+.AppleDouble
+.LSOverride
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Common local build output
+dist/
+target/
+*.dmg
+
 # User-specific files
 *.rsuser
 *.suo
@@ -115,12 +129,6 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
-echo "dist/" >> .gitignore
-echo "*.dmg" >> .gitignore
-echo "target/" >> .gitignore
-git add .gitignore
-git commit -m "Ignore build artifacts"
-
 _Chutzpah*
 
 # Visual C++ cache files

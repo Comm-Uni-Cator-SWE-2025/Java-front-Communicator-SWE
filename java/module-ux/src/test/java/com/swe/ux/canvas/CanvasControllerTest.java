@@ -46,7 +46,9 @@ class CanvasControllerTest {
     @Test
     void testActionManagerNotNull() {
         assertNotNull(actionManager, "ActionManager should be created");
-        assertEquals("test-user", actionManager.getUserId());
+        assertTrue(actionManager instanceof HostActionManager,
+                "ActionManager should expose host-specific data for this test");
+        assertEquals("test-user", ((HostActionManager) actionManager).getUserId());
     }
 
     @Test
