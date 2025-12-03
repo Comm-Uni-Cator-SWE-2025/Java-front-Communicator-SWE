@@ -38,6 +38,14 @@ jobs:
         java -version
         mvn -version
       displayName: "Verify Environment"
+    - script: |
+        export JAVA_HOME=$(/usr/libexec/java_home)
+        export PATH="$JAVA_HOME/bin:$PATH"
+        echo "JAVA_HOME=$JAVA_HOME"
+        java -version
+        mvn -version
+      displayName: "Set JAVA_HOME for Pipeline"
+
 
     # 1️⃣ Compile using system Java (24)
     - script: mvn -f java/pom.xml -B clean compile
